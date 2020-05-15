@@ -32,7 +32,7 @@ benchmarks.sort()
 
 append_output('%s' % plan)
 append_output('=====')
-append_output('|Benchmark| %s  | %s  |Diff |' % (trunk_build, branch_build))
+append_output('|Benchmark| %s(ms)  | %s(ms)  |Diff |' % (trunk_build, branch_build))
 append_output('|:-------:|:---:|:---:|:---:|')
 
 # for each benchmark
@@ -67,7 +67,13 @@ for bm in benchmarks:
     diff = 0
     if trunk_time is not None and branch_time is not None:
         diff = (branch_time - trunk_time) / trunk_time
+    diff_text = '%+.2f%%' % (diff * 100)
+    # use different color emoji for better/worse result
+    if diff >= 0.01:
+        diff_text += ' :red_square:'
+    elif diff <= -0.01:
+        diff_text += ' :green_square:'
     
-    append_output('|%s|%s|%s|%+.2f%%|' % (bm, trunk_text, branch_text, diff*100))
+    append_output('|%s|%s|%s|%s|' % (bm, trunk_text, branch_text, diff_text))
 
 append_output('\n')
