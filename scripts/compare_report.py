@@ -17,6 +17,7 @@ folder = sys.argv[2]
 expected_invocations = int(sys.argv[3])
 trunk_build = plan + '_Trunk'
 branch_build = plan + '_Branch'
+run_id = os.path.basename(os.path.normpath(folder))
 
 # list all the logs
 logs = os.listdir(folder)
@@ -30,7 +31,7 @@ benchmarks = [r['benchmark'] for r in results]
 benchmarks = list(set(benchmarks))
 benchmarks.sort()
 
-append_output('%s' % plan)
+append_output('%s (%s)' % (plan, run_id))
 append_output('=====')
 append_output('|Benchmark| %s(ms)  | %s(ms)  |Diff |' % (trunk_build, branch_build))
 append_output('|:-------:|:---:|:---:|:---:|')
@@ -77,3 +78,4 @@ for bm in benchmarks:
     append_output('|%s|%s|%s|%s|' % (bm, trunk_text, branch_text, diff_text))
 
 append_output('\n')
+print(output)
