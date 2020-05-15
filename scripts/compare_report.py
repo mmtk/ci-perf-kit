@@ -41,23 +41,30 @@ for bm in benchmarks:
             return None
         else:
             return sum(r['execution_times']) / len(r['execution_times'])
+    
+    def format_result(build):
+        time = None
+        text = ':x:'
+        has_result = [r for r in results if r['benchmark'] == bm and r['build'] == build][:1]
+        if len(has_result) != 0:
+            result = has_result[0]
+            time = average_execution_time(result)
+            if result['status'] == 'partial_fail':
+                text = '%s :warning:' % time
+            elif result['status'] == 'fail':
+                text = ':x:'
+            elif result['status'] == 'success':
+                text = time
+        return time, text
 
     # trunk
-    trunk_time = None
-    has_trunk_result = [r for r in results if r['benchmark'] == bm and r['build'] == trunk_build][:1]
-    if len(has_trunk_result) != 0:
-        trunk_result = has_trunk_result[0]
-        trunk_time = average_execution_time(trunk_result)
+    trunk_time, trunk_text = format_result(trunk_build)
     
     # branch
-    branch_time = None
-    has_branch_result = [r for r in results if r['benchmark'] == bm and r['build'] == branch_build][:1]
-    if len(has_branch_result) != 0:
-        branch_result = has_branch_result[0]
-        branch_time = average_execution_time(branch_result)
+    branch_time, branch_text = format_result(branch_build)
     
     diff = 0
     if trunk_time is not None and branch_time is not None:
         diff = (branch_time - trunk_time) / trunk_time
     
-    append_output('|%s|%s|%s|%+.4f|' % (bm, trunk_time, branch_time, diff))
+    append_output('|%s|%s|%s|%+.4f|' % (bm, trunk_text, branch_text, diff))

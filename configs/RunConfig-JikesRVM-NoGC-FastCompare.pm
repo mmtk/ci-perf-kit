@@ -190,8 +190,7 @@ $genadvice = 0;
 @jvm98bms = ("_202_jess", "_201_compress", "_209_db", "_213_javac", "_222_mpegaudio", "_227_mtrt", "_228_jack");
 
 # we can only run these benchmarks with NoGC plan with 2GB heap
-# @benchmarks = ("antlr", "fop", "luindex");
-@benchmarks = ("antlr");
+@benchmarks = ("antlr", "fop", "luindex");
 
 #
 # Variables below this line should be stable

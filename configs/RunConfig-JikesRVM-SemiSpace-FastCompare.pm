@@ -183,7 +183,7 @@ $genadvice = 0;
 @jksdacapo = (@dacapobms, @jksbach);
 @jvm98bms = ("_202_jess", "_201_compress", "_209_db", "_213_javac", "_222_mpegaudio", "_227_mtrt", "_228_jack");
 
-@benchmarks = ("antlr", "bloat", "fop", "eclipse", "hsqldb", "jython", "luindex", "lusearch", "pmd", "xalan");
+@benchmarks = ("antlr", "bloat", "fop", "hsqldb", "jython", "luindex", "lusearch", "pmd", "xalan");
 
 #
 # Variables below this line should be stable
