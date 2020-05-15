@@ -2,8 +2,6 @@ import parse
 import sys
 import os
 
-EXPECTED_INVOCATIONS = 5
-
 output = ''
 def append_output(msg):
     print(msg)
@@ -11,12 +9,13 @@ def append_output(msg):
     output += msg
 
 # log folder
-if len(sys.argv) != 3:
-    print "Usage: python compare_report.py plan log_dir"
+if len(sys.argv) != 4:
+    print "Usage: python compare_report.py <plan> <log_dir> <invocations>"
     sys.exit(1)
 
 plan = sys.argv[1]
 folder = sys.argv[2]
+expected_invocations = sys.argv[3]
 trunk_build = plan + '_Trunk'
 branch_build = plan + '_Branch'
 
@@ -25,7 +24,7 @@ logs = os.listdir(folder)
 
 results = []
 for l in logs:
-    results.append(parse.parse_log(os.path.join(folder, l), EXPECTED_INVOCATIONS))
+    results.append(parse.parse_log(os.path.join(folder, l), expected_invocations))
 
 # benchmarks
 benchmarks = [r['benchmark'] for r in results]
