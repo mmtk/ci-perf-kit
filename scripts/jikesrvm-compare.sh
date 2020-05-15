@@ -42,7 +42,7 @@ cp $kit_root/probes/probes.jar $kit_root/running/bin/probes/
 # Run for NoGC
 cp $kit_root/configs/RunConfig-JikesRVM-NoGC-FastCompare.pm $kit_root/running/bin/RunConfig.pm
 nogc_output=$($kit_root/running/bin/runbms 16 16)
-nogc_run_id=$(echo $nogc_output | cut -c9-33) # output is something like: 'Run id: fox-2020-05-13-Wed-124656'
+nogc_run_id=$(echo $nogc_output | cut -d ' ' -f 3) # output is something like: 'Run id: fox-2020-05-13-Wed-124656'
 
 # Result for NoGC
 echo "NoGC" >> $output_file
