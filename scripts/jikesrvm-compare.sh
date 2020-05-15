@@ -2,6 +2,7 @@ set -ex
 jikesrvm_binding=$(realpath $1)
 mmtk_core_trunk=$(realpath $2)
 mmtk_core_branch=$(realpath $3)
+output_file=$(realpath $4)
 
 # JikesRVM root
 jikesrvm=$jikesrvm_binding/repos/jikesrvm
@@ -44,8 +45,9 @@ nogc_output=$($kit_root/running/bin/runbms 16 16)
 nogc_run_id=$(echo $nogc_output | cut -c9-33) # output is something like: 'Run id: fox-2020-05-13-Wed-124656'
 
 # Result for NoGC
-python $kit_root/scripts/compare_report.py NoGC $kit_root/running/results/log/$nogc_run_id 5 > nogc.md
-cat nogc.md
+echo "NoGC" >> $output_file
+echo "====" >> $output_file
+python $kit_root/scripts/compare_report.py NoGC $kit_root/running/results/log/$nogc_run_id 5 >> $output_file
 
 # # Run for SemiSpace
 # cp $kit_root/configs/RunConfig-JikesRVM-SemiSpace-FastCompare.pm $kit_root/running/bin/RunConfig.pm
@@ -56,3 +58,5 @@ cat nogc.md
 # echo "SemiSpace"
 # echo "===="
 # python $kit_root/scripts/compare_report.py SemiSpace $kit_root/running/results/log/$ss_run_id
+
+cat $output_file
