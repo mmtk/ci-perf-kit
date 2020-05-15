@@ -280,7 +280,7 @@ foreach $bm (keys %minheap) {
 	      );
 $bmtimeoutmultiplier = 2;
 
-$benchmarkroot = "/usr/share/benchmarks";
+$benchmarkroot = "$rootdir/benchmarks";
 
 %bmsuite = (
 	    "_201_compress" => "jvm98",
