@@ -5,7 +5,7 @@ import os
 output = ''
 def append_output(msg):
     global output
-    output += msg
+    output += msg + '\n'
 
 # log folder
 if len(sys.argv) != 4:
@@ -77,5 +77,5 @@ for bm in benchmarks:
     
     append_output('|%s|%s|%s|%s|' % (bm, trunk_text, branch_text, diff_text))
 
-append_output('\n')
+append_output('')
 print(output)
