@@ -67,4 +67,4 @@ for bm in benchmarks:
     if trunk_time is not None and branch_time is not None:
         diff = (branch_time - trunk_time) / trunk_time
     
-    append_output('|%s|%s|%s|%+.4f|' % (bm, trunk_text, branch_text, diff))
+    append_output('|%s|%s|%s|%+.2f%%|' % (bm, trunk_text, branch_text, diff*100))
