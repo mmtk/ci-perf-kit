@@ -15,7 +15,7 @@ if len(sys.argv) != 4:
 
 plan = sys.argv[1]
 folder = sys.argv[2]
-expected_invocations = sys.argv[3]
+expected_invocations = int(sys.argv[3])
 trunk_build = plan + '_Trunk'
 branch_build = plan + '_Branch'
 

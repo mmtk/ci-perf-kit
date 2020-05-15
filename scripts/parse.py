@@ -40,5 +40,4 @@ def parse_log(log_file, n_runs):
     else:
         ret['status'] = 'unexpected_invocation_number'
 
-    print(ret)
     return ret
