@@ -45,8 +45,6 @@ nogc_output=$($kit_root/running/bin/runbms 16 16)
 nogc_run_id=$(echo $nogc_output | cut -d ' ' -f 3) # output is something like: 'Run id: fox-2020-05-13-Wed-124656'
 
 # Result for NoGC
-echo "NoGC" >> $output_file
-echo "====" >> $output_file
 python $kit_root/scripts/compare_report.py NoGC $kit_root/running/results/log/$nogc_run_id 5 >> $output_file
 
 # # Run for SemiSpace
@@ -55,8 +53,4 @@ ss_output=$($kit_root/running/bin/runbms 16 16)
 ss_run_id=$(echo $ss_output | cut -d ' ' -f 3) # output is something like: 'Run id: fox-2020-05-13-Wed-124656'
 
 # # Result for SemiSpace
-echo "SemiSpace" >> $output_file
-echo "====" >> $output_file
 python $kit_root/scripts/compare_report.py SemiSpace $kit_root/running/results/log/$ss_run_id 5 >> $output_file
-
-cat $output_file

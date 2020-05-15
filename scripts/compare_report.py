@@ -4,7 +4,6 @@ import os
 
 output = ''
 def append_output(msg):
-    print(msg)
     global output
     output += msg
 
@@ -31,6 +30,8 @@ benchmarks = [r['benchmark'] for r in results]
 benchmarks = list(set(benchmarks))
 benchmarks.sort()
 
+append_output('%s' % plan)
+append_output('=====')
 append_output('|Benchmark| %s  | %s  |Diff |' % (trunk_build, branch_build))
 append_output('|:-------:|:---:|:---:|:---:|')
 
@@ -68,3 +69,5 @@ for bm in benchmarks:
         diff = (branch_time - trunk_time) / trunk_time
     
     append_output('|%s|%s|%s|%+.2f%%|' % (bm, trunk_text, branch_text, diff*100))
+
+append_output('\n')
