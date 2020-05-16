@@ -32,7 +32,7 @@ benchmarks = list(set(benchmarks))
 benchmarks.sort()
 
 append_output('%s (%s)' % (plan, run_id))
-append_output('=====')
+append_output('-----')
 append_output('|Benchmark| %s(ms)  | %s(ms)  |Diff |' % (trunk_build, branch_build))
 append_output('|:-------:|:---:|:---:|:---:|')
 
