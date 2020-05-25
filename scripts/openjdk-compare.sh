@@ -27,7 +27,8 @@ cd $openjdk
 export DEBUG_LEVEL=release
 
 # Build for trunk
-rsync -avLe $mmtk_core_trunk/* $openjdk_binding/repos/mmtk-core
+rm -rf $openjdk_binding/repos/mmtk-core/*
+cp -r $mmtk_core_trunk/* $openjdk_binding/repos/mmtk-core/
 # NoGC
 export MMTK_PLAN=nogc
 sh configure --disable-warnings-as-errors --with-debug-level=$DEBUG_LEVEL
@@ -40,7 +41,8 @@ make CONF=linux-x86_64-normal-server-$DEBUG_LEVEL THIRD_PARTY_HEAP=$PWD/../../op
 cp -r $openjdk/build/linux-x86_64-normal-server-$DEBUG_LEVEL/ $kit_build/jdk-mmtk-trunk-semispace
 
 # Build for branch
-rsync -avLe $mmtk_core_branch/* $openjdk_binding/repos/mmtk-core
+rm -rf $openjdk_binding/repos/mmtk-core/*
+cp -r $mmtk_core_branch/* $openjdk_binding/repos/mmtk-core/
 # NoGC
 export MMTK_PLAN=nogc
 sh configure --disable-warnings-as-errors --with-debug-level=$DEBUG_LEVEL
