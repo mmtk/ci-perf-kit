@@ -8,15 +8,15 @@ def append_output(msg):
     output += msg + '\n'
 
 # log folder
-if len(sys.argv) != 4:
-    print "Usage: python compare_report.py <plan> <log_dir> <invocations>"
+if len(sys.argv) != 6:
+    print("Usage: python compare_report.py <log_dir> <plan> <build1> <build2> <invocations>")
     sys.exit(1)
 
-plan = sys.argv[1]
-folder = sys.argv[2]
-expected_invocations = int(sys.argv[3])
-trunk_build = plan + '_Trunk'
-branch_build = plan + '_Branch'
+folder = sys.argv[1]
+plan = sys.argv[2]
+build1 = sys.argv[3]
+build2 = sys.argv[4]
+expected_invocations = int(sys.argv[5])
 run_id = os.path.basename(os.path.normpath(folder))
 
 # list all the logs
@@ -33,7 +33,7 @@ benchmarks.sort()
 
 append_output('%s (%s)' % (plan, run_id))
 append_output('-----')
-append_output('|Benchmark| %s(ms)  | %s(ms)  |Diff |' % (trunk_build, branch_build))
+append_output('|Benchmark| Trunk(ms)  | Branch(ms)  |Diff |')
 append_output('|:-------:|:---:|:---:|:---:|')
 
 # for each benchmark
@@ -60,10 +60,10 @@ for bm in benchmarks:
         return time, text
 
     # trunk
-    trunk_time, trunk_text = format_result(trunk_build)
+    trunk_time, trunk_text = format_result(build1)
     
     # branch
-    branch_time, branch_text = format_result(branch_build)
+    branch_time, branch_text = format_result(build2)
     
     diff = 0
     if trunk_time is not None and branch_time is not None:

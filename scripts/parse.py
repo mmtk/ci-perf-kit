@@ -24,6 +24,7 @@ def parse_log(log_file, n_runs):
         lines = content.splitlines()
         execution_times = []
         for line in lines:
+            line = str(line)
             matcher = re.match(".*PASSED in (\d+) msec.*", line)
             if matcher:
                 execution_times.append(float(matcher.group(1)))
