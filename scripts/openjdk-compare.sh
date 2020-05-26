@@ -30,10 +30,10 @@ export DEBUG_LEVEL=release
 rm -rf $openjdk_binding/repos/mmtk-core/*
 cp -r $mmtk_core_trunk/* $openjdk_binding/repos/mmtk-core/
 # NoGC
-export MMTK_PLAN=nogc
-sh configure --disable-warnings-as-errors --with-debug-level=$DEBUG_LEVEL
-make CONF=linux-x86_64-normal-server-$DEBUG_LEVEL THIRD_PARTY_HEAP=$PWD/../../openjdk
-cp -r $openjdk/build/linux-x86_64-normal-server-$DEBUG_LEVEL/ $kit_build/jdk-mmtk-trunk-nogc
+# export MMTK_PLAN=nogc
+# sh configure --disable-warnings-as-errors --with-debug-level=$DEBUG_LEVEL
+# make CONF=linux-x86_64-normal-server-$DEBUG_LEVEL THIRD_PARTY_HEAP=$PWD/../../openjdk
+# cp -r $openjdk/build/linux-x86_64-normal-server-$DEBUG_LEVEL/ $kit_build/jdk-mmtk-trunk-nogc
 # SemiSpace
 export MMTK_PLAN=semispace
 sh configure --disable-warnings-as-errors --with-debug-level=$DEBUG_LEVEL
@@ -44,10 +44,10 @@ cp -r $openjdk/build/linux-x86_64-normal-server-$DEBUG_LEVEL/ $kit_build/jdk-mmt
 rm -rf $openjdk_binding/repos/mmtk-core/*
 cp -r $mmtk_core_branch/* $openjdk_binding/repos/mmtk-core/
 # NoGC
-export MMTK_PLAN=nogc
-sh configure --disable-warnings-as-errors --with-debug-level=$DEBUG_LEVEL
-make CONF=linux-x86_64-normal-server-$DEBUG_LEVEL THIRD_PARTY_HEAP=$PWD/../../openjdk
-cp -r $openjdk/build/linux-x86_64-normal-server-$DEBUG_LEVEL/ $kit_build/jdk-mmtk-branch-nogc
+# export MMTK_PLAN=nogc
+# sh configure --disable-warnings-as-errors --with-debug-level=$DEBUG_LEVEL
+# make CONF=linux-x86_64-normal-server-$DEBUG_LEVEL THIRD_PARTY_HEAP=$PWD/../../openjdk
+# cp -r $openjdk/build/linux-x86_64-normal-server-$DEBUG_LEVEL/ $kit_build/jdk-mmtk-branch-nogc
 # SemiSpace
 export MMTK_PLAN=semispace
 sh configure --disable-warnings-as-errors --with-debug-level=$DEBUG_LEVEL
@@ -68,13 +68,13 @@ echo "* branch:  [$mmtk_branch_rev](https://github.com/mmtk/mmtk-core/commit/$mm
 
 echo "" >> $output_file
 
-# Run for NoGC
-cp $kit_root/configs/RunConfig-OpenJDK-NoGC-FastCompare.pm $kit_root/running/bin/RunConfig.pm
-nogc_output=$($kit_root/running/bin/runbms 16 16)
-nogc_run_id=$(echo $nogc_output | cut -d ' ' -f 3) # output is something like: 'Run id: fox-2020-05-13-Wed-124656'
+# # Run for NoGC
+# cp $kit_root/configs/RunConfig-OpenJDK-NoGC-FastCompare.pm $kit_root/running/bin/RunConfig.pm
+# nogc_output=$($kit_root/running/bin/runbms 16 16)
+# nogc_run_id=$(echo $nogc_output | cut -d ' ' -f 3) # output is something like: 'Run id: fox-2020-05-13-Wed-124656'
 
-# Result for NoGC
-python $kit_root/scripts/compare_report.py $kit_root/running/results/log/$nogc_run_id NoGC jdk-mmtk-trunk-nogc jdk-mmtk-branch-nogc 5 >> $output_file
+# # Result for NoGC
+# python $kit_root/scripts/compare_report.py $kit_root/running/results/log/$nogc_run_id NoGC jdk-mmtk-trunk-nogc jdk-mmtk-branch-nogc 5 >> $output_file
 
 # Run For SemiSpace
 cp $kit_root/configs/RunConfig-OpenJDK-SemiSpace-FastCompare.pm $kit_root/running/bin/RunConfig.pm

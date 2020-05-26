@@ -190,7 +190,7 @@ $perfevents = "";
 @dacapo_9_12 = ("sunflow", "avrora", "h2", "tomcat", "tradebeans", "tradesoap");
 @dacapo_2006 = ("xalan", "sunflow", "pmd", "lusearch", "luindex", "jython", "hsqldb", "fop", "eclipse", "chart", "bloat", "batik", "antlr");
 
-@benchmarks = ("antlr", "fop", pmd", "hsqldb", "eclipse");
+@benchmarks = ("antlr", "fop", "pmd", "hsqldb", "eclipse");
 
 #
 # Variables below this line should be stable
