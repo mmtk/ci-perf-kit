@@ -59,3 +59,10 @@ def parse_run(log_folder, n_invocations = None):
     for l in logs:
         results.append(parse_log(os.path.join(log_folder, l), n_invocations))
     return run_id, results
+
+# Given a run id, return the date
+def parse_run_date(run_id):
+    from datetime import datetime
+    matcher = re.match(".*-(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})-(.*)-(?<hour>\d{2})(?<minute>\d{2})(?<second>\d{2})", run_id)
+    if matcher:
+        return datetime.datetime(int(matcher['year']), int(matcher['month']), int(matcher['day']), int(matcher['hour']), int(matcher['minute']), int(matcher['second']))
