@@ -17,18 +17,9 @@ def plot_history(runs, plan, benchmarks, start_date, end_date):
     for bm in benchmarks:
         # extract results
         print(plan + ' ' + bm)
-        # y = []
-        # for run in runs.keys():
-        #     for bm_run in runs[run]:
-        #         if bm_run['benchmark'] == bm and bm_run['build'].lower() == plan.lower():
-        #             print(bm_run)
-        #             if len(bm_run['execution_times']) != 0:
-        #                 print("%f / %f" % (sum(bm_run['execution_times']), len(bm_run['execution_times'])))
-        #                 y.append(sum(bm_run['execution_times']) / len(bm_run['execution_times']))
-        #             else:
-        #                 y.append(0)
 
         y = history_per_day(runs, plan, bm, start_date, end_date)
+        y = normalize_history(y)
         x = list(range(0, len(y)))
         fig.add_trace(plotly.graph_objects.Scatter(x = x, y = y), row = row, col = 1)
         row += 1
@@ -65,6 +56,25 @@ def history_per_day(runs, plan, benchmark, start_date, end_date):
 
         print("Run for %s: %s (%s)" % (single_date, last_run, execution_time))
         ret.append(execution_time)
+    
+    return ret
+
+
+# Use first non-zero value as 100%, normalize each value
+def normalize_history(arr):
+    if (len(arr)) == 0:
+        return arr
+
+    ret = []
+    first_non_zero = None
+    for x in arr:
+        if x != 0 and first_non_zero is None:
+            first_non_zero = x
+        
+        if first_non_zero is None:
+            ret.append(1)
+        else:
+            ret.append(x / first_non_zero)
     
     return ret
 
