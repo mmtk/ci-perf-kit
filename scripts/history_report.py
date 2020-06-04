@@ -8,10 +8,11 @@ from datetime import date
 import plotly
 from plotly.subplots import make_subplots
 
-if len(sys.argv) != 2:
-    print("Usage: python history_report.py <result_repo_vm_root>")
+if len(sys.argv) != 3:
+    print("Usage: python history_report.py <result_repo_vm_root> <output_dir>")
 
 result_repo_vm_root = sys.argv[1]
+output_dir = sys.argv[2]
 
 # all subfolders are plan names
 plans = os.listdir(result_repo_vm_root)
@@ -42,23 +43,5 @@ for plan in plans:
     
     # plot
     fig = plot.plot_history(runs, plan, benchmarks, from_date, to_date)
-    fig.write_html("%s_history.html" % plan)
-
-# runs = {}
-# log_folders = os.listdir(log_folder_root)
-# log_folders.sort()
-# for log_folder in log_folders:
-#     run_id, results = parse.parse_run(os.path.join(log_folder_root, log_folder))
-#     runs[run_id] = results
-
-# # plans = ['NoGC', 'SemiSpace']
-# benchmarks = ['antlr', 'fop']
-
-# from_date = datetime.date(2020, 6, 1)
-# to_date = date.today() + datetime.timedelta(days=1)
-
-# fig1 = plot.plot_history(runs, "NoGC", benchmarks, from_date, to_date)
-# fig1.write_html("nogc_history.html")
-
-# fig2 = plot.plot_history(runs, "SemiSpace", benchmarks, from_date, to_date)
-# fig2.write_html("semispace_history.html")
+    path = os.path.join(output_dir, "%s_history.html" % plan)
+    fig.write_html(path)

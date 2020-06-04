@@ -1,5 +1,6 @@
 set -ex
 jikesrvm_binding=$(realpath $1)
+output_dir=$(realpath $2)
 jikesrvm_rev=$(git -C $jikesrvm_binding rev-parse HEAD)
 
 # JikesRVM root
@@ -51,3 +52,12 @@ cd $result_dir
 git add .
 git commit -m 'Binding: '$jikesrvm_rev
 git push
+
+# plot result
+mkdir -p $output_dir
+
+cd $kit_root
+python3 -m venv python-env
+source python-env/bin/activate
+pip3 install -r scripts/requirements.txt
+python3 scripts/history_report.py $result_dir/jikesrvm $output_dir
