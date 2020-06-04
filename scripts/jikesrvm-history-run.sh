@@ -22,6 +22,10 @@ result_dir=$kit_root/result_repo
 rm -rf $result_dir
 git clone https://$RESULT_REPO_ACCESS_TOKEN@github.com/$RESULT_REPO.git $result_dir --branch=$RESULT_REPO_BRANCH
 
+# Copy probes
+mkdir -p $kit_root/running/bin/probes
+cp $kit_root/probes/probes.jar $kit_root/running/bin/probes/
+
 # Build - JikesRVM buildit script requires current dir to be JikesRVM root dir
 cd $jikesrvm
 
@@ -50,7 +54,7 @@ cp -r $kit_root/running/results/log/$ss_run_id $result_dir/jikesrvm/semispace
 # Commit result
 cd $result_dir
 git add .
-git commit -m 'Binding: '$jikesrvm_rev
+git -c user.name='github-actions' -c user.email=bot@noreply.github.com -commit -m 'JikesRVM Binding: '$jikesrvm_rev
 git push
 
 # plot result
