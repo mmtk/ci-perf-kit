@@ -1,5 +1,5 @@
 import plotly
-from plotly.subplots import make_subplots
+from plotly.graph_objs import *
 from datetime import timedelta, date
 import parse
 
@@ -8,12 +8,8 @@ import parse
 # benchmarks: benchmarks to plot
 # start_date, end_date: plot data between the given date range
 def plot_history(runs, plan, benchmarks, start_date, end_date):
-    # make subplots
-    fig = make_subplots(
-        rows = len(benchmarks)
-    )
-
     row = 1
+    traces = []
     for bm in benchmarks:
         # extract results
         print(plan + ' ' + bm)
@@ -21,9 +17,64 @@ def plot_history(runs, plan, benchmarks, start_date, end_date):
         y = history_per_day(runs, plan, bm, start_date, end_date)
         y = normalize_history(y)
         x = list(range(0, len(y)))
-        fig.add_trace(plotly.graph_objects.Scatter(x = x, y = y), row = row, col = 1)
+
+        print(y)
+
+        # fig.add_trace(plotly.graph_objects.Scatter(x = x, y = y), row = row, col = 1)
+        trace = {
+            "name": bm,
+            "hoverinfo": "text",
+            "fill": "tozeroy",
+            "mode": "lines",
+            "line": {"width": 1},
+            "type": "scatter",
+            "x": x,
+            "y": y,
+            "text": ["%s: %.2f" % (d, y) for (d, y) in zip(daterange(start_date, end_date), y)],
+            "xaxis": "x%d" % row,
+            "yaxis": "y%d" % row
+        }
+
+        traces.append(trace)
         row += 1
     
+    data = Data(traces)
+    
+    layout = {
+        "title": plan,
+        "margin": {"t": 80},
+        "width": 500,
+        "height": 500
+    }
+    for i in range(1, row):
+        layout["xaxis%d" % i] = {
+            "ticks": "",
+            "anchor": "y%d" % i,
+            "domain": [0, 1],
+            "mirror": False,
+            "showgrid": False,
+            "showline": False,
+            "zeroline": False,
+            "showticklabels": False,
+        }
+        # e.g. if we have 4 rows (row = 5 at the moment)
+        # the y domain for each trace should be [0, 0.25], [0.25, 0.5], [0.5, 0.75], [0.75, 1]
+        ydomain = [1 - 1/(row - 1) * i, 1 - 1/(row - 1) * (i - 1)]
+        layout["yaxis%d" % i] = {
+            "ticks": "",
+            "anchor": "x%d" % i,
+            "domain": ydomain,
+            "mirror": False,
+            "showgrid": False,
+            "showline": False,
+            "zeroline": False,
+            "showticklabels": False,
+            "range": [-1, 1],
+            "autorange": False,
+        }
+        print(ydomain)
+
+    fig = Figure(data = data, layout = layout)
     return fig
 
 
@@ -60,7 +111,7 @@ def history_per_day(runs, plan, benchmark, start_date, end_date):
     return ret
 
 
-# Use first non-zero value as 100%, normalize each value
+# Use first non-zero value as 0, normalize each value to be a percentage compared to the first non-zero value
 def normalize_history(arr):
     if (len(arr)) == 0:
         return arr
@@ -72,9 +123,9 @@ def normalize_history(arr):
             first_non_zero = x
         
         if first_non_zero is None:
-            ret.append(1)
+            ret.append(0)
         else:
-            ret.append(x / first_non_zero)
+            ret.append((x - first_non_zero) / first_non_zero)
     
     return ret
 
