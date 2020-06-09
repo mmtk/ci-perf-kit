@@ -17,7 +17,6 @@ result_dir=$kit_root/result_repo
 # Expect these env vars
 # RESULT_REPO
 # RESULT_REPO_BRANCH
-# RESULT_REPO_ACCESS_NAME
 # RESULT_REPO_ACCESS_TOKEN
 rm -rf $result_dir
 git clone https://$RESULT_REPO_ACCESS_TOKEN@github.com/$RESULT_REPO.git $result_dir --branch=$RESULT_REPO_BRANCH
@@ -55,6 +54,7 @@ cp -r $kit_root/running/results/log/$ss_run_id $result_dir/jikesrvm/semispace
 cd $result_dir
 git add .
 git -c user.name='github-actions' -c user.email=bot@noreply.github.com commit -m 'JikesRVM Binding: '$jikesrvm_rev
+git pull --rebase # pull any new commit (if any)
 git push
 
 # plot result
