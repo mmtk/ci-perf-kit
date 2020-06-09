@@ -8,11 +8,12 @@ from datetime import date
 import plotly
 from plotly.subplots import make_subplots
 
-if len(sys.argv) != 3:
-    print("Usage: python history_report.py <result_repo_vm_root> <output_dir>")
+if len(sys.argv) != 4:
+    print("Usage: python history_report.py <result_repo_vm_root> <output_dir> <prefix>")
 
 result_repo_vm_root = sys.argv[1]
 output_dir = sys.argv[2]
+prefix = sys.argv[3]
 
 # all subfolders are plan names
 plans = os.listdir(result_repo_vm_root)
@@ -43,5 +44,5 @@ for plan in plans:
     
     # plot
     fig = plot.plot_history(runs, plan, benchmarks, from_date, to_date)
-    path = os.path.join(output_dir, "%s_history.html" % plan)
+    path = os.path.join(output_dir, "%s_%s_history.html" % (prefix, plan))
     fig.write_html(path)

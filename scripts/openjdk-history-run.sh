@@ -64,3 +64,12 @@ git add .
 git -c user.name='github-actions' -c user.email=bot@noreply.github.com commit -m 'OpenJDK Binding: '$openjdk_rev
 git pull --rebase # pull any new commit (if any)
 git push
+
+# plot result
+mkdir -p $output_dir
+
+cd $kit_root
+python3 -m venv python-env
+source python-env/bin/activate
+pip3 install -r scripts/requirements.txt
+python3 scripts/history_report.py $result_dir/openjdk $output_dir
