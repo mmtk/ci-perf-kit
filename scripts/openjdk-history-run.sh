@@ -25,9 +25,6 @@ git clone https://$RESULT_REPO_ACCESS_TOKEN@github.com/$RESULT_REPO.git $result_
 mkdir -p $kit_root/running/bin/probes
 cp $kit_root/probes/probes.jar $kit_root/running/bin/probes/
 
-# Edit openjdk binding Cargo.toml to use access token
-sed -i 's/ssh:\/\/git@github.com\/mmtk/https:\/\/qinsoon:'$CI_ACCESS_TOKEN'@github.com\/mmtk/g' $openjdk_binding/mmtk/Cargo.toml
-
 # Build
 cd $openjdk
 export DEBUG_LEVEL=release
