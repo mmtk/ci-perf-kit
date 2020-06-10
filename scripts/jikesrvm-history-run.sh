@@ -64,4 +64,4 @@ cd $kit_root
 python3 -m venv python-env
 source python-env/bin/activate
 pip3 install -r scripts/requirements.txt
-python3 scripts/history_report.py $result_dir/jikesrvm $output_dir
+python3 scripts/history_report.py $result_dir/jikesrvm $output_dir jikesrvm
