@@ -1,4 +1,5 @@
 import os
+from os import environ
 import sys
 import parse
 import plot
@@ -18,8 +19,19 @@ prefix = sys.argv[3]
 # all subfolders are plan names
 plans = os.listdir(result_repo_vm_root)
 
-from_date = datetime.date(2020, 6, 1)
-to_date = date.today() + datetime.timedelta(days=1) # one day after today (so the last day is today)
+# check from date and to date
+from_date_env = environ.get("FROM_DATE")
+to_date_env = environ.get("TO_DATE")
+if from_date_env is not None:
+    from_date = datetime.datetime.strptime(from_date_env, "%Y-%m-%d").date()
+else:
+    # default start date
+    from_date = datetime.date(2020, 6, 1)
+
+if to_date_env is not None:
+    to_date = datetime.datetime.strptime(to_date_env, "%Y-%m-%d").date()
+else:
+    to_date = date.today() + datetime.timedelta(days=1) # one day after today (so the last day is today)
 
 for plan in plans:
     logs = [x for x in os.listdir(os.path.join(result_repo_vm_root, plan)) if os.path.isdir(os.path.join(result_repo_vm_root, plan, x))]
