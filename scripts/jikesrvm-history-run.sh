@@ -53,7 +53,7 @@ cp -r $kit_root/running/results/log/$ss_run_id $result_dir/jikesrvm/semispace
 # Commit result
 cd $result_dir
 git add .
-git -c user.name='github-actions' -c user.email=bot@noreply.github.com commit -m 'JikesRVM Binding: '$jikesrvm_rev
+git commit -m 'JikesRVM Binding: '$jikesrvm_rev
 git pull --rebase # pull any new commit (if any)
 git push
 
