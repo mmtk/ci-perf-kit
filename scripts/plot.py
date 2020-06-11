@@ -104,6 +104,8 @@ def history_per_day(runs, plan, benchmark, start_date, end_date):
         execution_time = 0
         if last_run is not None:
             execution_time = average_time(runs[last_run], plan, benchmark)
+            if execution_time is None:
+                execution_time = 0
 
         print("Run for %s: %s (%s)" % (single_date, last_run, execution_time))
         ret.append(execution_time)
@@ -116,6 +118,7 @@ def normalize_history(arr):
     if (len(arr)) == 0:
         return arr
 
+    print(arr)
     ret = []
     first_non_zero = None
     for x in arr:
@@ -132,7 +135,7 @@ def normalize_history(arr):
 
 def average_time(run, plan, benchmark):
     for bm_run in run:
-        if bm_run['benchmark'] == benchmark and bm_run['build'].lower() == plan.lower():
+        if bm_run['benchmark'] == benchmark and (bm_run['build'].lower() == plan.lower() or bm_run['build'].lower().endswith(plan.lower())):
             if len(bm_run['execution_times']) != 0:
                 return sum(bm_run['execution_times']) / len(bm_run['execution_times'])
             else:
