@@ -2,7 +2,7 @@ import re
 import os
 
 # Given a log file and expected invocations, return the result
-def parse_log(log_file, n_runs):
+def parse_log(log_file, n_invocations = None):
     # return a dict of the parse result
     ret = {}
 
@@ -25,20 +25,44 @@ def parse_log(log_file, n_runs):
         execution_times = []
         for line in lines:
             line = str(line)
+            if len(line) == 0:
+                continue
+            
             matcher = re.match(".*PASSED in (\d+) msec.*", line)
             if matcher:
                 execution_times.append(float(matcher.group(1)))
         ret['execution_times'] = execution_times
 
-    # check status
+    # if no n_invocations is passed in, we do not check how many results we have
+    if n_invocations == None:
+        return ret
+
+    # otherwise check status
     n_results = len(ret['execution_times'])
     if n_results == 0:
         ret['status'] = 'fail'
-    elif n_results == n_runs:
+    elif n_results == n_invocations:
         ret['status'] = 'success'
-    elif n_results < n_runs:
+    elif n_results < n_invocations:
         ret['status'] = 'partial_fail'
     else:
         ret['status'] = 'unexpected_invocation_number'
 
     return ret
+
+# Given a log folder, return the result
+def parse_run(log_folder, n_invocations = None):
+    run_id = os.path.basename(os.path.normpath(log_folder))
+
+    results = []
+    logs = os.listdir(log_folder)
+    for l in logs:
+        results.append(parse_log(os.path.join(log_folder, l), n_invocations))
+    return run_id, results
+
+# Given a run id, return the date
+def parse_run_date(run_id):
+    from datetime import datetime
+    matcher = re.match(".*-(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})-(.*)-(?<hour>\d{2})(?<minute>\d{2})(?<second>\d{2})", run_id)
+    if matcher:
+        return datetime.datetime(int(matcher['year']), int(matcher['month']), int(matcher['day']), int(matcher['hour']), int(matcher['minute']), int(matcher['second']))
