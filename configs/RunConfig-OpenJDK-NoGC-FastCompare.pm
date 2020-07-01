@@ -63,7 +63,7 @@ $remotedir = $rootdir;          # same directory structure on both machines
 # Misc variables
 #
 $standalonemode = 0;            # if 1, then stop daemons (including network!)
-$targetinvocations = 10;        # how many invocations of each benchmark?
+$targetinvocations = 20;        # how many invocations of each benchmark?
 $defaulttimingiteration = 2;    # which iteration of the benchmark to time
 $heaprange = 40;                 # controls x-axis range
 $maxinvocations = $targetinvocations;
