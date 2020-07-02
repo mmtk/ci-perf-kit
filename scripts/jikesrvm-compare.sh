@@ -58,7 +58,7 @@ nogc_output=$($kit_root/running/bin/runbms 16 16)
 nogc_run_id=$(echo $nogc_output | cut -d ' ' -f 3) # output is something like: 'Run id: fox-2020-05-13-Wed-124656'
 
 # Result for NoGC
-python $kit_root/scripts/compare_report.py $kit_root/running/results/log/$nogc_run_id NoGC NoGC_Trunk NoGC_Branch 10 >> $output_file
+python $kit_root/scripts/compare_report.py $kit_root/running/results/log/$nogc_run_id NoGC NoGC_Trunk NoGC_Branch 80 >> $output_file
 
 # # Run for SemiSpace
 cp $kit_root/configs/RunConfig-JikesRVM-SemiSpace-FastCompare.pm $kit_root/running/bin/RunConfig.pm
@@ -66,4 +66,4 @@ ss_output=$($kit_root/running/bin/runbms 16 16)
 ss_run_id=$(echo $ss_output | cut -d ' ' -f 3) # output is something like: 'Run id: fox-2020-05-13-Wed-124656'
 
 # # Result for SemiSpace
-python $kit_root/scripts/compare_report.py $kit_root/running/results/log/$ss_run_id SemiSpace SemiSpace_Trunk SemiSpace_Branch 10 >> $output_file
+python $kit_root/scripts/compare_report.py $kit_root/running/results/log/$ss_run_id SemiSpace SemiSpace_Trunk SemiSpace_Branch 80 >> $output_file
