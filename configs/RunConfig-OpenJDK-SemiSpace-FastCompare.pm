@@ -64,7 +64,7 @@ $remotedir = $rootdir;          # same directory structure on both machines
 #
 $standalonemode = 0;            # if 1, then stop daemons (including network!)
 $targetinvocations = 80;        # how many invocations of each benchmark?
-$defaulttimingiteration = 2;    # which iteration of the benchmark to time
+$defaulttimingiteration = 5;    # which iteration of the benchmark to time
 $heaprange = 6;                 # controls x-axis range
 $maxinvocations = $targetinvocations;
 $arch = "_x86_64-linux";
@@ -169,8 +169,8 @@ $perfevents = "";
 	      );
 # configurations
 @gcconfigs = (
-	      "jdk-mmtk-trunk-semispace|ms|s|c2|tph",
-	      "jdk-mmtk-branch-semispace|ms|s|c2|tph",
+	      "jdk-mmtk-trunk-semispace|ms|s|c2|tph|i5",
+	      "jdk-mmtk-branch-semispace|ms|s|c2|tph|i5",
 	      );
 
 
