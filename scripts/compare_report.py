@@ -122,8 +122,6 @@ for bm in benchmarks:
             diff = (stats2[key] - stats1[key]) / stats1[key]
         diff_text = '%+.2f%%' % (diff * 100)
 
-        print('%.2f, %.2f, diff=%s' % (stats1[key], stats2[key], diff_text))
-
         if should_highlight:
             if diff >= 0.01:
                 diff_text += ' :red_square:'
