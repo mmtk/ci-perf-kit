@@ -54,22 +54,6 @@ for bm in benchmarks:
         if len(has_result) != 0:
             result = has_result[0]
 
-            # # remove outliers
-            # import numpy as np
-            # from scipy import stats
-            # arr = np.array(result['execution_times'])
-            # z_score = stats.zscore(arr)
-
-            # # only keep data whose zscore is within 3
-            # result['execution_times'] = [r for r, z in zip(arr, z_score) if z < 3]
-
-            # time = average_execution_time(result)
-            # if result['status'] == 'partial_fail':
-            #     text = '%s :warning:%d/%d failed' % (time, expected_invocations - result['succeeded_runs'], expected_invocations)
-            # elif result['status'] == 'fail':
-            #     text = ':x:'
-            # elif result['status'] == 'success':
-            #     text = time
         return result
     
     def get_statistics(result):
@@ -79,8 +63,13 @@ for bm in benchmarks:
         from scipy import stats
         arr = np.array(result['execution_times'])
 
-        # mean and median
+        confidence = 0.95
+
+        # mean
         ret['mean'] = np.mean(arr)
+        # confidence interval
+        ret['mean_ci'] = stats.sem(arr) * stats.t.ppf((1 + confidence) / 2., len(arr) - 1)
+        # and median
         ret['median'] = np.median(arr)
 
         # outliers
@@ -90,6 +79,7 @@ for bm in benchmarks:
         # number of outliers and mean without outliers
         ret['n_outliers'] = len(arr) - len(filtered)
         ret['mean_without_outliers'] = np.mean(filtered)
+        ret['mean_without_outliers_ci'] = stats.sem(filtered) * stats.t.ppf((1 + confidence) / 2., len(filtered) - 1)
 
         return ret
 
@@ -102,9 +92,9 @@ for bm in benchmarks:
         text_mean = None
 
         if result['status'] == 'success':
-            text_mean = '%.2f' % s['mean']
+            text_mean = '%.2f ±%.2f' % (s['mean'], s['mean_ci'])
         elif result['status'] == 'partial_fail':
-            text_mean = '%.2f :warning: %d/%d failed' % (s['mean'], expected_invocations - result['succeeded_runs'], expected_invocations)
+            text_mean = '%.2f ±%.2f :warning: %d/%d failed' % (s['mean'], s['mean_ci'], expected_invocations - result['succeeded_runs'], expected_invocations)
         elif result['status'] == 'fail':
             text_mean = ':x:'
         
@@ -113,9 +103,9 @@ for bm in benchmarks:
             text_mean_without_outliers = ':x:'
         else:
             if s['n_outliers'] != 0:
-                text_mean_without_outliers = '%.2f :warning: %d removed' % (s['mean_without_outliers'], s['n_outliers'])
+                text_mean_without_outliers = '%.2f ±%.2f :warning: %d removed' % (s['mean_without_outliers'], s['mean_without_outliers_ci'], s['n_outliers'])
             else:
-                text_mean_without_outliers = '%.2f' % s['mean_without_outliers']
+                text_mean_without_outliers = '%.2f ±%.2f' % (s['mean_without_outliers'], s['mean_without_outliers_ci'])
         
         text_median = None
         if result['status'] != 'fail':
@@ -124,70 +114,30 @@ for bm in benchmarks:
             text_median = ':x:'
         
         return text_mean, text_mean_without_outliers, text_median, s
-
-        
-        # trunk_arr = np.array(trunk_result['execution_times'])
-        # branch_arr = np.array(branch_result['execution_times'])
-
-        # # mean
-        # trunk_mean = np.mean(trunk_arr)
-        # trunk_median = np.median(trunk_arr)
-
-        # # statistical significance
-        # x = np.array(trunk_result['execution_times'])
-        # y = np.array(branch_result['execution_times'])
-
-        # t, p = stats.ttest_ind(x, y)
-        # critical_value = stats.t.ppf(0.95, len(x) + len(y))
-        
-        # print(bm)
-        # print(x)
-        # print("avg = %f, 25p = %f, 50p = %f, 75p = %f" % (trunk_time, np.percentile(x, 25), np.percentile(x, 50), np.percentile(x, 75)))
-        # print("median = %f" % np.median(x))
-        # print(y)
-        # print("avg = %f, 25p = %f, 50p = %f, 75p = %f" % (branch_time, np.percentile(y, 25), np.percentile(y, 50), np.percentile(y, 75)))
-        # print("median = %f" % np.median(y))
-        # print("t=%f, p=%f, critical=%f" % (t, p, critical_value))
-        # print("significant change: %s" % (p < 0.05))
-        # print("significant increase: %s" % (p / 2 < 0.05 and t > 0))
-        # print("significant decrease: %s" % (p / 2 < 0.05 and t < 0))
-
-        # s_x_2 = x.var(ddof=1)
-        # s_y_2 = y.var(ddof=1)
-
-        # t = (x.mean() - y.mean()) / sqrt(s_x_2 / len(x) + s_y_2 / len(y))
-
-        # # degree of freedom
-        # df = len(x) + len(y) - 2
-        # # p-value
-        # p = 1 - stats.t.cdf(t, df = df)
     
-    def format_diff(stats1, stats2):
+    def format_diff(stats1, stats2, key, should_highlight):
         # mean diff
         diff = 0
-        if stats1['mean'] is not None and stats2['mean'] is not None:
-            diff = (stats1['mean'] - stats2['mean']) / stats1['mean']
+        if stats1[key] is not None and stats2[key] is not None:
+            diff = (stats2[key] - stats1[key]) / stats1[key]
         diff_text = '%+.2f%%' % (diff * 100)
-        
-        # mean without outliers diff
-        diff2 = 0
-        if stats1['mean_without_outliers'] is not None and stats2['mean_without_outliers'] is not None:
-            diff = (stats1['mean_without_outliers'] - stats2['mean_without_outliers']) / stats1['mean_without_outliers']
-        diff2_text = '%+.2f%%' % (diff * 100)
-        # use different color emoji for better/worse result
-        if diff >= 0.01:
-            diff_text += ' :red_square:'
-        elif diff <= -0.01:
-            diff_text += ' :green_square:'
-        
-        return diff_text, diff2_text
+
+        print('%.2f, %.2f, diff=%s' % (stats1[key], stats2[key], diff_text))
+
+        if should_highlight:
+            if diff >= 0.01:
+                diff_text += ' :red_square:'
+            elif diff <= -0.01:
+                diff_text += ' :green_square:'
+        return diff_text
     
     trunk_mean, trunk_mean_without_outliers, trunk_median, trunk_stats = format_build_statistics(trunk_result)
     branch_mean, branch_mean_without_outliers, branch_median, branch_stats = format_build_statistics(branch_result)
 
-    diff_text, diff2_text = format_diff(trunk_stats, branch_stats)
+    mean_diff = format_diff(trunk_stats, branch_stats, 'mean', False)
+    mean_without_outliers_diff = format_diff(trunk_stats, branch_stats, 'mean_without_outliers', True)
     
-    append_output('|%s|%s|%s|%s|%s|%s|%s|%s|%s|' % (bm, trunk_mean, trunk_mean_without_outliers, trunk_median, branch_mean, branch_mean_without_outliers, branch_median, diff_text, diff2_text))
+    append_output('|%s|%s|%s|%s|%s|%s|%s|%s|%s|' % (bm, trunk_mean, trunk_mean_without_outliers, trunk_median, branch_mean, branch_mean_without_outliers, branch_median, mean_diff, mean_without_outliers_diff))
 
 append_output('')
 print(output)
