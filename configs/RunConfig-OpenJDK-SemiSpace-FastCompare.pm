@@ -340,7 +340,7 @@ $tmp = "/tmp/runbms-".$ENV{USER};
 
 %bmargs = (
 	   "jvm98" => "-cp $rootdir/../probes/probes.jar:. SpecApplication -i[#] [bm]",
-	   "dacapo" => "-Dprobes=MMTk -cp $rootdir/../probes/probes.jar:$benchmarkroot/dacapo/dacapo-2006-10-MR2.jar Harness -n [#] [bm]",
+	   "dacapo" => "-Dprobes=MMTk -cp $rootdir/../probes/probes.jar:$benchmarkroot/dacapo/dacapo-2006-10-MR2.jar Harness -converge [bm]",
 	   "dacapobach" => "-Dprobes=MMTk -cp $rootdir/../probes/probes.jar:/home/wenyuz/dacapo-9.12-MR1-bach-java6.jar Harness -n [#] [bm]",
 	   "pjbb2005" => "-Dprobes=MMTk -cp $rootdir/../probes/probes.jar:$benchmarkroot/pjbb2005/jbb.jar:$benchmarkroot/pjbb2005/check.jar spec.jbb.JBBmain -propfile $benchmarkroot/pjbb2005/SPECjbb-8x10000.props -c probe.PJBB2005Callback -n [#]",
 	   "pjbb2000" => "-cp pseudojbb.jar spec.jbb.JBBmain -propfile SPECjbb-8x12500.props -n [#] [mmtkstart]",
