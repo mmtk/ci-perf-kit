@@ -47,6 +47,7 @@ def parse_log(log_file, n_invocations = None):
         ret['status'] = 'partial_fail'
     else:
         ret['status'] = 'unexpected_invocation_number'
+    ret['succeeded_runs'] = n_results
 
     return ret
 

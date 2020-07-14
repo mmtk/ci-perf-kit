@@ -63,8 +63,8 @@ $remotedir = $rootdir;          # same directory structure on both machines
 # Misc variables
 #
 $standalonemode = 0;            # if 1, then stop daemons (including network!)
-$targetinvocations = 5;        # how many invocations of each benchmark?
-$defaulttimingiteration = 2;    # which iteration of the benchmark to time
+$targetinvocations = 40;        # how many invocations of each benchmark?
+$defaulttimingiteration = 5;    # which iteration of the benchmark to time
 $heaprange = 6;                 # controls x-axis range
 $maxinvocations = $targetinvocations;
 $arch = "_x86_64-linux";
@@ -169,8 +169,8 @@ $perfevents = "";
 	      );
 # configurations
 @gcconfigs = (
-	      "jdk-mmtk-trunk-semispace|ms|s|c2|tph",
-	      "jdk-mmtk-branch-semispace|ms|s|c2|tph",
+	      "jdk-mmtk-trunk-semispace|ms|s|c2|tph|i5",
+	      "jdk-mmtk-branch-semispace|ms|s|c2|tph|i5",
 	      );
 
 
@@ -340,7 +340,7 @@ $tmp = "/tmp/runbms-".$ENV{USER};
 
 %bmargs = (
 	   "jvm98" => "-cp $rootdir/../probes/probes.jar:. SpecApplication -i[#] [bm]",
-	   "dacapo" => "-Dprobes=MMTk -cp $rootdir/../probes/probes.jar:$benchmarkroot/dacapo/dacapo-2006-10-MR2.jar Harness -n [#] [bm]",
+	   "dacapo" => "-Dprobes=MMTk -cp $rootdir/../probes/probes.jar:$benchmarkroot/dacapo/dacapo-2006-10-MR2.jar Harness -converge [bm]",
 	   "dacapobach" => "-Dprobes=MMTk -cp $rootdir/../probes/probes.jar:/home/wenyuz/dacapo-9.12-MR1-bach-java6.jar Harness -n [#] [bm]",
 	   "pjbb2005" => "-Dprobes=MMTk -cp $rootdir/../probes/probes.jar:$benchmarkroot/pjbb2005/jbb.jar:$benchmarkroot/pjbb2005/check.jar spec.jbb.JBBmain -propfile $benchmarkroot/pjbb2005/SPECjbb-8x10000.props -c probe.PJBB2005Callback -n [#]",
 	   "pjbb2000" => "-cp pseudojbb.jar spec.jbb.JBBmain -propfile SPECjbb-8x12500.props -n [#] [mmtkstart]",
