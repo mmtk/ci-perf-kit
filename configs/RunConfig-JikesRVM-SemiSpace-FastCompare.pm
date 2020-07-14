@@ -162,7 +162,7 @@ $genadvice = 0;
 	      );
 # configurations
 @gcconfigs = (
-	      "SemiSpace_Trunk", "SemiSpace_Branch",
+	      "SemiSpace_Trunk|i5", "SemiSpace_Branch|i5",
 	      );
 
 

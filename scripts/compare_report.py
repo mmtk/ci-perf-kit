@@ -46,8 +46,6 @@ for bm in benchmarks:
             return sum(r['execution_times']) / len(r['execution_times'])
     
     def get_result(build):
-        # time = None
-        # text = ':x:'
         result = None
         
         has_result = [r for r in results if r['benchmark'] == bm and r['build'] == build][:1]
