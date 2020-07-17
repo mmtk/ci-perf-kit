@@ -1,15 +1,18 @@
 set -ex
-openjdk_binding=$(realpath $1)
+openjdk_binding_trunk=$(realpath $1)
 mmtk_core_trunk=$(realpath $2)
-mmtk_core_branch=$(realpath $3)
-output_file=$(realpath $4)
+openjdk_binding_branch=$(realpath $3)
+mmtk_core_branch=$(realpath $4)
+output_file=$(realpath $5)
 
-openjdk_rev=$(git -C $openjdk_binding rev-parse HEAD)
+openjdk_trunk_rev=$(git -C $openjdk_binding_trunk rev-parse HEAD)
 mmtk_trunk_rev=$(git -C $mmtk_core_trunk rev-parse HEAD)
+openjdk_branch_rev=$(git -C $openjdk_binding_branch rev-parse HEAD)
 mmtk_branch_rev=$(git -C $mmtk_core_branch rev-parse HEAD)
 
 # OpenJDK root
-openjdk=$openjdk_binding/repos/openjdk
+openjdk_trunk=$openjdk_binding_trunk/repos/openjdk
+openjdk_branch=$openjdk_binding_branch/repos/openjdk
 # root dir of this perf kit
 kit_root=$(realpath $(dirname "$0")/..)
 # where we put all the builds
@@ -18,17 +21,25 @@ mkdir -p $kit_build
 rm -rf $kit_build/*
 
 # Edit openjdk binding Cargo.toml to use local path for mmtk core - note: this makes this script not repeatable
-sed -i s/^mmtk[[:space:]]=/#ci:mmtk=/g $openjdk_binding/mmtk/Cargo.toml
-sed -i s/^#[[:space:]]mmtk/mmtk/g $openjdk_binding/mmtk/Cargo.toml
-mkdir -p $openjdk_binding/repos/mmtk-core
+sed -i s/^mmtk[[:space:]]=/#ci:mmtk=/g $openjdk_binding_trunk/mmtk/Cargo.toml
+sed -i s/^#[[:space:]]mmtk/mmtk/g $openjdk_binding_trunk/mmtk/Cargo.toml
+mkdir -p $openjdk_binding_trunk/repos/mmtk-core
+
+if [ "$openjdk_binding_branch" != "$openjdk_binding_trunk" ]; then
+    sed -i s/^mmtk[[:space:]]=/#ci:mmtk=/g $openjdk_binding_branch/mmtk/Cargo.toml
+    sed -i s/^#[[:space:]]mmtk/mmtk/g $openjdk_binding_branch/mmtk/Cargo.toml
+    mkdir -p $openjdk_binding_branch/repos/mmtk-core
+fi
 
 # Build
-cd $openjdk
 export DEBUG_LEVEL=release
 
+# Trunk
+cd $openjdk_trunk
+
 # Build for trunk
-rm -rf $openjdk_binding/repos/mmtk-core/*
-cp -r $mmtk_core_trunk/* $openjdk_binding/repos/mmtk-core/
+rm -rf $openjdk_binding_trunk/repos/mmtk-core/*
+cp -r $mmtk_core_trunk/* $openjdk_binding_trunk/repos/mmtk-core/
 # NoGC
 # export MMTK_PLAN=nogc
 # sh configure --disable-warnings-as-errors --with-debug-level=$DEBUG_LEVEL
@@ -38,11 +49,14 @@ cp -r $mmtk_core_trunk/* $openjdk_binding/repos/mmtk-core/
 export MMTK_PLAN=semispace
 sh configure --disable-warnings-as-errors --with-debug-level=$DEBUG_LEVEL
 make CONF=linux-x86_64-normal-server-$DEBUG_LEVEL THIRD_PARTY_HEAP=$PWD/../../openjdk
-cp -r $openjdk/build/linux-x86_64-normal-server-$DEBUG_LEVEL/ $kit_build/jdk-mmtk-trunk-semispace
+cp -r $openjdk_trunk/build/linux-x86_64-normal-server-$DEBUG_LEVEL/ $kit_build/jdk-mmtk-trunk-semispace
+
+# Branch
+cd $openjdk_branch
 
 # Build for branch
-rm -rf $openjdk_binding/repos/mmtk-core/*
-cp -r $mmtk_core_branch/* $openjdk_binding/repos/mmtk-core/
+rm -rf $openjdk_binding_branch/repos/mmtk-core/*
+cp -r $mmtk_core_branch/* $openjdk_binding_branch/repos/mmtk-core/
 # NoGC
 # export MMTK_PLAN=nogc
 # sh configure --disable-warnings-as-errors --with-debug-level=$DEBUG_LEVEL
@@ -52,7 +66,7 @@ cp -r $mmtk_core_branch/* $openjdk_binding/repos/mmtk-core/
 export MMTK_PLAN=semispace
 sh configure --disable-warnings-as-errors --with-debug-level=$DEBUG_LEVEL
 make CONF=linux-x86_64-normal-server-$DEBUG_LEVEL THIRD_PARTY_HEAP=$PWD/../../openjdk
-cp -r $openjdk/build/linux-x86_64-normal-server-$DEBUG_LEVEL/ $kit_build/jdk-mmtk-branch-semispace
+cp -r $openjdk_branch/build/linux-x86_64-normal-server-$DEBUG_LEVEL/ $kit_build/jdk-mmtk-branch-semispace
 
 # Run
 cd $kit_root
@@ -62,8 +76,9 @@ cp $kit_root/probes/probes.jar $kit_root/running/bin/probes/
 echo "OpenJDK" >> $output_file
 echo "====" >> $output_file
 
-echo "* binding: [$openjdk_rev](https://github.com/mmtk/mmtk-openjdk/commit/$openjdk_rev)" >> $output_file
+echo "* binding_trunk: [$openjdk_trunk_rev](https://github.com/mmtk/mmtk-openjdk/commit/$openjdk_trunk_rev)" >> $output_file
 echo "* trunk:   [$mmtk_trunk_rev](https://github.com/mmtk/mmtk-core/commit/$mmtk_trunk_rev)" >> $output_file
+echo "* binding_branch: [$openjdk_branch_rev](https://github.com/mmtk/mmtk-openjdk/commit/$openjdk_branch_rev)" >> $output_file
 echo "* branch:  [$mmtk_branch_rev](https://github.com/mmtk/mmtk-core/commit/$mmtk_branch_rev)" >> $output_file
 
 echo "" >> $output_file
