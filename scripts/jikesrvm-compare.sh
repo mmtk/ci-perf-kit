@@ -52,9 +52,9 @@ cp $kit_root/probes/probes.jar $kit_root/running/bin/probes/
 echo "JikesRVM" >> $output_file
 echo "====" >> $output_file
 
-echo "* binding_trunk: [$jikesrvm_rev](https://github.com/mmtk/mmtk-jikesrvm/commit/$jikesrvm_trunk_rev)" >> $output_file
+echo "* binding_trunk: [$jikesrvm_binding_trunk](https://github.com/mmtk/mmtk-jikesrvm/commit/$jikesrvm_trunk_rev)" >> $output_file
 echo "* trunk:   [$mmtk_trunk_rev](https://github.com/mmtk/mmtk-core/commit/$mmtk_trunk_rev)" >> $output_file
-echo "* binding_branch: [$jikesrvm_rev](https://github.com/mmtk/mmtk-jikesrvm/commit/$jikesrvm_branch_rev)" >> $output_file
+echo "* binding_branch: [$jikesrvm_binding_branch](https://github.com/mmtk/mmtk-jikesrvm/commit/$jikesrvm_branch_rev)" >> $output_file
 echo "* branch:  [$mmtk_branch_rev](https://github.com/mmtk/mmtk-core/commit/$mmtk_branch_rev)" >> $output_file
 
 echo "" >> $output_file
