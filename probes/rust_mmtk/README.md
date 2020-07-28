@@ -16,7 +16,7 @@ The following parameters are required to run the mmtk probe:
 -Djava.library.path=ci-perf-kit/probes/rust_mmtk -Dprobes=RustMMTk -cp ci-perf-kit/probes/probes.jar:ci-perf-kit/probes/rust_mmtk/java:/usr/share/benchmarks/dacapo/dacapo-2006-10-MR2.jar
 ```
 
-JikesRVM (Probe needs to be built with `-m32`):
+JikesRVM (Probe needs to be built with `-m32`, and Java version needs to be <= 1.6):
 ```
 rvm -Djava.library.path=ci-perf-kit/probes/rust_mmtk -Dprobes=RustMMTk -cp ci-perf-kit/probes/probes.jar:ci-perf-kit/probes/rust_mmtk/java:/usr/share/benchmarks/dacapo/dacapo-2006-10-MR2.jar -Xms500M -Xmx500M Harness -c probe.Dacapo2006Callback fop
 ```
@@ -24,5 +24,5 @@ rvm -Djava.library.path=ci-perf-kit/probes/rust_mmtk -Dprobes=RustMMTk -cp ci-pe
 OpenJDK:
 
 ```
-java -Djava.library.path=/home/yilin/Code/probes/ -Dprobes=RustMMTk -cp /home/yilin/Code/probes/probes.jar:/usr/share/benchmarks/dacapo/dacapo-2006-10-MR2.jar -XX:+UseThirdPartyHeap -server -XX:MetaspaceSize=100M -Xms500M -Xmx500M Harness -c probe.Dacapo2006Callback fop
+java -Djava.library.path=ci-perf-kit/probes/rust_mmtk -Dprobes=RustMMTk -cp ci-perf-kit/probes/probes.jar:ci-perf-kit/probes/rust_mmtk/java:/usr/share/benchmarks/dacapo/dacapo-2006-10-MR2.jar -XX:+UseThirdPartyHeap -server -XX:MetaspaceSize=100M -Xms500M -Xmx500M Harness -c probe.Dacapo2006Callback fop
 ```
