@@ -6,10 +6,16 @@ public class RustMMTkProbe implements Probe {
     }
 
     public void begin(String benchmark, int iteration, boolean warmup) {
+        if (warmup)
+            return;
+
         begin_native(benchmark, iteration, warmup, Thread.currentThread().getId());
     }
 
     public void end(String benchmark, int iteration, boolean warmup) {
+        if (warmup)
+            return;
+
         end_native(benchmark, iteration, warmup, Thread.currentThread().getId());
     }
 
