@@ -197,9 +197,11 @@ public class OpenJDKProbe implements Probe, Runnable {
             }
             System.err.println("- - - - - - - - - - - - - - - - - - - - ");
 
-            lastYoungUsed = youngMemoryPool.getUsage().getUsed();
-            lastSurvivorUsed = survivorMemoryPool.getUsage().getUsed();
-            lastOldUsed = oldMemoryPool.getUsage().getUsed();
+            if (hasMemoryPools) {
+                lastYoungUsed = youngMemoryPool.getUsage().getUsed();
+                lastSurvivorUsed = survivorMemoryPool.getUsage().getUsed();
+                lastOldUsed = oldMemoryPool.getUsage().getUsed();
+            }
 
             lastYoungUsed = 0;
             totalSurvivorUsed = 0;
