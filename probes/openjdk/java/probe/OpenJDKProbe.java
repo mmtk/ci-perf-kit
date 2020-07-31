@@ -3,6 +3,10 @@
  *   
  *   It can be accessed from Xi Yang's repo (https://github.com/yangxi/openjdk-wb/) (collaborator access required):
  *   https://github.com/yangxi/openjdk-wb/blob/60502df1a631f40df3a4353f3ee43c1f9d0f4ff9/probes/probe/DacapoBetaProbe.java
+ *
+ *   Changes:
+ *   - removed some debugging outputs
+ *   - do not collect statistics for begin()/end() if warmup
  */
 
 package probe;
