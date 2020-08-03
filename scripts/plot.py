@@ -78,6 +78,81 @@ def plot_history(runs, plan, benchmarks, start_date, end_date):
     return fig
 
 
+def plot_multi_plans_history(title, runs, plans, benchmarks, start_date, end_date):
+    # whether we should show legend - only show legend for a plan when it is the first time we add a trace for this plan
+    show_legend = {}
+    for p in plans:
+        show_legend[p] = True
+
+    row = 1
+    traces = []
+    for bm in benchmarks:
+        print(bm)
+
+        for p in plans:
+            y = history_per_day(runs, p, bm, start_date ,end_date)
+            # y = normalize_history(y)
+            x = list(range(0, len(y)))
+
+            trace = {
+                "name": p,
+                "legendgroup": p,
+                "showlegend": show_legend[p],
+                "hoverinfo": "text",
+                "mode": "lines",
+                "line": {"width": 1},
+                "type": "scatter",
+                "x": x,
+                "y": y,
+                "text": ["%s: %s, %.2f" % (d, p, y) for (d, y) in zip(daterange(start_date, end_date), y)],
+                "xaxis": "x%d" % row,
+                "yaxis": "y%d" % row
+            }
+            # dont show legend for this plan any more
+            show_legend[p] = False
+
+            traces.append(trace)
+        
+        row += 1
+
+        data = Data(traces)
+    
+    layout = {
+        "title": title,
+        "margin": {"t": 80},
+        "width": 500,
+        "height": 500
+    }
+    for i in range(1, row):
+        layout["xaxis%d" % i] = {
+            "ticks": "",
+            "anchor": "y%d" % i,
+            "domain": [0, 1],
+            "mirror": False,
+            "showgrid": False,
+            "showline": False,
+            "zeroline": False,
+            "showticklabels": False,
+        }
+        # e.g. if we have 4 rows (row = 5 at the moment)
+        # the y domain for each trace should be [0, 0.25], [0.25, 0.5], [0.5, 0.75], [0.75, 1]
+        ydomain = [1 - 1/(row - 1) * i, 1 - 1/(row - 1) * (i - 1)]
+        layout["yaxis%d" % i] = {
+            "title": benchmarks[i - 1],
+            "ticks": "",
+            "anchor": "x%d" % i,
+            "domain": ydomain,
+            "mirror": False,
+            "showgrid": False,
+            "showline": False,
+            "zeroline": False,
+            "showticklabels": False,
+            "autorange": True,
+        }
+    
+    fig = Figure(data = data, layout = layout)
+    return fig
+
 def daterange(start_date, end_date):
     for n in range(int ((end_date - start_date).days)):
         yield start_date + timedelta(n)
