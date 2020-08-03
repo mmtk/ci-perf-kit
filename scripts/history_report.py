@@ -55,6 +55,6 @@ for plan in plans:
     print(benchmarks)
     
     # plot
-    fig = plot.plot_history(runs, plan, benchmarks, from_date, to_date)
+    fig = plot.plot_history(runs, plan, benchmarks, from_date, to_date, "execution_times")
     path = os.path.join(output_dir, "%s_%s_history.html" % (prefix, plan))
     fig.write_html(path)
