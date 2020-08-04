@@ -64,6 +64,7 @@ git push
 
 # plot result
 mkdir -p $output_dir
+rm -f $output_dir/*
 
 cd $kit_root
 python3 -m venv python-env
