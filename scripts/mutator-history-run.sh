@@ -59,11 +59,11 @@ mu_run_id=$(echo $mu_output | cut -d ' ' -f 3) # output is something like: 'Run 
 mkdir -p $result_dir/mutator
 cp -r $kit_root/running/results/log/$mu_run_id $result_dir/mutator
 # Commit result
-# cd $result_dir
-# git add .
-# git commit -m 'Mutator(OpenJDK) Binding: '$openjdk_rev
-# git pull --rebase
-# git push
+cd $result_dir
+git add .
+git commit -m 'Mutator(OpenJDK) Binding: '$openjdk_rev
+git pull --rebase
+git push
 
 # plot result
 mkdir -p $output_dir
