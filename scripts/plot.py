@@ -211,7 +211,7 @@ def normalize_history(arr):
 def average_time(run, plan, benchmark, data_key):
     for bm_run in run:
         if bm_run['benchmark'] == benchmark and (bm_run['build'].lower() == plan.lower() or bm_run['build'].lower().endswith(plan.lower())):
-            if len(bm_run[data_key]) != 0:
+            if data_key in bm_run and len(bm_run[data_key]) != 0:
                 return sum(bm_run[data_key]) / len(bm_run[data_key])
             else:
                 return None

@@ -9,12 +9,11 @@ from datetime import date
 import plotly
 from plotly.subplots import make_subplots
 
-if len(sys.argv) != 4:
-    print("Usage: python mutator_report.py <result_repo_mutator_root> <output_dir> <prefix>")
+if len(sys.argv) != 3:
+    print("Usage: python mutator_report.py <result_repo_mutator_root> <output_dir>")
 
 result_repo_mutator_root = sys.argv[1]
 output_dir = sys.argv[2]
-prefix = sys.argv[3]
 
 # check from date and to date
 from_date_env = environ.get("FROM_DATE")
