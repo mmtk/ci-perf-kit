@@ -7,14 +7,14 @@ import parse
 # plan: the plan to plot
 # benchmarks: benchmarks to plot
 # start_date, end_date: plot data between the given date range
-def plot_history(runs, plan, benchmarks, start_date, end_date):
+def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
     row = 1
     traces = []
     for bm in benchmarks:
         # extract results
         print(plan + ' ' + bm)
 
-        y = history_per_day(runs, plan, bm, start_date, end_date)
+        y = history_per_day(runs, plan, bm, start_date, end_date, data_key)
         y = normalize_history(y)
         x = list(range(0, len(y)))
 
@@ -78,13 +78,88 @@ def plot_history(runs, plan, benchmarks, start_date, end_date):
     return fig
 
 
+def plot_multi_plans_history(runs, plans, benchmarks, start_date, end_date, data_key):
+    # whether we should show legend - only show legend for a plan when it is the first time we add a trace for this plan
+    show_legend = {}
+    for p in plans:
+        show_legend[p] = True
+
+    row = 1
+    traces = []
+    for bm in benchmarks:
+        print(bm)
+
+        for p in plans:
+            y = history_per_day(runs, p, bm, start_date, end_date, data_key)
+            # y = normalize_history(y)
+            x = list(range(0, len(y)))
+
+            trace = {
+                "name": p,
+                "legendgroup": p,
+                "showlegend": show_legend[p],
+                "hoverinfo": "text",
+                "mode": "lines",
+                "line": {"width": 1},
+                "type": "scatter",
+                "x": x,
+                "y": y,
+                "text": ["%s: %s, %.2f" % (d, p, y) for (d, y) in zip(daterange(start_date, end_date), y)],
+                "xaxis": "x%d" % row,
+                "yaxis": "y%d" % row
+            }
+            # dont show legend for this plan any more
+            show_legend[p] = False
+
+            traces.append(trace)
+        
+        row += 1
+
+        data = Data(traces)
+    
+    layout = {
+        "title": data_key,
+        "margin": {"t": 80},
+        "width": 500,
+        "height": 500
+    }
+    for i in range(1, row):
+        layout["xaxis%d" % i] = {
+            "ticks": "",
+            "anchor": "y%d" % i,
+            "domain": [0, 1],
+            "mirror": False,
+            "showgrid": False,
+            "showline": False,
+            "zeroline": False,
+            "showticklabels": False,
+        }
+        # e.g. if we have 4 rows (row = 5 at the moment)
+        # the y domain for each trace should be [0, 0.25], [0.25, 0.5], [0.5, 0.75], [0.75, 1]
+        ydomain = [1 - 1/(row - 1) * i, 1 - 1/(row - 1) * (i - 1)]
+        layout["yaxis%d" % i] = {
+            "title": benchmarks[i - 1],
+            "ticks": "",
+            "anchor": "x%d" % i,
+            "domain": ydomain,
+            "mirror": False,
+            "showgrid": False,
+            "showline": False,
+            "zeroline": False,
+            "showticklabels": False,
+            "autorange": True,
+        }
+    
+    fig = Figure(data = data, layout = layout)
+    return fig
+
 def daterange(start_date, end_date):
     for n in range(int ((end_date - start_date).days)):
         yield start_date + timedelta(n)
 
 
 # Returns one array, each element is the average execution time for the benchmark on one day, the index represents the days from the start date
-def history_per_day(runs, plan, benchmark, start_date, end_date):
+def history_per_day(runs, plan, benchmark, start_date, end_date, data_key):
     # ordered runs
     run_ids = list(runs.keys())
     run_ids.sort()
@@ -103,7 +178,7 @@ def history_per_day(runs, plan, benchmark, start_date, end_date):
         
         execution_time = 0
         if last_run is not None:
-            execution_time = average_time(runs[last_run], plan, benchmark)
+            execution_time = average_time(runs[last_run], plan, benchmark, data_key)
             if execution_time is None:
                 execution_time = 0
 
@@ -133,10 +208,10 @@ def normalize_history(arr):
     return ret
 
 
-def average_time(run, plan, benchmark):
+def average_time(run, plan, benchmark, data_key):
     for bm_run in run:
         if bm_run['benchmark'] == benchmark and (bm_run['build'].lower() == plan.lower() or bm_run['build'].lower().endswith(plan.lower())):
-            if len(bm_run['execution_times']) != 0:
-                return sum(bm_run['execution_times']) / len(bm_run['execution_times'])
+            if data_key in bm_run and len(bm_run[data_key]) != 0:
+                return sum(bm_run[data_key]) / len(bm_run[data_key])
             else:
                 return None

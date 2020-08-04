@@ -22,16 +22,37 @@ def parse_log(log_file, n_invocations = None):
     with gzip.open(log_file, 'r') as f:
         content = f.read()
         lines = content.splitlines()
-        execution_times = []
-        for line in lines:
-            line = str(line)
+
+        # key -> data array
+        data = {}
+        def insert_data(key, x):
+            if key in data:
+                data[key].append(x)
+            else:
+                data[key] = [x]
+
+        for i in range(0, len(lines)):
+            line = lines[i].decode('utf-8')
             if len(line) == 0:
                 continue
             
+            # bm time
             matcher = re.match(".*PASSED in (\d+) msec.*", line)
             if matcher:
-                execution_times.append(float(matcher.group(1)))
-        ret['execution_times'] = execution_times
+                insert_data('execution_times', float(matcher.group(1)))
+            
+            # mmtk statistics
+            if "MMTk Statistics Totals" in line:
+                mmtk_keys = lines[i + 1].decode('utf-8').split()
+                mmtk_values = lines[i + 2].decode('utf-8').split()
+                assert len(mmtk_keys) == len(mmtk_values), "Error when reading MMTk statistics: num of keys does not match num of values"
+                for j in range(0, len(mmtk_keys)):
+                    insert_data(mmtk_keys[j], float(mmtk_values[j]))
+
+        # initialie execution_times to empty in case all runs failed
+        ret['execution_times'] = []
+        for key in data:
+            ret[key] = data[key]
 
     # if no n_invocations is passed in, we do not check how many results we have
     if n_invocations == None:
