@@ -38,6 +38,16 @@ export MMTK_PLAN=nogc
 sh configure --disable-warnings-as-errors --with-debug-level=$DEBUG_LEVEL
 make CONF=linux-x86_64-normal-server-$DEBUG_LEVEL THIRD_PARTY_HEAP=$PWD/../../openjdk
 cp -r $openjdk/build/linux-x86_64-normal-server-$DEBUG_LEVEL/ $kit_build/jdk-mmtk-nogc
+# Lock free NoGC
+export MMTK_PLAN=nogc_lock_free
+sh configure --disable-warnings-as-errors --with-debug-level=$DEBUG_LEVEL
+make CONF=linux-x86_64-normal-server-$DEBUG_LEVEL THIRD_PARTY_HEAP=$PWD/../../openjdk
+cp -r $openjdk/build/linux-x86_64-normal-server-$DEBUG_LEVEL/ $kit_build/jdk-mmtk-lock-free-nogc
+# No zeroing NoGC
+export MMTK_PLAN=nogc_no_zeroing
+sh configure --disable-warnings-as-errors --with-debug-level=$DEBUG_LEVEL
+make CONF=linux-x86_64-normal-server-$DEBUG_LEVEL THIRD_PARTY_HEAP=$PWD/../../openjdk
+cp -r $openjdk/build/linux-x86_64-normal-server-$DEBUG_LEVEL/ $kit_build/jdk-mmtk-no-zeroing-nogc
 # SemiSpace
 export MMTK_PLAN=semispace
 sh configure --disable-warnings-as-errors --with-debug-level=$DEBUG_LEVEL
@@ -58,7 +68,7 @@ mu_run_id=$(echo $mu_output | cut -d ' ' -f 3) # output is something like: 'Run 
 # Save result
 mkdir -p $result_dir/mutator
 cp -r $kit_root/running/results/log/$mu_run_id $result_dir/mutator
-# Commit result
+# Commit result - comment out the following for testing if you dont want to commit the result
 cd $result_dir
 git add .
 git commit -m 'Mutator(OpenJDK) Binding: '$openjdk_rev

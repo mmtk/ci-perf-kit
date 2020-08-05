@@ -176,6 +176,10 @@ $perfevents = "";
 @gcconfigs = (
 		  # MMTk NoGC
 		  "jdk-mmtk-nogc|ms|s|c2|tph|xmx8000M|xms8000M|rmmtkprobe",
+		  # MMTk Lock Free NoGC
+		  "jdk-mmtk-lock-free-nogc|ms|s|c2|tph|xmx8000M|xms8000M|rmmtkprobe",
+		  # MMTk No Zeroing NoGC
+		  "jdk-mmtk-no-zeroing-nogc|ms|s|c2|tph|xmx8000M|xms8000M|rmmtkprobe",
 		  # MMTk SemiSpace	
 	      "jdk-mmtk-semispace|ms|s|c2|tph|xmx8000M|xms8000M|rmmtkprobe",
 		  # Epsilon
@@ -188,6 +192,8 @@ $perfevents = "";
 # directories in which productio jvms can be found
 %jvmroot = (
         "jdk-mmtk-nogc" => "$rootdir/build",
+		"jdk-mmtk-lock-free-nogc" => "$rootdir/build",
+		"jdk-mmtk-no-zeroing-nogc" => "$rootdir/build",
 		"jdk-mmtk-semispace" => "$rootdir/build",
 		"jdk-epsilon" => "$rootdir/build",
 		"jdk-g1" => "$rootdir/build",
