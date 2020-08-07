@@ -280,7 +280,7 @@ foreach $bm (keys %minheap) {
 	      );
 $bmtimeoutmultiplier = 2;
 
-$benchmarkroot = "$rootdir/benchmarks";
+$benchmarkroot = "/usr/share/benchmarks";
 
 %bmsuite = (
 	    "_201_compress" => "jvm98",
@@ -331,9 +331,9 @@ $tmp = "/tmp/runbms-".$ENV{USER};
 	      );
 
 %bmargs = (
-	   "jvm98" => "-Dprobes=MMTk -cp $rootdir/bin/probes/probes.jar:. SpecApplication -i[#] [bm]",
-	   "dacapo" => "-Dprobes=MMTk -cp $rootdir/bin/probes/probes.jar:$benchmarkroot/dacapo/dacapo-2006-10-MR2.jar Harness -c probe.Dacapo2006Callback -n [#] [bm]",
-	   "dacapobach" => "-Dprobes=MMTk -cp $rootdir/bin/probes/probes.jar:$benchmarkroot/dacapo/dacapo-9.12-bach.jar Harness -c probe.DacapoBachCallback -n [#] [bm]",
-	   "pjbb2005" => "-Dprobes=MMTk -cp $rootdir/bin/probes/probes.jar:$benchmarkroot/pjbb2005/jbb.jar:$benchmarkroot/pjbb2005/check.jar spec.jbb.JBBmain -propfile $benchmarkroot/pjbb2005/SPECjbb-8x10000.props -c probe.PJBB2005Callback -n [#]",
+	   "jvm98" => "-Dprobes=MMTk -cp $rootdir/../probes/probes.jar:. SpecApplication -i[#] [bm]",
+	   "dacapo" => "-Dprobes=MMTk -cp $rootdir/../probes/probes.jar:$benchmarkroot/dacapo/dacapo-2006-10-MR2.jar Harness -c probe.Dacapo2006Callback -n [#] [bm]",
+	   "dacapobach" => "-Dprobes=MMTk -cp $rootdir/../probes/probes.jar:$benchmarkroot/dacapo/dacapo-9.12-bach.jar Harness -c probe.DacapoBachCallback -n [#] [bm]",
+	   "pjbb2005" => "-Dprobes=MMTk -cp $rootdir/../probes/probes.jar:$benchmarkroot/pjbb2005/jbb.jar:$benchmarkroot/pjbb2005/check.jar spec.jbb.JBBmain -propfile $benchmarkroot/pjbb2005/SPECjbb-8x10000.props -c probe.PJBB2005Callback -n [#]",
 	   "pjbb2000" => "-cp pseudojbb.jar spec.jbb.JBBmain -propfile SPECjbb-8x12500.props -n [#] [mmtkstart]",
 	   );

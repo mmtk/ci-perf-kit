@@ -1,68 +1,43 @@
 set -ex
+
+# include common.sh
+. $(dirname "$0")/common.sh
+
 jikesrvm_binding=$(realpath $1)
 output_dir=$(realpath $2)
 jikesrvm_rev=$(git -C $jikesrvm_binding rev-parse HEAD)
 
 # JikesRVM root
 jikesrvm=$jikesrvm_binding/repos/jikesrvm
-# root dir of this perf kit
-kit_root=$(realpath $(dirname "$0")/..)
-# where we put all the builds
-kit_build=$kit_root/running/build
-mkdir -p $kit_build
-rm -rf $kit_build/*
-# where we put results
-result_dir=$kit_root/result_repo
 
-# Expect these env vars
-# RESULT_REPO
-# RESULT_REPO_BRANCH
-# RESULT_REPO_ACCESS_TOKEN
-rm -rf $result_dir
-git clone https://$RESULT_REPO_ACCESS_TOKEN@github.com/$RESULT_REPO.git $result_dir --branch=$RESULT_REPO_BRANCH
-
-# Copy probes
-mkdir -p $kit_root/running/bin/probes
-cp $kit_root/probes/probes.jar $kit_root/running/bin/probes/
+ensure_empty_dir $kit_build
+checkout_result_repo
 
 # Build - JikesRVM buildit script requires current dir to be JikesRVM root dir
 cd $jikesrvm
 
 # NoGC
-python scripts/testMMTk.py -g RFastAdaptiveNoGC -j $JAVA_HOME --build-only -- --answer-yes --use-third-party-heap=../.. --use-third-party-build-configs=../../jikesrvm/build/configs --use-external-source=../../jikesrvm/rvm/src
-cp -r $jikesrvm/dist/RFastAdaptiveNoGC_x86_64-linux $kit_build/NoGC_x86_64-linux/
+build_jikesrvm_with_mmtk $jikesrvm_binding RFastAdaptiveNoGC $kit_build/NoGC_x86_64-linux
 # Run for NoGC
-cp $kit_root/configs/RunConfig-JikesRVM-NoGC-Complete.pm $kit_root/running/bin/RunConfig.pm
-nogc_output=$($kit_root/running/bin/runbms 16 16)
-nogc_run_id=$(echo $nogc_output | cut -d ' ' -f 3) # output is something like: 'Run id: fox-2020-05-13-Wed-124656'
+nogc_run_id=$(run_benchmarks $kit_root/configs/RunConfig-JikesRVM-NoGC-Complete.pm)
 # Save result
-mkdir -p $result_dir/jikesrvm/nogc
-cp -r $kit_root/running/results/log/$nogc_run_id $result_dir/jikesrvm/nogc
+mkdir -p $result_repo_dir/jikesrvm/nogc
+cp -r $kit_root/running/results/log/$nogc_run_id $result_repo_dir/jikesrvm/nogc
 
 # SemiSpace
-python scripts/testMMTk.py -g RFastAdaptiveSemiSpace -j $JAVA_HOME --build-only -- --answer-yes --use-third-party-heap=../.. --use-third-party-build-configs=../../jikesrvm/build/configs --use-external-source=../../jikesrvm/rvm/src
-cp -r $jikesrvm/dist/RFastAdaptiveSemiSpace_x86_64-linux $kit_build/SemiSpace_x86_64-linux/
+build_jikesrvm_with_mmtk $jikesrvm_binding RFastAdaptiveSemiSpace $kit_build/SemiSpace_x86_64-linux
 # Run for SemiSpace
-cp $kit_root/configs/RunConfig-JikesRVM-SemiSpace-Complete.pm $kit_root/running/bin/RunConfig.pm
-ss_output=$($kit_root/running/bin/runbms 16 16)
-ss_run_id=$(echo $ss_output | cut -d ' ' -f 3) # output is something like: 'Run id: fox-2020-05-13-Wed-124656'
+ss_run_id=$(run_benchmarks $kit_root/configs/RunConfig-JikesRVM-SemiSpace-Complete.pm)
 # Save result
-mkdir -p $result_dir/jikesrvm/semispace
-cp -r $kit_root/running/results/log/$ss_run_id $result_dir/jikesrvm/semispace
+mkdir -p $result_repo_dir/jikesrvm/semispace
+cp -r $log_dir/$ss_run_id $result_repo_dir/jikesrvm/semispace
 
 # Commit result
-cd $result_dir
-git add .
-git commit -m 'JikesRVM Binding: '$jikesrvm_rev
-git pull --rebase # pull any new commit (if any)
-git push
+commit_result_repo 'JikesRVM Binding: '$jikesrvm_rev
 
 # plot result
-mkdir -p $output_dir
-rm -f $output_dir/*
-
+ensure_empty_dir $output_dir
 cd $kit_root
-python3 -m venv python-env
-source python-env/bin/activate
-pip3 install -r scripts/requirements.txt
-python3 scripts/history_report.py $result_dir/jikesrvm $output_dir jikesrvm
+start_venv python-env
+pip3 install -r $(dirname "$0")/requirements.txt
+python3 scripts/history_report.py $result_repo_dir/jikesrvm $output_dir jikesrvm
