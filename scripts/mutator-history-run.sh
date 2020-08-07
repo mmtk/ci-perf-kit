@@ -49,5 +49,5 @@ commit_result_repo 'Mutator(OpenJDK) Binding: '$openjdk_rev
 ensure_empty_dir $output_dir
 cd $kit_root
 start_venv python-env
-pip3 install -r scripts/requirements.txt
+pip3 install -r $(dirname "$0")/requirements.txt
 python3 scripts/mutator_report.py $result_repo_dir/mutator $output_dir
