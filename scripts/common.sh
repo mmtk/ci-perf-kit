@@ -11,9 +11,21 @@ log_dir=$kit_root/running/results/log
 # where we put results
 result_repo_dir=$kit_root/result_repo
 
+# ensure_env 'var_name'
+ensure_env() {
+    env_var=$1
+
+    if ! [[ -v $env_var ]]; then
+        echo "Environment Variable "$env_var" is required. "
+        exit 1
+    fi
+}
+
 # build_jikesrvm 'binding_path' 'plan' 'build_path'
 # Env: JAVA_HOME
 build_jikesrvm_with_mmtk() {
+    ensure_env JAVA_HOME
+
     binding_path=$1
     plan=$2
     build_path=$3 # put the build here
@@ -91,16 +103,6 @@ ensure_empty_dir() {
     rm -rf $path/*
 }
 
-# ensure_env 'var_name'
-ensure_env() {
-    env_var=$1
-
-    if ! [[ -v $env_var ]]; then
-        echo "Environment Variable "$env_var" is required. "
-        exit 1
-    fi
-}
-
 # start_venv 'venv_path'
 start_venv() {
     venv_path=$1
@@ -115,6 +117,9 @@ leave_venv() {
 
 # Env: RESULT_REPO_ACCESS_TOKEN, RESULT_REPO, RESULT_REPO_BRANCH
 checkout_result_repo() {
+    ensure_env RESULT_REPO
+    ensure_env RESULT_REPO_BRANCH
+    
     rm -rf $result_repo_dir
     # Use this for local testing
     # git clone ssh://git@github.com/$RESULT_REPO.git $result_repo_dir --branch=$RESULT_REPO_BRANCH
