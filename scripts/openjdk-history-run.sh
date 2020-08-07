@@ -13,10 +13,6 @@ openjdk=$openjdk_binding/repos/openjdk
 ensure_empty_dir $kit_build
 checkout_result_repo
 
-# Copy probes
-ensure_empty_dir $kit_root/running/bin/probes
-cp $kit_root/probes/probes.jar $kit_root/running/bin/probes/
-
 # Build
 cd $openjdk
 

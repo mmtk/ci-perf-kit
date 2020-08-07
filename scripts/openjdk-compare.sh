@@ -41,8 +41,6 @@ build_openjdk_with_mmtk $openjdk_binding_branch semispace release $kit_build/jdk
 
 # Run
 cd $kit_root
-ensure_empty_dir $kit_root/running/bin/probes
-cp $kit_root/probes/probes.jar $kit_root/running/bin/probes/
 
 echo "OpenJDK" >> $output_file
 echo "====" >> $output_file

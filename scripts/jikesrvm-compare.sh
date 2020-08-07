@@ -19,18 +19,16 @@ ensure_empty_dir $kit_build
 
 # Trunk
 rsync -avLe $mmtk_core_trunk/* $jikesrvm_binding_trunk/repos/mmtk-core
-build_jikesrvm_with_mmtk $jikesrvm_binding_trunk $mmtk_core_trunk RFastAdaptiveNoGC $kit_build/NoGC_Trunk_x86_64-linux
-build_jikesrvm_with_mmtk $jikesrvm_binding_trunk $mmtk_core_trunk RFastAdaptiveSemiSpace $kit_build/SemiSpace_Trunk_x86_64-linux
+build_jikesrvm_with_mmtk $jikesrvm_binding_trunk RFastAdaptiveNoGC $kit_build/NoGC_Trunk_x86_64-linux
+build_jikesrvm_with_mmtk $jikesrvm_binding_trunk RFastAdaptiveSemiSpace $kit_build/SemiSpace_Trunk_x86_64-linux
 
 # Branch
 rsync -avLe $mmtk_core_branch/* $jikesrvm_binding_branch/repos/mmtk-core
-build_jikesrvm_with_mmtk $jikesrvm_binding_branch $mmtk_core_branch RFastAdaptiveNoGC $kit_build/NoGC_Branch_x86_64-linux
-build_jikesrvm_with_mmtk $jikesrvm_binding_branch $mmtk_core_branch RFastAdaptiveSemiSpace $kit_build/SemiSpace_Branch_x86_64-linux
+build_jikesrvm_with_mmtk $jikesrvm_binding_branch RFastAdaptiveNoGC $kit_build/NoGC_Branch_x86_64-linux
+build_jikesrvm_with_mmtk $jikesrvm_binding_branch RFastAdaptiveSemiSpace $kit_build/SemiSpace_Branch_x86_64-linux
 
 # Run
 cd $kit_root
-ensure_empty_dir $kit_root/running/bin/probes
-cp $kit_root/probes/probes.jar $kit_root/running/bin/probes/
 
 echo "JikesRVM" >> $output_file
 echo "====" >> $output_file

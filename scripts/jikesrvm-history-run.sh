@@ -13,10 +13,6 @@ jikesrvm=$jikesrvm_binding/repos/jikesrvm
 ensure_empty_dir $kit_build
 checkout_result_repo
 
-# Copy probes
-ensure_empty_dir $kit_root/running/bin/probes
-cp $kit_root/probes/probes.jar $kit_root/running/bin/probes/
-
 # Build - JikesRVM buildit script requires current dir to be JikesRVM root dir
 cd $jikesrvm
 
