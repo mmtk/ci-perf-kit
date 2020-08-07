@@ -37,7 +37,7 @@ mkdir -p $result_repo_dir/jikesrvm/semispace
 cp -r $log_dir/$ss_run_id $result_repo_dir/jikesrvm/semispace
 
 # Commit result
-commit_result_repo
+commit_result_repo 'JikesRVM Binding: '$jikesrvm_rev
 
 # plot result
 ensure_empty_dir $output_dir

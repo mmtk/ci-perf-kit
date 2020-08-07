@@ -29,6 +29,48 @@ build_jikesrvm_with_mmtk() {
     cp -r $jikesrvm_path'/dist/'$plan'_x86_64-linux' $build_path/
 }
 
+# openjdk_binding_use_local_mmtk 'binding_path'
+openjdk_binding_use_local_mmtk() {
+    binding_path=$1
+
+    sed -i s/^mmtk[[:space:]]=/#ci:mmtk=/g $binding_path/mmtk/Cargo.toml
+    sed -i s/^#[[:space:]]mmtk/mmtk/g $binding_path/mmtk/Cargo.toml
+}
+
+# build_openjdk ’binding_path' 'plan' 'debug_level' 'build_path'
+build_openjdk_with_mmtk() {
+    binding_path=$1
+    plan=$2
+    debug_level=$3
+    build_path=$4
+
+    openjdk_path=$binding_path/repos/openjdk
+
+    cd $openjdk_path
+    export DEBUG_LEVEL=$debug_level
+    export MMTK_PLAN=$plan
+    sh configure --disable-warnings-as-errors --with-debug-level=$DEBUG_LEVEL
+    make CONF=linux-x86_64-normal-server-$DEBUG_LEVEL THIRD_PARTY_HEAP=$PWD/../../openjdk
+
+    # copy to build_path
+    cp -r $openjdk_path/build/linux-x86_64-normal-server-$DEBUG_LEVEL $build_path
+}
+
+# build_openjdk 'openjdk_path' 'debug_level' 'build_path'
+build_openjdk() {
+    openjdk_path=$1
+    debug_level=$2
+    build_path=$3
+
+    cd $openjdk_path
+    export DEBUG_LEVEl=$debug_level
+    sh configure --disable-warnings-as-errors --with-debug-level=$DEBUG_LEVEL
+    make CONF=linux-x86_64-normal-server-$DEBUG_LEVEL
+
+    # copy to build_path
+    cp -r $openjdk_path/build/linux-x86_64-normal-server-$DEBUG_LEVEL $build_path
+}
+
 # run_benchmarks 'config'
 run_benchmarks() {
     config=$1
@@ -47,6 +89,16 @@ ensure_empty_dir() {
 
     mkdir -p $path
     rm -rf $path/*
+}
+
+# ensure_env 'var_name'
+ensure_env() {
+    env_var=$1
+
+    if ! [[ -v $env_var ]]; then
+        echo "Environment Variable "$env_var" is required. "
+        exit 1
+    fi
 }
 
 # start_venv 'venv_path'

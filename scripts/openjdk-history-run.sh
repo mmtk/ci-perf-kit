@@ -1,73 +1,47 @@
 set -ex
+
+# include common.sh
+. $(dirname "$0")/common.sh
+
 openjdk_binding=$(realpath $1)
 output_dir=$(realpath $2)
 openjdk_rev=$(git -C $openjdk_binding rev-parse HEAD)
 
 # OpenJDK root
 openjdk=$openjdk_binding/repos/openjdk
-# root dir of this perf kit
-kit_root=$(realpath $(dirname "$0")/..)
-# where we put all the builds
-kit_build=$kit_root/running/build
-mkdir -p $kit_build
-rm -rf $kit_build/*
-# where we put results
-result_dir=$kit_root/result_repo
 
-# Expect these env vars
-# RESULT_REPO
-# RESULT_REPO_BRANCH
-# RESULT_REPO_ACCESS_TOKEN
-rm -rf $result_dir
-git clone https://$RESULT_REPO_ACCESS_TOKEN@github.com/$RESULT_REPO.git $result_dir --branch=$RESULT_REPO_BRANCH
+ensure_empty_dir $kit_build
+checkout_result_repo
 
 # Copy probes
-mkdir -p $kit_root/running/bin/probes
+ensure_empty_dir $kit_root/running/bin/probes
 cp $kit_root/probes/probes.jar $kit_root/running/bin/probes/
 
 # Build
 cd $openjdk
-export DEBUG_LEVEL=release
 
 # NoGC
-export MMTK_PLAN=nogc
-sh configure --disable-warnings-as-errors --with-debug-level=$DEBUG_LEVEL
-make CONF=linux-x86_64-normal-server-$DEBUG_LEVEL THIRD_PARTY_HEAP=$PWD/../../openjdk
-cp -r $openjdk/build/linux-x86_64-normal-server-$DEBUG_LEVEL/ $kit_build/jdk-mmtk-nogc
+build_openjdk_with_mmtk $openjdk_binding nogc release $kit_build/jdk-mmtk-nogc
 # Run For NoGC
-cp $kit_root/configs/RunConfig-OpenJDK-NoGC-Complete.pm $kit_root/running/bin/RunConfig.pm
-nogc_output=$($kit_root/running/bin/runbms 16 16)
-nogc_run_id=$(echo $nogc_output | cut -d ' ' -f 3) # output is something like: 'Run id: fox-2020-05-13-Wed-124656'
+nogc_run_id=$(run_benchmarks $kit_root/configs/RunConfig-OpenJDK-NoGC-Complete.pm)
 # Save result
-mkdir -p $result_dir/openjdk/nogc
-cp -r $kit_root/running/results/log/$nogc_run_id $result_dir/openjdk/nogc
+mkdir -p $result_repo_dir/openjdk/nogc
+cp -r $kit_root/running/results/log/$nogc_run_id $result_repo_dir/openjdk/nogc
 
 # SemiSpace
-export MMTK_PLAN=semispace
-sh configure --disable-warnings-as-errors --with-debug-level=$DEBUG_LEVEL
-make CONF=linux-x86_64-normal-server-$DEBUG_LEVEL THIRD_PARTY_HEAP=$PWD/../../openjdk
-cp -r $openjdk/build/linux-x86_64-normal-server-$DEBUG_LEVEL/ $kit_build/jdk-mmtk-semispace
+build_openjdk_with_mmtk $openjdk_binding semispace release $kit_build/jdk-mmtk-semispace
 # Run For SemiSpace
-cp $kit_root/configs/RunConfig-OpenJDK-SemiSpace-Complete.pm $kit_root/running/bin/RunConfig.pm
-ss_output=$($kit_root/running/bin/runbms 16 16)
-ss_run_id=$(echo $ss_output | cut -d ' ' -f 3) # output is something like: 'Run id: fox-2020-05-13-Wed-124656'
+ss_run_id=$(run_benchmarks $kit_root/configs/RunConfig-OpenJDK-SemiSpace-Complete.pm)
 # Save result
-mkdir -p $result_dir/openjdk/semispace
-cp -r $kit_root/running/results/log/$ss_run_id $result_dir/openjdk/semispace
+mkdir -p $result_repo_dir/openjdk/semispace
+cp -r $kit_root/running/results/log/$ss_run_id $result_repo_dir/openjdk/semispace
 
 # Commit result
-cd $result_dir
-git add .
-git commit -m 'OpenJDK Binding: '$openjdk_rev
-git pull --rebase # pull any new commit (if any)
-git push
+commit_result_repo 'OpenJDK Binding: '$openjdk_rev
 
 # plot result
-mkdir -p $output_dir
-rm -f $output_dir/*
-
+ensure_empty_dir $output_dir
 cd $kit_root
-python3 -m venv python-env
-source python-env/bin/activate
+start_venv python-env
 pip3 install -r scripts/requirements.txt
-python3 scripts/history_report.py $result_dir/openjdk $output_dir openjdk
+python3 scripts/history_report.py $result_repo_dir/openjdk $output_dir openjdk

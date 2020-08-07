@@ -14,10 +14,6 @@ mmtk_trunk_rev=$(git -C $mmtk_core_trunk rev-parse HEAD)
 jikesrvm_branch_rev=$(git -C $jikesrvm_binding_branch rev-parse HEAD)
 mmtk_branch_rev=$(git -C $mmtk_core_branch rev-parse HEAD)
 
-# JikesRVM root
-jikesrvm_trunk=$jikesrvm_binding_trunk/repos/jikesrvm
-jikesrvm_branch=$jikesrvm_binding_branch/repos/jikesrvm
-
 # Build - JikesRVM buildit script requires current dir to be JikesRVM root dir
 ensure_empty_dir $kit_build
 
@@ -55,7 +51,7 @@ nogc_run_id=$(run_benchmarks $kit_root/configs/RunConfig-JikesRVM-NoGC-FastCompa
 # Result for NoGC
 python $kit_root/scripts/compare_report.py $kit_root/running/results/log/$nogc_run_id NoGC NoGC_Trunk NoGC_Branch 40 >> $output_file
 
-# # Run for SemiSpace
+# Run for SemiSpace
 ss_run_id=$(run_benchmarks $kit_root/configs/RunConfig-JikesRVM-SemiSpace-FastCompare.pm)
-# # Result for SemiSpace
+# Result for SemiSpace
 python $kit_root/scripts/compare_report.py $kit_root/running/results/log/$ss_run_id SemiSpace SemiSpace_Trunk SemiSpace_Branch 40 >> $output_file
