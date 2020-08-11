@@ -2,54 +2,53 @@ import plotly
 from plotly.graph_objs import *
 from datetime import timedelta, date
 import parse
+import numpy as np
+import math
 
 # runs: all the runs for a certain build (as a dictionary from run_id -> run results)
 # plan: the plan to plot
 # benchmarks: benchmarks to plot
 # start_date, end_date: plot data between the given date range
 def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
+    layout = {
+        "title": plan,
+        # "margin": {"t": 80},
+        # "width": 500,
+        # "height": 500
+    }
+    
+    n_benchmarks = len(benchmarks)
     row = 1
     traces = []
     for bm in benchmarks:
         # extract results
         print(plan + ' ' + bm)
 
-        y = history_per_day(runs, plan, bm, start_date, end_date, data_key)
-        y = normalize_history(y)
+        y, std = history_per_day(runs, plan, bm, start_date, end_date, data_key)
+        # y = normalize_history(y)
         x = list(range(0, len(y)))
 
-        print(y)
+        y_max = max(y)
+        y_min = min(y)
 
-        # fig.add_trace(plotly.graph_objects.Scatter(x = x, y = y), row = row, col = 1)
-        trace = {
+        x_axis = "x%d" % row
+        y_axis = "y%d" % row
+
+        # history
+        traces.append({
             "name": bm,
             "hoverinfo": "text",
-            "fill": "tozeroy",
-            "mode": "lines",
-            "line": {"width": 1},
+            "line": {"width": 3},
             "type": "scatter",
             "x": x,
             "y": y,
-            "text": ["%s: %.2f" % (d, y) for (d, y) in zip(daterange(start_date, end_date), y)],
-            "xaxis": "x%d" % row,
-            "yaxis": "y%d" % row
-        }
-
-        traces.append(trace)
-        row += 1
-    
-    data = Data(traces)
-    
-    layout = {
-        "title": plan,
-        "margin": {"t": 80},
-        "width": 500,
-        "height": 500
-    }
-    for i in range(1, row):
-        layout["xaxis%d" % i] = {
+            "text": ["history: %s: %.2f" % (d, y) for (d, y) in zip(daterange(start_date, end_date), y)],
+            "xaxis": x_axis,
+            "yaxis": y_axis
+        })
+        layout["xaxis%d" % row] = {
             "ticks": "",
-            "anchor": "y%d" % i,
+            "anchor": x_axis,
             "domain": [0, 1],
             "mirror": False,
             "showgrid": False,
@@ -59,22 +58,65 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
         }
         # e.g. if we have 4 rows (row = 5 at the moment)
         # the y domain for each trace should be [0, 0.25], [0.25, 0.5], [0.5, 0.75], [0.75, 1]
-        ydomain = [1 - 1/(row - 1) * i, 1 - 1/(row - 1) * (i - 1)]
-        layout["yaxis%d" % i] = {
+        ydomain = [1 - 1/n_benchmarks * row, 1 - 1/n_benchmarks * (row - 1)]
+        layout["yaxis%d" % row] = {
+            "title": bm,
             "ticks": "",
-            "anchor": "x%d" % i,
+            "anchor": y_axis,
             "domain": ydomain,
             "mirror": False,
             "showgrid": False,
-            "showline": False,
+            "showline": True,
             "zeroline": False,
             "showticklabels": False,
-            "range": [-1, 1],
+            "range": [y_min * 0.9, y_max * 1.1],
             "autorange": False,
         }
-        print(ydomain)
 
-    fig = Figure(data = data, layout = layout)
+        # moving average
+        y_moving_average = moving_average(y, 10)
+        traces.append({
+            "name": bm,
+            "hoverinfo": "text",
+            # "fill": "tozeroy",
+            # "mode": "lines",
+            "line": {"width": 1},
+            "type": "scatter",
+            "x": x,
+            "y": y_moving_average,
+            "text": ["10-p moving avg: %s: %.2f" % (d, y) for (d, y) in zip(daterange(start_date, end_date), y)],
+            "xaxis": x_axis,
+            "yaxis": y_axis,
+            "showlegend": False,
+        })
+
+        # variance (+-std dev from moving average)
+        variance_trace = {
+            "name": bm,
+            "hoverinfo": "text",
+            "mode": "lines",
+            "line_color": "gray",
+            "line": {"width": 0},
+            "x": x,
+            "xaxis": x_axis,
+            "yaxis": y_axis,
+            "showlegend": False,
+        }
+        variance_up = list(map(lambda a, b: a + b, y_moving_average, std))
+        traces.append({**variance_trace, **{
+            "y": variance_up,
+            "text": ["moving avg + std dev: %s: %.2f" % (d, y) for (d, y) in zip(daterange(start_date, end_date), y)],
+        }})
+        variance_down = list(map(lambda a, b: a - b, y_moving_average, std))
+        traces.append({**variance_trace, **{
+            "fill": "tonexty",
+            "y": variance_down,
+            "text": ["moving avg - std dev: %s: %.2f" % (d, y) for (d, y) in zip(daterange(start_date, end_date), y)],
+        }})
+
+        row += 1
+
+    fig = Figure(data = Data(traces), layout = layout)
     return fig
 
 
@@ -90,7 +132,7 @@ def plot_multi_plans_history(runs, plans, benchmarks, start_date, end_date, data
         print(bm)
 
         for p in plans:
-            y = history_per_day(runs, p, bm, start_date, end_date, data_key)
+            y, std = history_per_day(runs, p, bm, start_date, end_date, data_key)
             # y = normalize_history(y)
             x = list(range(0, len(y)))
 
@@ -120,8 +162,8 @@ def plot_multi_plans_history(runs, plans, benchmarks, start_date, end_date, data
     layout = {
         "title": data_key,
         "margin": {"t": 80},
-        "width": 500,
-        "height": 500
+        # "width": 500,
+        # "height": 500
     }
     for i in range(1, row):
         layout["xaxis%d" % i] = {
@@ -153,18 +195,42 @@ def plot_multi_plans_history(runs, plans, benchmarks, start_date, end_date, data
     fig = Figure(data = data, layout = layout)
     return fig
 
+
 def daterange(start_date, end_date):
     for n in range(int ((end_date - start_date).days)):
         yield start_date + timedelta(n)
 
 
-# Returns one array, each element is the average execution time for the benchmark on one day, the index represents the days from the start date
+def moving_average(array_numbers, p):
+    window_sum = 0
+    window_len = 0
+
+    n = len(array_numbers)
+    ma = []
+    for i in range(0, n):
+        if window_len < p:
+            window_sum += array_numbers[i]
+            window_len += 1
+        else:
+            window_sum -= array_numbers[i - p]
+            window_sum += array_numbers[i]
+        
+        ma.append(window_sum / float(window_len))
+    
+    assert len(array_numbers) == len(ma)
+    return ma
+
+
+# Returns two arrays:
+# The first array is average execution time for the benchmark on one day.
+# The second array represents standard deviation.
 def history_per_day(runs, plan, benchmark, start_date, end_date, data_key):
     # ordered runs
     run_ids = list(runs.keys())
     run_ids.sort()
 
-    ret = []
+    avg = []
+    std = []
 
     # record last run. If we dont have a run for that day, we use last run
     last_run = None
@@ -176,16 +242,17 @@ def history_per_day(runs, plan, benchmark, start_date, end_date, data_key):
         if len(runs_of_the_day) != 0:
             last_run = runs_of_the_day[-1]
         
-        execution_time = 0
+        result = 0
         if last_run is not None:
-            execution_time = average_time(runs[last_run], plan, benchmark, data_key)
-            if execution_time is None:
-                execution_time = 0
+            result = average_time(runs[last_run], plan, benchmark, data_key)
+            if result is None:
+                result = 0, 0
 
-        print("Run for %s: %s (%s)" % (single_date, last_run, execution_time))
-        ret.append(execution_time)
+        print("Run for %s: %s (%s +- %s)" % (single_date, last_run, result[0], result[1]))
+        avg.append(result[0])
+        std.append(result[1])
     
-    return ret
+    return avg, std
 
 
 # Use first non-zero value as 0, normalize each value to be a percentage compared to the first non-zero value
@@ -212,6 +279,6 @@ def average_time(run, plan, benchmark, data_key):
     for bm_run in run:
         if bm_run['benchmark'] == benchmark and (bm_run['build'].lower() == plan.lower() or bm_run['build'].lower().endswith(plan.lower())):
             if data_key in bm_run and len(bm_run[data_key]) != 0:
-                return sum(bm_run[data_key]) / len(bm_run[data_key])
+                return sum(bm_run[data_key]) / len(bm_run[data_key]), np.std(bm_run[data_key])
             else:
                 return None
