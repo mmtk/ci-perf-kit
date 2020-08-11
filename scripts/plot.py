@@ -26,11 +26,15 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
         print(plan + ' ' + bm)
 
         y, std = history_per_day(runs, plan, bm, start_date, end_date, data_key)
-        # y = normalize_history(y)
         x = list(range(0, len(y)))
 
-        y_max = max(y)
-        y_min = min(y)
+        y_baseline = min(y)
+        y_max = max(y) / y_baseline
+        y_min = min(y) / y_baseline
+
+        # normalize y
+        y = normalize_to(y, y_baseline)
+        std = normalize_to(std, y_baseline)
 
         x_axis = "x%d" % row
         y_axis = "y%d" % row
@@ -88,6 +92,12 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
                 else:
                     ret.append(None)
             return ret
+        def keep_last(arr, f):
+            r = arr.copy()
+            r.reverse()
+            res = keep_first(r, f)
+            res.reverse()
+            return res
 
         y_max_array = keep_first(y, lambda x: x == y_max) # keep max, leave others as None
         traces.append({**history_trace, **{
@@ -110,12 +120,6 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
         annotation = {
             "xref": x_axis,
             "yref": y_axis,
-            # "showarrow": True,
-            # "arrowhead": 2,
-            # "arrowsize": 1,
-            # "arrowwidth": 1,
-            # "ax": 0,
-            # "ay": -30,
             "font": {
                 "color": "white"
             }
@@ -123,15 +127,45 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
         annotations.append({**annotation, **{
             "x": x[max_i],
             "y": y_max,
-            "text": "max=%s" % y_max,
+            "text": "max=%.2f" % y_max,
             "bgcolor": "red",
         }})
         min_i = y.index(y_min)
         annotations.append({**annotation, **{
             "x": x[min_i],
             "y": y_min,
-            "text": "min=%s" % y_min,
+            "text": "min=%.2f" % y_min,
             "bgcolor": "green",
+        }})
+
+        # highlight current
+        current = y[-1]
+        current_std = std[-1]
+        # determine if current is improvement or degradation
+        if current + current_std < y_min:
+            # improvement
+            current_color = "green"
+        elif current - current_std > y_min:
+            # degradation
+            current_color = "red"
+        else:
+            # none of the above
+            current_color = "black"
+
+        y_last_array = keep_last(y, lambda x: x == current)
+        traces.append({**history_trace, **{
+            "mode": "markers",
+            "y": y_last_array,
+            "text": ["history current: %s: %.2f" % (d, y) for (d, y) in zip(daterange(start_date, end_date), y)],
+            "marker": {"size": 15, "color": "black"},
+            "showlegend": False,
+        }})
+        annotations.append({**annotation, **{
+            "x": x[-1],
+            "y": y[-1],
+            "text": "%.2f" % current,
+            "font": {"color": current_color, "size": 60},
+            "ax": 100,
         }})
 
         # moving average
@@ -336,6 +370,11 @@ def normalize_history(arr):
             ret.append((x - first_non_zero) / first_non_zero)
     
     return ret
+
+
+def normalize_to(arr, base):
+    assert base != 0, "Cannot normalize to a zero value"
+    return list(map(lambda x: x / base, arr))
 
 
 def average_time(run, plan, benchmark, data_key):
