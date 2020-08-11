@@ -60,10 +60,11 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
             "type": "scatter",
             "x": x,
             "xaxis": x_axis,
-            "yaxis": y_axis
+            "yaxis": y_axis,
+            "showlegend": False,
         }
         traces.append({**history_trace, **{
-            "line": {"width": 3},
+            "line": {"width": 3, "color": "black"},
             "y": y,
             "text": ["history: %s: %.2f" % (d, y) for (d, y) in zip(daterange(start_date, end_date), y)],
         }})
@@ -185,7 +186,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
             "hoverinfo": "text",
             # "fill": "tozeroy",
             # "mode": "lines",
-            "line": {"width": 1, "color": "black"},
+            "line": {"width": 1, "color": "gray"},
             "type": "scatter",
             "x": x,
             "y": y_moving_average,
