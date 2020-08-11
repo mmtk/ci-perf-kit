@@ -19,8 +19,14 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
     
     n_benchmarks = len(benchmarks)
     row = 1
+    
     traces = []
     annotations = []
+
+    # we want all the traces use the same Y range so it is easier to interpret the plot. These two variables record the upper and lower of Y range
+    y_range_upper = - float("inf")
+    y_range_lower = float("inf")
+
     for bm in benchmarks:
         # extract results
         print(plan + ' ' + bm)
@@ -28,9 +34,16 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
         y, std = history_per_day(runs, plan, bm, start_date, end_date, data_key)
         x = list(range(0, len(y)))
 
+        # From now, all y's are normalized to this baseline
         y_baseline = min(y)
         y_max = max(y) / y_baseline
         y_min = min(y) / y_baseline
+
+        # update range
+        if y_max > y_range_upper:
+            y_range_upper = y_max
+        if y_min < y_range_lower:
+            y_range_lower = y_min
 
         # normalize y
         y = normalize_to(y, y_baseline)
@@ -77,7 +90,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
             "showline": True,
             "zeroline": False,
             "showticklabels": False,
-            "range": [y_min * 0.9, y_max * 1.1],
+            # "range": [y_min * 0.9, y_max * 1.1],
             "autorange": False,
         }
 
@@ -120,22 +133,19 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
         annotation = {
             "xref": x_axis,
             "yref": y_axis,
-            "font": {
-                "color": "white"
-            }
         }
         annotations.append({**annotation, **{
             "x": x[max_i],
             "y": y_max,
-            "text": "max=%.2f" % y_max,
-            "bgcolor": "red",
+            "text": "%s: %.2f" % (start_date + timedelta(days=max_i), y_max),
+            "font": {"color": "red"}
         }})
         min_i = y.index(y_min)
         annotations.append({**annotation, **{
             "x": x[min_i],
             "y": y_min,
-            "text": "min=%.2f" % y_min,
-            "bgcolor": "green",
+            "text": "%s: %.2f" % (start_date + timedelta(days=min_i), y_min),
+            "font": {"color": "green"}
         }})
 
         # highlight current
@@ -179,7 +189,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
             "type": "scatter",
             "x": x,
             "y": y_moving_average,
-            "text": ["10-p moving avg: %s: %.2f" % (d, y) for (d, y) in zip(daterange(start_date, end_date), y)],
+            "text": ["10-p moving avg: %s: %.2f" % (d, y) for (d, y) in zip(daterange(start_date, end_date), y_moving_average)],
             "xaxis": x_axis,
             "yaxis": y_axis,
             "showlegend": False,
@@ -200,16 +210,21 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
         variance_up = list(map(lambda a, b: a + b, y_moving_average, std))
         traces.append({**variance_trace, **{
             "y": variance_up,
-            "text": ["moving avg + std dev: %s: %.2f" % (d, y) for (d, y) in zip(daterange(start_date, end_date), y)],
+            "text": ["moving avg + std dev: %s: %.2f" % (d, y) for (d, y) in zip(daterange(start_date, end_date), variance_up)],
         }})
         variance_down = list(map(lambda a, b: a - b, y_moving_average, std))
         traces.append({**variance_trace, **{
             "fill": "tonexty",
             "y": variance_down,
-            "text": ["moving avg - std dev: %s: %.2f" % (d, y) for (d, y) in zip(daterange(start_date, end_date), y)],
+            "text": ["moving avg - std dev: %s: %.2f" % (d, y) for (d, y) in zip(daterange(start_date, end_date), variance_down)],
         }})
 
         row += 1
+
+    # fix range for all the traces
+    y_range = [y_range_lower - 0.02, y_range_upper + 0.02]
+    for i in range(1, row):
+        layout["yaxis%d" % i]["range"] = y_range
 
     fig = Figure(data = Data(traces), layout = layout)
     for anno in annotations:
