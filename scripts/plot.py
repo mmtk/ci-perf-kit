@@ -35,17 +35,20 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
         y_axis = "y%d" % row
 
         # history
-        traces.append({
+        history_trace = {
             "name": bm,
             "hoverinfo": "text",
-            "line": {"width": 3},
+            "line": {"width": 1},
             "type": "scatter",
             "x": x,
-            "y": y,
-            "text": ["history: %s: %.2f" % (d, y) for (d, y) in zip(daterange(start_date, end_date), y)],
             "xaxis": x_axis,
             "yaxis": y_axis
-        })
+        }
+        traces.append({**history_trace, **{
+            "line": {"width": 3},
+            "y": y,
+            "text": ["history: %s: %.2f" % (d, y) for (d, y) in zip(daterange(start_date, end_date), y)],
+        }})
         layout["xaxis%d" % row] = {
             "ticks": "",
             "anchor": x_axis,
@@ -72,6 +75,35 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
             "range": [y_min * 0.9, y_max * 1.1],
             "autorange": False,
         }
+
+        # highlight max/min
+        def keep_first(arr, f):
+            ret = []
+            first = True
+            for x in arr:
+                if f(x) and first:
+                    ret.append(x)
+                    first = False
+                else:
+                    ret.append(None)
+            return ret
+
+        y_max_array = keep_first(y, lambda x: x == y_max) # keep max, leave others as None
+        traces.append({**history_trace, **{
+            "mode": "markers",
+            "y": y_max_array,
+            "text": ["history max: %s: %.2f" % (d, y) for (d, y) in zip(daterange(start_date, end_date), y)],
+            "marker": { "size": 15, "color": "red" },
+            "showlegend": False,
+        }})
+        y_min_array = keep_first(y, lambda x: x == y_min) # keep min, leave others as None
+        traces.append({**history_trace, **{
+            "mode": "markers",
+            "y": y_min_array,
+            "text": ["history min: %s: %.2f" % (d, y) for (d, y) in zip(daterange(start_date, end_date), y)],
+            "marker": { "size": 15, "color": "green" },
+            "showlegend": False,
+        }})
 
         # moving average
         y_moving_average = moving_average(y, 10)
