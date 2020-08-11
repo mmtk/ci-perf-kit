@@ -20,6 +20,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
     n_benchmarks = len(benchmarks)
     row = 1
     traces = []
+    annotations = []
     for bm in benchmarks:
         # extract results
         print(plan + ' ' + bm)
@@ -104,6 +105,34 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
             "marker": { "size": 15, "color": "green" },
             "showlegend": False,
         }})
+        # labeling max/min
+        max_i = y.index(y_max)
+        annotation = {
+            "xref": x_axis,
+            "yref": y_axis,
+            # "showarrow": True,
+            # "arrowhead": 2,
+            # "arrowsize": 1,
+            # "arrowwidth": 1,
+            # "ax": 0,
+            # "ay": -30,
+            "font": {
+                "color": "white"
+            }
+        }
+        annotations.append({**annotation, **{
+            "x": x[max_i],
+            "y": y_max,
+            "text": "max=%s" % y_max,
+            "bgcolor": "red",
+        }})
+        min_i = y.index(y_min)
+        annotations.append({**annotation, **{
+            "x": x[min_i],
+            "y": y_min,
+            "text": "min=%s" % y_min,
+            "bgcolor": "green",
+        }})
 
         # moving average
         y_moving_average = moving_average(y, 10)
@@ -112,7 +141,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
             "hoverinfo": "text",
             # "fill": "tozeroy",
             # "mode": "lines",
-            "line": {"width": 1},
+            "line": {"width": 1, "color": "black"},
             "type": "scatter",
             "x": x,
             "y": y_moving_average,
@@ -149,6 +178,8 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
         row += 1
 
     fig = Figure(data = Data(traces), layout = layout)
+    for anno in annotations:
+        fig.add_annotation(anno)
     return fig
 
 
