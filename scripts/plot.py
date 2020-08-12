@@ -35,9 +35,10 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
         x = list(range(0, len(y)))
 
         # From now, all y's are normalized to this baseline
-        y_baseline = min(y)
+        nonzero_y = [i for i in y if i != 0]
+        y_baseline = min(nonzero_y)
         y_max = max(y) / y_baseline
-        y_min = min(y) / y_baseline
+        y_min = min(nonzero_y) / y_baseline
 
         # update range
         if y_max > y_range_upper:
@@ -355,7 +356,7 @@ def history_per_day(runs, plan, benchmark, start_date, end_date, data_key):
         if len(runs_of_the_day) != 0:
             last_run = runs_of_the_day[-1]
         
-        result = 0
+        result = 0, 0
         if last_run is not None:
             result = average_time(runs[last_run], plan, benchmark, data_key)
             if result is None:
