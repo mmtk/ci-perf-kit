@@ -130,8 +130,10 @@ checkout_result_repo() {
 commit_result_repo() {
     message=$1
 
-    git --git-dir $result_repo_dir/.git add $result_repo_dir/.
-    git --git-dir $result_repo_dir/.git commit -m "$message"
-    git --git-dir $result_repo_dir/.git pull --rebase # pull any new commit (if any)
-    git --git-dir $result_repo_dir/.git push
+    cd $result_repo_dir
+
+    git add .
+    git commit -m "$message"
+    git pull --rebase # pull any new commit (if any)
+    git push
 }
