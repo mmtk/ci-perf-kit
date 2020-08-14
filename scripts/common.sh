@@ -128,9 +128,9 @@ checkout_result_repo() {
 
 # commit_result_repo_dir 'message'
 commit_result_repo() {
-    # message=$1
+    message=$1
 
-    # cd $result_repo_dir
+    cd $result_repo_dir
 
     # git add .
     # git commit -m "$message"
