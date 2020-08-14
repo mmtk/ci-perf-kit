@@ -35,7 +35,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
         x = list(range(0, len(y)))
 
         # From now, all y's are normalized to this baseline
-        nonzero_y = [i for i in y if i != 0]
+        nonzero_y = [i for i in y[:-1] if i != 0] # we dont want 0 as baseline, and we should not use the most recent data as baseline
         y_baseline = min(nonzero_y)
         y_max = max(y) / y_baseline
         y_min = min(nonzero_y) / y_baseline
