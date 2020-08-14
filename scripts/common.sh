@@ -132,8 +132,8 @@ commit_result_repo() {
 
     cd $result_repo_dir
 
-    # git add .
-    # git commit -m "$message"
-    # git pull --rebase # pull any new commit (if any)
-    # git push
+    git add .
+    git commit -m "$message"
+    git pull --rebase # pull any new commit (if any)
+    git push
 }
