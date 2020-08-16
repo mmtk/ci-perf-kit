@@ -54,7 +54,7 @@ echo "" >> $output_file
 
 # Python venv
 start_venv python-env
-pip3 install -r $(dirname "$0")/requirements.txt
+pip3 install -r scripts/requirements.txt
 
 # Run For SemiSpace
 ss_run_id=$(run_benchmarks $kit_root/configs/RunConfig-OpenJDK-SemiSpace-FastCompare.pm)
