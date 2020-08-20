@@ -133,7 +133,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
             "text": ["%s: %.2f" % (x, y) if y != 0 else "" for (x, y) in zip(x_labels, y)],
             "textfont_color": "red",
             "cliponaxis": False,
-            "marker": { "size": 15, "color": "red" },
+            "marker": { "size": 20, "color": "red", "symbol": "triangle-up" },
             "showlegend": False,
         }})
         y_min_array = keep_first(y, lambda x: x == y_min) # keep min, leave others as None
@@ -144,7 +144,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
             "text": ["%s: %.2f" % (x, y) if y != 0 else "" for (x, y) in zip(x_labels, y)],
             "textfont_color": "green",
             "cliponaxis": False,
-            "marker": { "size": 15, "color": "green" },
+            "marker": { "size": 20, "color": "green", "symbol": "triangle-down" },
             "showlegend": False,
         }})
 
@@ -166,12 +166,15 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
         if current + current_std < y_min:
             # improvement
             current_color = "green"
+            current_symbol = "▽"
         elif current - current_std > y_min:
             # degradation
             current_color = "red"
+            current_symbol = "△"
         else:
             # none of the above
             current_color = "black"
+            current_symbol = "~"
 
         y_last_array = keep_last(y, lambda x: x == current)
         traces.append({**history_trace, **{
@@ -198,7 +201,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
         }})
         # aboslute number
         annotations.append({**annotation, **{
-            "text": "%.2f ms" % y_cur_aboslute,
+            "text": "%.2f ms %s" % (y_cur_aboslute, current_symbol),
             "font": {"color": "black"},
             "xanchor": "center",
             "yanchor": "bottom",
@@ -227,7 +230,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
             "name": bm,
             "hoverinfo": "text",
             "mode": "lines",
-            "line_color": "gray",
+            "line_color": "#cacccf",
             "line": {"width": 0},
             "x": x,
             "xaxis": x_axis,
