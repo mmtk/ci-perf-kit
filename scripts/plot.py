@@ -31,8 +31,11 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
         # extract results
         print(plan + ' ' + bm)
 
-        y, std = history_per_day(runs, plan, bm, start_date, end_date, data_key)
+        # y, std = history_per_day(runs, plan, bm, start_date, end_date, data_key)
+        y, std = history_per_run(runs, plan, bm, data_key)
         x = list(range(0, len(y)))
+        x_labels = list(runs.keys())
+        x_labels.sort()
 
         # From now, all y's are normalized to this baseline
         nonzero_y = [i for i in y[:-1] if i != 0] # we dont want 0 as baseline, and we should not use the most recent data as baseline
@@ -67,7 +70,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
         traces.append({**history_trace, **{
             "line": {"width": 3, "color": "black"},
             "y": y,
-            "text": ["history: %s: %.2f" % (d, y) for (d, y) in zip(daterange(start_date, end_date), y)],
+            "text": ["history: %s: %.2f" % (x, y) for (x, y) in zip(x_labels, y)],
         }})
         layout["xaxis%d" % row] = {
             "ticks": "",
@@ -118,7 +121,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
         traces.append({**history_trace, **{
             "mode": "markers",
             "y": y_max_array,
-            "text": ["history max: %s: %.2f" % (d, y) for (d, y) in zip(daterange(start_date, end_date), y)],
+            "text": ["history max: %s: %.2f" % (x, y) for (x, y) in zip(x_labels, y)],
             "marker": { "size": 15, "color": "red" },
             "showlegend": False,
         }})
@@ -126,7 +129,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
         traces.append({**history_trace, **{
             "mode": "markers",
             "y": y_min_array,
-            "text": ["history min: %s: %.2f" % (d, y) for (d, y) in zip(daterange(start_date, end_date), y)],
+            "text": ["history min: %s: %.2f" % (x, y) for (x, y) in zip(x_labels, y)],
             "marker": { "size": 15, "color": "green" },
             "showlegend": False,
         }})
@@ -139,14 +142,14 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
         annotations.append({**annotation, **{
             "x": x[max_i],
             "y": y_max,
-            "text": "%s: %.2f" % (start_date + timedelta(days=max_i), y_max),
+            "text": "%s: %.2f" % (x_labels[max_i], y_max),
             "font": {"color": "red"}
         }})
         min_i = y.index(y_min)
         annotations.append({**annotation, **{
             "x": x[min_i],
             "y": y_min,
-            "text": "%s: %.2f" % (start_date + timedelta(days=min_i), y_min),
+            "text": "%s: %.2f" % (x_labels[min_i], y_min),
             "font": {"color": "green"}
         }})
 
@@ -168,7 +171,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
         traces.append({**history_trace, **{
             "mode": "markers",
             "y": y_last_array,
-            "text": ["history current: %s: %.2f" % (d, y) for (d, y) in zip(daterange(start_date, end_date), y)],
+            "text": ["history current: %s: %.2f" % (x, y) for (x, y) in zip(x_labels, y)],
             "marker": {"size": 15, "color": "black"},
             "showlegend": False,
         }})
@@ -191,7 +194,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
             "type": "scatter",
             "x": x,
             "y": y_moving_average,
-            "text": ["10-p moving avg: %s: %.2f" % (d, y) for (d, y) in zip(daterange(start_date, end_date), y_moving_average)],
+            "text": ["10-p moving avg: %s: %.2f" % (x, y) for (x, y) in zip(x_labels, y_moving_average)],
             "xaxis": x_axis,
             "yaxis": y_axis,
             "showlegend": False,
@@ -212,13 +215,13 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
         variance_up = list(map(lambda a, b: a + b, y_moving_average, std))
         traces.append({**variance_trace, **{
             "y": variance_up,
-            "text": ["moving avg + std dev: %s: %.2f" % (d, y) for (d, y) in zip(daterange(start_date, end_date), variance_up)],
+            "text": ["moving avg + std dev: %s: %.2f" % (x, y) for (x, y) in zip(x_labels, variance_up)],
         }})
         variance_down = list(map(lambda a, b: a - b, y_moving_average, std))
         traces.append({**variance_trace, **{
             "fill": "tonexty",
             "y": variance_down,
-            "text": ["moving avg - std dev: %s: %.2f" % (d, y) for (d, y) in zip(daterange(start_date, end_date), variance_down)],
+            "text": ["moving avg - std dev: %s: %.2f" % (x, y) for (x, y) in zip(x_labels, variance_down)],
         }})
 
         row += 1
@@ -246,9 +249,13 @@ def plot_multi_plans_history(runs, plans, benchmarks, start_date, end_date, data
         print(bm)
 
         for p in plans:
-            y, std = history_per_day(runs, p, bm, start_date, end_date, data_key)
+            print(p)
+            # y, std = history_per_day(runs, p, bm, start_date, end_date, data_key)
             # y = normalize_history(y)
+            y, std = history_per_run(runs, p, bm, data_key)
             x = list(range(0, len(y)))
+            x_labels = list(runs.keys())
+            x_labels.sort()
 
             trace = {
                 "name": p,
@@ -260,7 +267,7 @@ def plot_multi_plans_history(runs, plans, benchmarks, start_date, end_date, data
                 "type": "scatter",
                 "x": x,
                 "y": y,
-                "text": ["%s: %s, %.2f" % (d, p, y) for (d, y) in zip(daterange(start_date, end_date), y)],
+                "text": ["%s: %s, %.2f" % (x, p, y) for (x, y) in zip(x_labels, y)],
                 "xaxis": "x%d" % row,
                 "yaxis": "y%d" % row
             }
@@ -366,6 +373,26 @@ def history_per_day(runs, plan, benchmark, start_date, end_date, data_key):
         avg.append(result[0])
         std.append(result[1])
     
+    return avg, std
+
+
+def history_per_run(runs, plan, benchmark, data_key):
+    # ordered runs
+    run_ids = list(runs.keys())
+    run_ids.sort()
+
+    avg = []
+    std = []
+
+    for rid in run_ids:
+        result = average_time(runs[rid], plan, benchmark, data_key)
+        if result is None:
+            result = 0, 0
+        
+        print("Run for %s: %s +/- %s" % (rid, result[0], result[1]))
+        avg.append(result[0])
+        std.append(result[1])
+
     return avg, std
 
 
