@@ -5,6 +5,10 @@ import parse
 import numpy as np
 import math
 
+
+GRAPH_WIDTH = 800
+GRAPH_HEIGHT_PER_BENCHMARK = 200
+
 # runs: all the runs for a certain build (as a dictionary from run_id -> run results)
 # plan: the plan to plot
 # benchmarks: benchmarks to plot
@@ -13,8 +17,8 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
     layout = {
         "title": plan,
         # "margin": {"t": 80},
-        # "width": 500,
-        # "height": 500
+        "width": GRAPH_WIDTH,
+        "height": GRAPH_HEIGHT_PER_BENCHMARK * len(benchmarks),
     }
     
     n_benchmarks = len(benchmarks)
@@ -40,14 +44,17 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
         # From now, all y's are normalized to this baseline
         nonzero_y = [i for i in y[:-1] if i != 0] # we dont want 0 as baseline, and we should not use the most recent data as baseline
         y_baseline = min(nonzero_y)
-        y_max = max(y) / y_baseline
+        y_max = max(nonzero_y) / y_baseline
         y_min = min(nonzero_y) / y_baseline
 
+        this_y_upper = max(y) / y_baseline
+        this_y_lower = min(y) / y_baseline
+
         # update range
-        if y_max > y_range_upper:
-            y_range_upper = y_max
-        if y_min < y_range_lower:
-            y_range_lower = y_min
+        if this_y_upper > y_range_upper:
+            y_range_upper = this_y_upper
+        if this_y_lower < y_range_lower:
+            y_range_lower = this_y_lower
 
         # normalize y
         y = normalize_to(y, y_baseline)
@@ -119,39 +126,31 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
 
         y_max_array = keep_first(y, lambda x: x == y_max) # keep max, leave others as None
         traces.append({**history_trace, **{
-            "mode": "markers",
+            "mode": "markers+text",
+            "textposition": "top center",
             "y": y_max_array,
-            "text": ["history max: %s: %.2f" % (x, y) for (x, y) in zip(x_labels, y)],
+            "text": ["%s: %.2f" % (x, y) if y != 0 else "" for (x, y) in zip(x_labels, y)],
+            "textfont_color": "red",
+            "cliponaxis": False,
             "marker": { "size": 15, "color": "red" },
             "showlegend": False,
         }})
         y_min_array = keep_first(y, lambda x: x == y_min) # keep min, leave others as None
         traces.append({**history_trace, **{
-            "mode": "markers",
+            "mode": "markers+text",
+            "textposition": "bottom center",
             "y": y_min_array,
-            "text": ["history min: %s: %.2f" % (x, y) for (x, y) in zip(x_labels, y)],
+            "text": ["%s: %.2f" % (x, y) if y != 0 else "" for (x, y) in zip(x_labels, y)],
+            "textfont_color": "green",
+            "cliponaxis": False,
             "marker": { "size": 15, "color": "green" },
             "showlegend": False,
         }})
         # labeling max/min
-        max_i = y.index(y_max)
         annotation = {
             "xref": x_axis,
             "yref": y_axis,
         }
-        annotations.append({**annotation, **{
-            "x": x[max_i],
-            "y": y_max,
-            "text": "%s: %.2f" % (x_labels[max_i], y_max),
-            "font": {"color": "red"}
-        }})
-        min_i = y.index(y_min)
-        annotations.append({**annotation, **{
-            "x": x[min_i],
-            "y": y_min,
-            "text": "%s: %.2f" % (x_labels[min_i], y_min),
-            "font": {"color": "green"}
-        }})
 
         # highlight current
         current = y[-1]
@@ -283,8 +282,8 @@ def plot_multi_plans_history(runs, plans, benchmarks, start_date, end_date, data
     layout = {
         "title": data_key,
         "margin": {"t": 80},
-        # "width": 500,
-        # "height": 500
+        "width": GRAPH_WIDTH,
+        "height": GRAPH_HEIGHT_PER_BENCHMARK * len(benchmarks),
     }
     for i in range(1, row):
         layout["xaxis%d" % i] = {
