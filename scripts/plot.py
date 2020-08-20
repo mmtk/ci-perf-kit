@@ -41,6 +41,8 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
         x_labels = list(runs.keys())
         x_labels.sort()
 
+        y_cur_aboslute = y[-1]
+
         # From now, all y's are normalized to this baseline
         nonzero_y = [i for i in y[:-1] if i != 0] # we dont want 0 as baseline, and we should not use the most recent data as baseline
         y_baseline = min(nonzero_y)
@@ -93,7 +95,6 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
         # the y domain for each trace should be [0, 0.25], [0.25, 0.5], [0.5, 0.75], [0.75, 1]
         ydomain = [1 - 1/n_benchmarks * row, 1 - 1/n_benchmarks * (row - 1)]
         layout["yaxis%d" % row] = {
-            "title": bm,
             "ticks": "",
             "anchor": y_axis,
             "domain": ydomain,
@@ -146,10 +147,16 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
             "marker": { "size": 15, "color": "green" },
             "showlegend": False,
         }})
-        # labeling max/min
+
+        # labeling
         annotation = {
             "xref": x_axis,
             "yref": y_axis,
+            "x": x[-1] + 3,
+            "y": 1,
+            "showarrow": False,
+            # "bordercolor": 'black',
+            # "borderwidth": 1,
         }
 
         # highlight current
@@ -174,12 +181,28 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
             "marker": {"size": 15, "color": "black"},
             "showlegend": False,
         }})
+        # big number
         annotations.append({**annotation, **{
-            "x": x[-1],
-            "y": y[-1],
             "text": "%.2f" % current,
             "font": {"color": current_color, "size": 60},
-            "ax": 100,
+            "xanchor": "center",
+            "yanchor": "middle",
+        }})
+        # benchmark name
+        annotations.append({**annotation, **{
+            "text": "<b>%s" % bm,
+            "font": {"color": "black", "size": 20},
+            "xanchor": "center",
+            "yanchor": "bottom",
+            "yshift": 40
+        }})
+        # aboslute number
+        annotations.append({**annotation, **{
+            "text": "%.2f ms" % y_cur_aboslute,
+            "font": {"color": "black"},
+            "xanchor": "center",
+            "yanchor": "bottom",
+            "yshift": -50
         }})
 
         # moving average
