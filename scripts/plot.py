@@ -35,6 +35,8 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
         # extract results
         print(plan + ' ' + bm)
 
+        is_last_row = row == n_benchmarks
+
         # y, std = history_per_day(runs, plan, bm, start_date, end_date, data_key)
         y, std = history_per_run(runs, plan, bm, data_key)
         x = list(range(0, len(y)))
@@ -62,7 +64,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
         y = normalize_to(y, y_baseline)
         std = normalize_to(std, y_baseline)
 
-        x_axis = "x%d" % row
+        x_axis = "x"
         y_axis = "y%d" % row
 
         # history
@@ -82,28 +84,32 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
             "text": ["history: %s: %.2f" % (x, y) for (x, y) in zip(x_labels, y)],
         }})
         layout["xaxis%d" % row] = {
-            "ticks": "",
+            # attempt to show xticks. Couldn't get this work. Xticks are shown under the first subgraph. 
+            # I can't switch it to the last (or it does not show on the last because out of boundary)
+            # "showticklabels": is_last_row,
+            # "tickmode": "array",
+            # "tickvals": list(range(0, len(y))),
+            # "ticktext": x_labels,
+            "showticklabels": False,
             "anchor": x_axis,
             "domain": [0, 1],
             "mirror": False,
             "showgrid": False,
             "showline": False,
             "zeroline": False,
-            "showticklabels": False,
         }
         # e.g. if we have 4 rows (row = 5 at the moment)
         # the y domain for each trace should be [0, 0.25], [0.25, 0.5], [0.5, 0.75], [0.75, 1]
         ydomain = [1 - 1/n_benchmarks * row, 1 - 1/n_benchmarks * (row - 1)]
         layout["yaxis%d" % row] = {
             "ticks": "",
-            "anchor": y_axis,
+            "anchor": x_axis,
             "domain": ydomain,
             "mirror": False,
             "showgrid": False,
             "showline": True,
             "zeroline": False,
             "showticklabels": False,
-            # "range": [y_min * 0.9, y_max * 1.1],
             "autorange": False,
         }
 
