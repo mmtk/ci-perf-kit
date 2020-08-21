@@ -225,7 +225,8 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
             "showlegend": False,
         })
 
-        # variance (+-std dev from moving average)
+        # variance (10p moving average of std dev)
+        std_dev_moving_average = moving_average(std, 10)
         variance_trace = {
             "name": bm,
             "hoverinfo": "text",
@@ -237,12 +238,12 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
             "yaxis": y_axis,
             "showlegend": False,
         }
-        variance_up = list(map(lambda a, b: a + b, y_moving_average, std))
+        variance_up = list(map(lambda a, b: a + b, y_moving_average, std_dev_moving_average))
         traces.append({**variance_trace, **{
             "y": variance_up,
             "text": ["moving avg + std dev: %s: %.2f" % (x, y) for (x, y) in zip(x_labels, variance_up)],
         }})
-        variance_down = list(map(lambda a, b: a - b, y_moving_average, std))
+        variance_down = list(map(lambda a, b: a - b, y_moving_average, std_dev_moving_average))
         traces.append({**variance_trace, **{
             "fill": "tonexty",
             "y": variance_down,
