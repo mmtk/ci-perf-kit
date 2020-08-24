@@ -128,9 +128,7 @@ checkout_result_repo() {
 
 # commit_result_repo_dir 'message'
 commit_result_repo() {
-    if [[ -v "${SKIP_UPLOAD_RESULT}" ]]; then
-        echo "SKIP_UPLOAD_RESULT is set, skip uploading result"
-    else
+    if [[ -v "$SKIP_UPLOAD_RESULT" ]]; then
         message=$1
 
         cd $result_repo_dir
@@ -138,6 +136,8 @@ commit_result_repo() {
         git add .
         git commit -m "$message"
         git pull --rebase # pull any new commit (if any)
-        git push
+        git push    
+    else
+        echo "SKIP_UPLOAD_RESULT is set, skip uploading result"
     fi
 }
