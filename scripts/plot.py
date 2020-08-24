@@ -37,9 +37,12 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
 
         is_last_row = row == n_benchmarks
 
-        # y, std = history_per_day(runs, plan, bm, start_date, end_date, data_key)
+        # We place the labels (big number/benchmark name/absolute number) on the position of (last point + this offset)
+        LABEL_OFFSET = 3
+
         y, std = history_per_run(runs, plan, bm, data_key)
         x = list(range(0, len(y)))
+        print(x)
         x_labels = list(runs.keys())
         x_labels.sort()
 
@@ -158,12 +161,13 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
         annotation = {
             "xref": x_axis,
             "yref": y_axis,
-            "x": x[-1] + 3,
+            "x": x[-1] + LABEL_OFFSET,
             "y": 1,
             "showarrow": False,
             # "bordercolor": 'black',
             # "borderwidth": 1,
         }
+        print(annotation)
 
         # highlight current
         current = y[-1]
