@@ -136,6 +136,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
 
         y_max_array = keep_first(y, lambda x: x == y_max) # keep max, leave others as None
         traces.append({**history_trace, **{
+            "hoverinfo": "none",
             "mode": "markers+text",
             "textposition": "top center",
             "y": y_max_array,
@@ -147,6 +148,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
         }})
         y_min_array = keep_first(y, lambda x: x == y_min) # keep min, leave others as None
         traces.append({**history_trace, **{
+            "hoverinfo": "none",
             "mode": "markers+text",
             "textposition": "bottom center",
             "y": y_min_array,
@@ -188,6 +190,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
 
         y_last_array = keep_last(y, lambda x: x == current)
         traces.append({**history_trace, **{
+            "hoverinfo": "none",
             "mode": "markers",
             "y": y_last_array,
             "text": ["history current: %s: %.2f" % (x, y) for (x, y) in zip(x_labels, y)],
