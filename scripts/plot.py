@@ -6,8 +6,11 @@ import numpy as np
 import math
 
 
-GRAPH_WIDTH = 800
+GRAPH_WIDTH = 1000
 GRAPH_HEIGHT_PER_BENCHMARK = 200
+
+SHOW_DATA_POINT = False
+TRACE_MODE = "lines+markers" if SHOW_DATA_POINT else "lines"
 
 # runs: all the runs for a certain build (as a dictionary from run_id -> run results)
 # plan: the plan to plot
@@ -74,6 +77,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
         history_trace = {
             "name": bm,
             "hoverinfo": "text",
+            "mode": TRACE_MODE,
             "line": {"width": 1},
             "type": "scatter",
             "x": x,
@@ -227,7 +231,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
             "name": bm,
             "hoverinfo": "text",
             # "fill": "tozeroy",
-            # "mode": "lines",
+            "mode": TRACE_MODE,
             "line": {"width": 1, "color": "gray"},
             "type": "scatter",
             "x": x,
