@@ -128,7 +128,7 @@ checkout_result_repo() {
 
 # commit_result_repo_dir 'message'
 commit_result_repo() {
-    if [[ -v "$SKIP_UPLOAD_RESULT" ]]; then
+    if [[ -z $SKIP_UPLOAD_RESULT ]]; then
         message=$1
 
         cd $result_repo_dir
