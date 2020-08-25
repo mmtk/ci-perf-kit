@@ -12,6 +12,13 @@ GRAPH_HEIGHT_PER_BENCHMARK = 200
 SHOW_DATA_POINT = False
 TRACE_MODE = "lines+markers" if SHOW_DATA_POINT else "lines"
 
+# Intervals between X values (dense for old data, sparse for recent data). See log_timeline()
+X_INTERVAL_1 = 1
+X_INTERVAL_2 = 3
+X_INTERVAL_3 = 5
+# We place the labels (big number/benchmark name/absolute number) on the position of (last point + this offset)
+LABEL_OFFSET = X_INTERVAL_3 * 3
+
 # runs: all the runs for a certain build (as a dictionary from run_id -> run results)
 # plan: the plan to plot
 # benchmarks: benchmarks to plot
@@ -40,11 +47,8 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
 
         is_last_row = row == n_benchmarks
 
-        # We place the labels (big number/benchmark name/absolute number) on the position of (last point + this offset)
-        LABEL_OFFSET = 3
-
         y, std = history_per_run(runs, plan, bm, data_key)
-        x = list(range(0, len(y)))
+        x = log_timeline(len(y))
         print(x)
         x_labels = list(runs.keys())
         x_labels.sort()
@@ -462,6 +466,35 @@ def normalize_history(arr):
 def normalize_to(arr, base):
     assert base != 0, "Cannot normalize to a zero value"
     return list(map(lambda x: x / base, arr))
+
+
+# Given n points, return their x values (starting from 0) that are dense for the first few values and sparse for the last values.
+# We could use exponential values, however, it does not look as good.
+# Instead, we use fixed intervals:
+# * [-10, -1]: 5 between points
+# * [-30, -10): 3 between points
+# * Others: 1
+INTERVALS = [X_INTERVAL_2] * 20 + [X_INTERVAL_3] * 10
+def log_timeline(n):
+    if n == 0:
+        return []
+
+    if n <= 30:
+        intervals = INTERVALS[-n:]
+    else:
+        intervals = INTERVALS.copy()
+        intervals = [X_INTERVAL_1] * (n - 30) + intervals
+
+    assert len(intervals) == n
+
+    cur = 0
+    x = []
+    for i in range(0, n):
+        x.append(cur)
+        cur += intervals[i]
+
+    assert len(x) == n
+    return x
 
 
 def average_time(run, plan, benchmark, data_key):
