@@ -12,16 +12,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import org.openjdk.jmh.annotations.Benchmark;
-import org.openjdk.jmh.annotations.BenchmarkMode;
-import org.openjdk.jmh.annotations.Level;
-import org.openjdk.jmh.annotations.Mode;
-import org.openjdk.jmh.annotations.Param;
-import org.openjdk.jmh.annotations.State;
-import org.openjdk.jmh.annotations.Scope;
-import org.openjdk.jmh.annotations.Setup;
+import org.openjdk.jmh.annotations.*;
 
-@State(Scope.Thread)
+@State(Scope.Benchmark)
 @BenchmarkMode(Mode.AverageTime)
 public class BinaryTrees {
     @State(Scope.Benchmark)
@@ -30,11 +23,11 @@ public class BinaryTrees {
     }
     
     @Param({"21"})
-    private int depth;
+    private int size; // depth
 
     @Benchmark
     public void run() throws InterruptedException {
-        int n = depth;
+        int n = size;
         final ExecutorService executors = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         
         final int maxDepth = n < (BenchmarkState.MIN_DEPTH + 2) ? BenchmarkState.MIN_DEPTH + 2 : n;
