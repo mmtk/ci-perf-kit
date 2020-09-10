@@ -37,6 +37,15 @@ public class Fasta {
             Runtime.getRuntime().availableProcessors() > 1 
             ? Runtime.getRuntime().availableProcessors() - 1 
             : 1];
+        
+        @Setup(Level.Trial)
+        public void setUp() {
+            for (int i = 0; i < WORKERS.length; i++) {
+                WORKERS[i] = new NucleotideSelector();
+                WORKERS[i].setDaemon(true);
+                WORKERS[i].start();
+            }
+        }
     }
 
     @Param({"25000000"})
@@ -46,11 +55,6 @@ public class Fasta {
     public void run(Blackhole blackhole, BenchmarkState st) {
         int n = size;
 
-        for (int i = 0; i < st.WORKERS.length; i++) {
-            st.WORKERS[i] = new NucleotideSelector();
-            st.WORKERS[i].setDaemon(true);
-            st.WORKERS[i].start();
-        }
         try (OutputStream writer = new ByteArrayOutputStream()) {
             final int bufferSize = BenchmarkState.LINE_COUNT * BenchmarkState.LINE_LENGTH;
 
