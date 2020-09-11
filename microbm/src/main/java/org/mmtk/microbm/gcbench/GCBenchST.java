@@ -55,7 +55,7 @@ class Node {
 }
 
 @BenchmarkMode(Mode.AverageTime)
-public class GCBench {
+public class GCBenchST {
 	public static final int kStretchTreeDepth    = 18;	// about 16Mb
 	public static final int kLongLivedTreeDepth  = 16;  // about 4Mb
 	public static final int kArraySize  = 500000;  // about 4Mb

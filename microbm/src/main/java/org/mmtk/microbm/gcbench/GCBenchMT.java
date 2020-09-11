@@ -19,6 +19,7 @@ import java.util.Random;
  * for testing GC performance on NUMA machines
  */
 @State(Scope.Benchmark)
+@BenchmarkMode(Mode.AverageTime)
 public class GCBenchMT {
   /**
    * pointers to long-lived data structures,
@@ -141,7 +142,7 @@ public class GCBenchMT {
         // iterate over each depth of tree
         // at each depth, make all nodes in trees[i] point to nodes in trees[i+1]
         for (int i=0; i<numThreads; i++) {
-            Node remoteTree = MakeRemoteTree(GCBench.kLongLivedTreeDepth, i);
+            Node remoteTree = MakeRemoteTree(GCBenchST.kLongLivedTreeDepth, i);
             longLivedTrees[i] = remoteTree;
         }
 
@@ -292,11 +293,11 @@ public class GCBenchMT {
             output(
                 " Stretching memory with a binary tree of depth "
                 + kStretchTreeDepth);
-            GCBench.PrintDiagnostics();
+            GCBenchST.PrintDiagnostics();
             tStart = System.currentTimeMillis();
     
             // Stretch the memory space quickly
-            tempTree = GCBench.MakeTree(kStretchTreeDepth);
+            tempTree = GCBenchST.MakeTree(kStretchTreeDepth);
             tempTree = null;
     
                     if (this.localLongLivedData) {
@@ -305,7 +306,7 @@ public class GCBenchMT {
                             " Creating a long-lived binary tree of depth " +
                             kLongLivedTreeDepth);
                         longLivedTree = new Node();
-                        GCBench.Populate(kLongLivedTreeDepth, longLivedTree);
+                        GCBenchST.Populate(kLongLivedTreeDepth, longLivedTree);
                         
                         // Create long-lived array, filling half of it
                         output(
@@ -317,12 +318,12 @@ public class GCBenchMT {
                         }
                     }
                     
-            GCBench.PrintDiagnostics();
+            GCBenchST.PrintDiagnostics();
                     
                     // now allocate local short-lived data
                     
             for (int d = kMinTreeDepth; d <= kMaxTreeDepth; d += 2) {
-                        GCBench.TimeConstruction(d);
+                        GCBenchST.TimeConstruction(d);
     
                         // @jsinger
                         // shuffle long-lived pointers here
@@ -350,7 +351,7 @@ public class GCBenchMT {
     
             tFinish = System.currentTimeMillis();
             tElapsed = tFinish-tStart;
-            GCBench.PrintDiagnostics();
+            GCBenchST.PrintDiagnostics();
             output("Completed in " + tElapsed + "ms.");
         }
     
@@ -383,7 +384,7 @@ public class GCBenchMT {
     @Override
     public void run() {
         output("allocating local nodes");
-        int numNodes = GCBench.TreeSize(GCBench.kLongLivedTreeDepth);
+        int numNodes = GCBenchST.TreeSize(GCBenchST.kLongLivedTreeDepth);
         for (int i=0; i<numNodes; i++) {
         pool.push(new Node());
         }
