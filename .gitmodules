@@ -1,3 +1,6 @@
 [submodule "running"]
 	path = running
 	url = git@github.com:mmtk/running.git
+[submodule "ReBench"]
+	path = ReBench
+	url = git@github.com:mmtk/ReBench.git
