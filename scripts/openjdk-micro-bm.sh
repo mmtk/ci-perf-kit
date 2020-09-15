@@ -46,6 +46,8 @@ build_openjdk_with_mmtk $openjdk_binding_branch semispace release $kit_build/jdk
 # Build MicroBM
 cd $microbm_root
 mvn clean install
+rm -f ci.data
+
 # install rebench
 start_venv2 $microbm_root/venv
 pip install $rebench_root
@@ -60,4 +62,4 @@ echo "* branch:  [$mmtk_branch_rev](https://github.com/mmtk/mmtk-core/commit/$mm
 
 echo "" >> $output_file
 
-rebench microbm.conf CI -d
+python ../scripts/rebench_report.py rebench microbm.conf CI >> $output_file
