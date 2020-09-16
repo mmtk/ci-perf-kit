@@ -21,7 +21,6 @@ try:
     table = table.strip('-').rstrip('-') # We strip extra dashes.
     results_by_bm = {}
     for row in table.split('\n'):
-        print('row: ' + row)
         cols = row.split()
         if len(cols) == 0:
             continue
