@@ -15,11 +15,13 @@ print("Running: %s" % args)
 try:
     rebench_run = subprocess.check_output(args)
     
-    # print(rebench_run)
-    extract = rebench_run.split('--------------------------------------------------------------------------------------------------------------')
+    # ReBench prints variable-lengthed separator lines. We hope this string below is enough to capture it. 
+    extract = rebench_run.split('------------------------------------------------------------------------')
     table = extract[-2]
+    table = table.strip('-').rstrip('-') # We strip extra dashes.
     results_by_bm = {}
     for row in table.split('\n'):
+        print('row: ' + row)
         cols = row.split()
         if len(cols) == 0:
             continue
@@ -38,7 +40,6 @@ try:
         else:
             results_by_bm[bm] = item
     
-    print(results_by_bm)
     append_output('|Benchmark|Trunk (ms)|Branch (ms)|Diff|')
     append_output('|:-------:|:--------:|:---------:|:---:|')
 
@@ -58,7 +59,7 @@ try:
             diff_text += ' :red_square:'
         elif diff <= -0.01:
             diff_text += ' :green_square:'
-        append_output('|%s|%s|%s|%s|' % (bm, trunk, branch, diff_text))
+        append_output('|%s|%.2f|%.2f|%s|' % (bm, trunk / 1000000, branch / 1000000, diff_text))
     
     print(output)
 
