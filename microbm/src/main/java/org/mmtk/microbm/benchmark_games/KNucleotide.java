@@ -7,7 +7,10 @@
 
  package org.mmtk.microbm.benchmark_games;
 
+import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -25,14 +28,33 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.HashMap;
 
+import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.annotations.*;
 
+@BenchmarkMode(Mode.AverageTime)
 public class KNucleotide {
+    @State(Scope.Benchmark)
+    public static class BenchmarkState {
+        byte[] sequence;
+
+        @Setup(Level.Trial)
+        public void setup() throws IOException {
+            try {
+                File initialFile = new File("data/knucleotide-input.txt");
+                InputStream targetStream = new FileInputStream(initialFile);
+                this.sequence = read(targetStream);
+            } catch (IOException e) {
+                System.err.println("Failed to read file: " + e.getMessage());
+                throw e;
+            }
+        }
+    }
+
     static final byte[] codes = { -1, 0, -1, 1, 3, -1, -1, 2 };
     static final char[] nucleotides = { 'A', 'C', 'G', 'T' };
 
     static class Result {
-        HashMap<Long, Integer> map = new HashMap<Long, Integer>();
+        Long2IntOpenHashMap map = new Long2IntOpenHashMap();
         int keyLength;
     
         public Result(int keyLength) {
@@ -54,17 +76,17 @@ public class KNucleotide {
 
     static Result createFragmentMap(byte[] sequence, int offset, int fragmentLength) {
         Result res = new Result(fragmentLength);
-        HashMap<Long, Integer> map = res.map;
+        Long2IntOpenHashMap map = res.map;
         int lastIndex = sequence.length - fragmentLength + 1;
         for (int index = offset; index < lastIndex; index += fragmentLength) {
-            map.put(getKey(sequence, index, fragmentLength), 1);
+            map.addTo(getKey(sequence, index, fragmentLength), 1);
         }
 
         return res;
     }
 
     static Result sumTwoMaps(Result map1, Result map2) {
-        map2.map.forEach((key, value) -> map1.map.put(key, value));
+        map2.map.forEach((key, value) -> map1.map.addTo(key, value));
         return map1;
     }
 
@@ -158,20 +180,18 @@ public class KNucleotide {
     }
 
     @Benchmark
-    public void run() throws Exception {
-        byte[] sequence = read(System.in);
-
+    public void run(Blackhole blackhole, BenchmarkState st) throws Exception {
         ExecutorService pool = Executors.newFixedThreadPool(Runtime.getRuntime()
                 .availableProcessors());
         int[] fragmentLengths = { 1, 2, 3, 4, 6, 12, 18 };
-        List<Future<Result>> futures = pool.invokeAll(createFragmentTasks(sequence,
+        List<Future<Result>> futures = pool.invokeAll(createFragmentTasks(st.sequence,
                 fragmentLengths));
         pool.shutdown();
 
         StringBuilder sb = new StringBuilder();
 
-        sb.append(writeFrequencies(sequence.length, futures.get(0).get()));
-        sb.append(writeFrequencies(sequence.length - 1,
+        sb.append(writeFrequencies(st.sequence.length, futures.get(0).get()));
+        sb.append(writeFrequencies(st.sequence.length - 1,
                 sumTwoMaps(futures.get(1).get(), futures.get(2).get())));
 
         String[] nucleotideFragments = { "GGT", "GGTA", "GGTATT", "GGTATTTTAATT",
@@ -180,6 +200,6 @@ public class KNucleotide {
             sb.append(writeCount(futures, nucleotideFragment));
         }
 
-        System.out.print(sb);
+        blackhole.consume(sb);
     }
 }
