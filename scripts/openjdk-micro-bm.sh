@@ -49,7 +49,7 @@ mvn clean install
 rm -f ci.data
 
 # install rebench
-start_venv2 $microbm_root/venv
+start_venv $microbm_root/venv
 pip install $rebench_root
 
 echo "OpenJDK Micro Benchmarks" >> $output_file

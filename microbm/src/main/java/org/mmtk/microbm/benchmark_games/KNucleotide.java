@@ -37,7 +37,7 @@ public class KNucleotide {
     public static class BenchmarkState {
         byte[] sequence;
 
-        @Setup(Level.Trial)
+        @Setup(Level.Iteration)
         public void setup() throws IOException {
             try {
                 File initialFile = new File("data/knucleotide-input.txt");
