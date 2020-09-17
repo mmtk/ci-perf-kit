@@ -16,11 +16,11 @@ try:
     rebench_run = subprocess.check_output(args)
     
     # ReBench prints variable-lengthed separator lines. We hope this string below is enough to capture it. 
-    extract = rebench_run.split('------------------------------------------------------------------------')
+    extract = rebench_run.split(b'------------------------------------------------------------------------')
     table = extract[-2]
-    table = table.strip('-').rstrip('-') # We strip extra dashes.
+    table = table.strip(b'-').rstrip(b'-') # We strip extra dashes.
     results_by_bm = {}
-    for row in table.split('\n'):
+    for row in table.split(b'\n'):
         cols = row.split()
         if len(cols) == 0:
             continue
@@ -42,12 +42,12 @@ try:
     append_output('|Benchmark|Trunk (ms)|Branch (ms)|Diff|')
     append_output('|:-------:|:--------:|:---------:|:---:|')
 
-    bms = results_by_bm.keys()
+    bms = list(results_by_bm.keys())
     bms.sort()
     for bm in bms:
         item = results_by_bm[bm]
-        for build, val in item['mean'].iteritems():
-            if 'trunk' in build.lower():
+        for build, val in item['mean'].items():
+            if b'trunk' in build.lower():
                 trunk = float(val)
             else:
                 branch = float(val)
