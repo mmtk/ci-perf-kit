@@ -40,7 +40,7 @@ public class KNucleotide {
         @Setup(Level.Iteration)
         public void setup() throws IOException {
             try {
-                File initialFile = new File("data/knucleotide-input.txt");
+                File initialFile = new File("data/knucleotide-input-large.txt");
                 InputStream targetStream = new FileInputStream(initialFile);
                 this.sequence = read(targetStream);
             } catch (IOException e) {
