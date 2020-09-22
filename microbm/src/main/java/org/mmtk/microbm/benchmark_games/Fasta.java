@@ -55,7 +55,9 @@ public class Fasta {
     public void run(Blackhole blackhole, BenchmarkState st) {
         int n = size;
 
-        try (OutputStream writer = new ByteArrayOutputStream()) {
+        OutputStream writer = null;
+        try {
+            writer = new ByteArrayOutputStream();
             final int bufferSize = BenchmarkState.LINE_COUNT * BenchmarkState.LINE_LENGTH;
 
             for (int i = 0; i < BenchmarkState.BUFFERS_IN_PLAY; i++) {
@@ -83,6 +85,14 @@ public class Fasta {
             }
             blackhole.consume(writer);
         } catch (IOException ex) {
+        } finally {
+            if (writer != null) {
+                try {
+                    writer.close();
+                } catch (Exception e) {
+                    System.err.println("Failed to close writer");
+                }
+            }
         }
      }
 
@@ -165,9 +175,9 @@ public class Fasta {
     public static class NucleotideSelector extends Thread {
 
         private final BlockingQueue<AbstractBuffer> 
-                in = new ArrayBlockingQueue<>(BenchmarkState.BUFFERS_IN_PLAY);
+                in = new ArrayBlockingQueue<AbstractBuffer>(BenchmarkState.BUFFERS_IN_PLAY);
         private final BlockingQueue<AbstractBuffer> 
-                out = new ArrayBlockingQueue<>(BenchmarkState.BUFFERS_IN_PLAY);
+                out = new ArrayBlockingQueue<AbstractBuffer>(BenchmarkState.BUFFERS_IN_PLAY);
 
         public void put(AbstractBuffer line) {
             try {

@@ -64,14 +64,37 @@ public class KNucleotide {
 
     static ArrayList<Callable<Result>> createFragmentTasks(final byte[] sequence,
             int[] fragmentLengths) {
-        ArrayList<Callable<Result>> tasks = new ArrayList<>();
+        ArrayList<Callable<Result>> tasks = new ArrayList<Callable<Result>>();
         for (int fragmentLength : fragmentLengths) {
             for (int index = 0; index < fragmentLength; index++) {
                 int offset = index;
-                tasks.add(() -> createFragmentMap(sequence, offset, fragmentLength));
+                tasks.add(new CreateFragmentMap(sequence, offset, fragmentLength));
             }
         }
         return tasks;
+    }
+
+    static class CreateFragmentMap implements Callable<Result> {
+        byte[] sequence;
+        int offset;
+        int fragmentLength;
+        CreateFragmentMap(byte[] sequence, int offset, int fragmentLength) {
+            this.sequence = sequence;
+            this.offset = offset;
+            this.fragmentLength = fragmentLength;
+        }
+
+        @Override
+        public Result call() {
+            Result res = new Result(fragmentLength);
+            Long2IntOpenHashMap map = res.map;
+            int lastIndex = sequence.length - fragmentLength + 1;
+            for (int index = offset; index < lastIndex; index += fragmentLength) {
+                map.addTo(getKey(sequence, index, fragmentLength), 1);
+            }
+    
+            return res;
+        }
     }
 
     static Result createFragmentMap(byte[] sequence, int offset, int fragmentLength) {
@@ -86,15 +109,36 @@ public class KNucleotide {
     }
 
     static Result sumTwoMaps(Result map1, Result map2) {
-        map2.map.forEach((key, value) -> map1.map.addTo(key, value));
+        for (long key : map2.map.keySet()) {
+            map1.map.addTo(key, map2.map.get(key));
+        }
+
         return map1;
     }
 
+    static class CompareEntry implements Comparator {
+        public int compare(Object o1, Object o2) {
+            Entry<String, Integer> e1 = (Entry<String, Integer>) o1;
+            Entry<String, Integer> e2 = (Entry<String, Integer>) o2;
+
+            if (e1.getValue() > e2.getValue()) {
+                return -1;
+            } else if (e1.getValue() < e2.getValue()) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+    }
+
     static String writeFrequencies(float totalCount, Result frequencies) {
-        List<Entry<String, Integer>> freq = new ArrayList<>(frequencies.map.size());
-        frequencies.map.forEach((key, cnt) -> freq.add(new SimpleEntry<>(keyToString(key,
-                frequencies.keyLength), cnt)));
-        freq.sort(Map.Entry.comparingByValue(Comparator.reverseOrder()));
+        List<Entry<String, Integer>> freq = new ArrayList<Entry<String, Integer>>(frequencies.map.size());
+        for (long key : frequencies.map.keySet()) {
+            int cnt = frequencies.map.get(key);
+            freq.add(new SimpleEntry<String, Integer>(keyToString(key,
+            frequencies.keyLength), cnt));
+        }
+        freq.sort(new CompareEntry());
         StringBuilder sb = new StringBuilder();
         for (Entry<String, Integer> entry : freq) {
             sb.append(String.format(Locale.ENGLISH, "%s %.3f\n", entry.getKey(),

@@ -25,6 +25,31 @@ public class BinaryTrees {
     @Param({"21"})
     private int size; // depth
 
+    static class BinaryTreesRunner implements Runnable {
+        int maxDepth;
+        int depth;
+        String[] results;
+
+        BinaryTreesRunner(int maxDepth, int depth, String[] results) {
+            this.maxDepth = maxDepth;
+            this.depth = depth;
+            this.results = results;
+        }
+
+        @Override
+        public void run() {
+            int check = 0;
+
+            final int iterations = 1 << (maxDepth - depth + BenchmarkState.MIN_DEPTH);
+            for (int i = 1; i <= iterations; ++i) {
+                final TreeNode treeNode1 = bottomUpTree(depth);
+                check += treeNode1.itemCheck();
+            }
+            results[(depth - BenchmarkState.MIN_DEPTH) / 2] = 
+            iterations + "\t trees of depth " + depth + "\t check: " + check;
+        }
+    }
+
     @Benchmark
     public void run() throws InterruptedException {
         int n = size;
@@ -42,17 +67,7 @@ public class BinaryTrees {
 
         for (int d = BenchmarkState.MIN_DEPTH; d <= maxDepth; d += 2) {
             final int depth = d;
-            executors.execute(() -> {
-                int check = 0;
-
-                final int iterations = 1 << (maxDepth - depth + BenchmarkState.MIN_DEPTH);
-                for (int i = 1; i <= iterations; ++i) {
-                    final TreeNode treeNode1 = bottomUpTree(depth);
-                    check += treeNode1.itemCheck();
-                }
-                results[(depth - BenchmarkState.MIN_DEPTH) / 2] = 
-                iterations + "\t trees of depth " + depth + "\t check: " + check;
-            });
+            executors.execute(new BinaryTreesRunner(maxDepth, depth, results));
         }
 
         executors.shutdown();

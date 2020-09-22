@@ -75,7 +75,9 @@ THE POSSIBILITY OF SUCH DAMAGE.
         <!--
             Java source/target to use for compilation.
           -->
-        <javac.target>1.8</javac.target>
+        <javac.target>1.6</javac.target>
+        <maven.compiler.source>1.6</maven.compiler.source>
+        <maven.compiler.target>1.6</maven.compiler.target>
 
         <!--
             Name of the benchmark Uber-JAR to generate.
@@ -90,9 +92,10 @@ THE POSSIBILITY OF SUCH DAMAGE.
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.0</version>
                 <configuration>
-                    <compilerVersion>${javac.target}</compilerVersion>
-                    <source>${javac.target}</source>
-                    <target>${javac.target}</target>
+                    <compilerVersion>1.6</compilerVersion>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                    <executable>/usr/lib/jvm/java-1.6.0-openjdk-amd64/bin/javac</executable>
                 </configuration>
             </plugin>
             <plugin>
