@@ -58,7 +58,7 @@ try:
             diff_text += ' :red_square:'
         elif diff <= -0.01:
             diff_text += ' :green_square:'
-        append_output('|%s|%.2f|%.2f|%s|' % (bm, trunk / 1000000, branch / 1000000, diff_text))
+        append_output('|%s|%.2f|%.2f|%s|' % (str(bm), trunk / 1000000, branch / 1000000, diff_text))
     
     print(output)
 
