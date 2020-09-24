@@ -115,17 +115,6 @@ leave_venv() {
     deactivate
 }
 
-start_venv2() {
-    venv_path=$1
-
-    virtualenv $venv_path
-    source $venv_path/bin/activate
-}
-
-leave_venv2() {
-    deactivate
-}
-
 # Env: RESULT_REPO_ACCESS_TOKEN, RESULT_REPO, RESULT_REPO_BRANCH
 checkout_result_repo() {
     ensure_env RESULT_REPO
