@@ -19,21 +19,29 @@ import org.openjdk.jmh.annotations.*;
 
 @BenchmarkMode(Mode.AverageTime)
 public class RegexRedux {
+    @State(Scope.Benchmark)
+    public static class BenchmarkState {
+      ByteArrayOutputStream baos;
 
-  @Benchmark
-  public static void run(Blackhole blackhole) throws IOException {
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    {
-        File initialFile = new File("data/knucleotide-input.txt");
-        InputStream targetStream = new FileInputStream(initialFile);
-        
-        byte[] buf = new byte[65536];
-        int count;
-        while ((count = targetStream.read(buf)) > 0) {
-            baos.write(buf, 0, count);
+      @Setup(Level.Trial)
+      public void setup() throws IOException {
+        baos = new ByteArrayOutputStream();
+        {
+            File initialFile = new File("data/knucleotide-input.txt");
+            InputStream targetStream = new FileInputStream(initialFile);
+            
+            byte[] buf = new byte[65536];
+            int count;
+            while ((count = targetStream.read(buf)) > 0) {
+                baos.write(buf, 0, count);
+            }
         }
     }
-    final String input = baos.toString("US-ASCII");
+  }
+
+  @Benchmark
+  public static void run(BenchmarkState st, Blackhole blackhole) throws IOException {
+    final String input = st.baos.toString("US-ASCII");
 
     final int initialLength = input.length();
 
