@@ -49,6 +49,14 @@ openjdk_binding_use_local_mmtk() {
     sed -i s/^#[[:space:]]mmtk/mmtk/g $binding_path/mmtk/Cargo.toml
 }
 
+# jikesrvm_binding_use_local_mmtk 'binding_path'
+jikesrvm_binding_use_local_mmtk() {
+    binding_path=$1
+
+    sed -i s/^mmtk[[:space:]]=/#ci:mmtk=/g $binding_path/mmtk/Cargo.toml
+    sed -i s/^#[[:space:]]mmtk/mmtk/g $binding_path/mmtk/Cargo.toml
+}
+
 # build_openjdk ’binding_path' 'plan' 'debug_level' 'build_path'
 build_openjdk_with_mmtk() {
     binding_path=$1
