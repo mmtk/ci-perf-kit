@@ -14,6 +14,16 @@ mmtk_trunk_rev=$(git -C $mmtk_core_trunk rev-parse HEAD)
 jikesrvm_branch_rev=$(git -C $jikesrvm_binding_branch rev-parse HEAD)
 mmtk_branch_rev=$(git -C $mmtk_core_branch rev-parse HEAD)
 
+# JikesRVM root
+jikesrvm_trunk=$jikesrvm_binding_trunk/repos/openjdk
+jikesrvm_branch=$jikesrvm_binding_branch/repos/openjdk
+
+# Edit openjdk binding Cargo.toml to use local path for mmtk core - note: this makes this script not repeatable
+jikesrvm_binding_use_local_mmtk $jikesrvm_binding_trunk
+if [ "$jikesrvm_binding_branch" != "$jikesrvm_binding_trunk" ]; then
+    jikesrvm_binding_use_local_mmtk $jikesrvm_binding_branch
+fi
+
 # Build - JikesRVM buildit script requires current dir to be JikesRVM root dir
 ensure_empty_dir $kit_build
 
