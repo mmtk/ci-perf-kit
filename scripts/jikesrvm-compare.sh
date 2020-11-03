@@ -18,7 +18,7 @@ mmtk_branch_rev=$(git -C $mmtk_core_branch rev-parse HEAD)
 jikesrvm_trunk=$jikesrvm_binding_trunk/repos/openjdk
 jikesrvm_branch=$jikesrvm_binding_branch/repos/openjdk
 
-# Edit openjdk binding Cargo.toml to use local path for mmtk core - note: this makes this script not repeatable
+# Edit jikesrvm binding Cargo.toml to use local path for mmtk core - note: this makes this script not repeatable
 jikesrvm_binding_use_local_mmtk $jikesrvm_binding_trunk
 if [ "$jikesrvm_binding_branch" != "$jikesrvm_binding_trunk" ]; then
     jikesrvm_binding_use_local_mmtk $jikesrvm_binding_branch
@@ -28,12 +28,14 @@ fi
 ensure_empty_dir $kit_build
 
 # Trunk
-rsync -avLe $mmtk_core_trunk/* $jikesrvm_binding_trunk/repos/mmtk-core
+ensure_empty_dir $jikesrvm_binding_trunk/repos/mmtk-core
+cp -r $mmtk_core_trunk/* $jikesrvm_binding_trunk/repos/mmtk-core/
 build_jikesrvm_with_mmtk $jikesrvm_binding_trunk RFastAdaptiveNoGC $kit_build/NoGC_Trunk_x86_64-linux
 build_jikesrvm_with_mmtk $jikesrvm_binding_trunk RFastAdaptiveSemiSpace $kit_build/SemiSpace_Trunk_x86_64-linux
 
 # Branch
-rsync -avLe $mmtk_core_branch/* $jikesrvm_binding_branch/repos/mmtk-core
+ensure_empty_dir $jikesrvm_binding_branch/repos/mmtk-core
+cp -r $mmtk_core_branch/* $jikesrvm_binding_branch/repos/mmtk-core/
 build_jikesrvm_with_mmtk $jikesrvm_binding_branch RFastAdaptiveNoGC $kit_build/NoGC_Branch_x86_64-linux
 build_jikesrvm_with_mmtk $jikesrvm_binding_branch RFastAdaptiveSemiSpace $kit_build/SemiSpace_Branch_x86_64-linux
 
