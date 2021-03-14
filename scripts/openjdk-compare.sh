@@ -32,12 +32,14 @@ ensure_empty_dir $openjdk_binding_trunk/repos/mmtk-core
 cp -r $mmtk_core_trunk/* $openjdk_binding_trunk/repos/mmtk-core/
 # SemiSpace
 build_openjdk_with_mmtk $openjdk_binding_trunk semispace release $kit_build/jdk-mmtk-trunk-semispace
+build_openjdk_with_mmtk $openjdk_binding_trunk gencopy release $kit_build/jdk-mmtk-trunk-gencopy
 
 # Build for branch
 ensure_empty_dir $openjdk_binding_branch/repos/mmtk-core
 cp -r $mmtk_core_branch/* $openjdk_binding_branch/repos/mmtk-core/
 # SemiSpace
 build_openjdk_with_mmtk $openjdk_binding_branch semispace release $kit_build/jdk-mmtk-branch-semispace
+build_openjdk_with_mmtk $openjdk_binding_branch gencopy release $kit_build/jdk-mmtk-branch-gencopy
 
 # Run
 cd $kit_root
@@ -60,3 +62,8 @@ pip3 install -r scripts/requirements.txt
 ss_run_id=$(run_benchmarks $kit_root/configs/RunConfig-OpenJDK-SemiSpace-FastCompare.pm)
 # Result for SemiSpace
 python $kit_root/scripts/compare_report.py $kit_root/running/results/log/$ss_run_id SemiSpace jdk-mmtk-trunk-semispace jdk-mmtk-branch-semispace 40 >> $output_file
+
+# Run For GenCopy
+gencopy_run_id=$(run_benchmarks $kit_root/configs/RunConfig-OpenJDK-GenCopy-FastCompare.pm)
+# Result for SemiSpace
+python $kit_root/scripts/compare_report.py $kit_root/running/results/log/$ss_run_id GenCopy jdk-mmtk-trunk-gencopy jdk-mmtk-branch-gencopy 40 >> $output_file
