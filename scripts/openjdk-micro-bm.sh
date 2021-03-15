@@ -65,4 +65,4 @@ echo "* branch:  [$mmtk_branch_rev](https://github.com/mmtk/mmtk-core/commit/$mm
 echo "" >> $output_file
 
 python ../scripts/rebench_report.py rebench microbm.conf CI_SemiSpace >> $output_file
-python ../scripts/rebench_report.py rebench microbm.conf CI_GenCopy >> $output_file
+# python ../scripts/rebench_report.py rebench microbm.conf CI_GenCopy >> $output_file
