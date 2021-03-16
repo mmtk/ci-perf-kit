@@ -32,6 +32,14 @@ ss_run_id=$(run_benchmarks $kit_root/configs/RunConfig-OpenJDK-SemiSpace-Complet
 mkdir -p $result_repo_dir/openjdk/semispace
 cp -r $kit_root/running/results/log/$ss_run_id $result_repo_dir/openjdk/semispace
 
+# GenCopy
+build_openjdk_with_mmtk $openjdk_binding gencopy release $kit_build/jdk-mmtk-gencopy
+# Run For GenCopy
+gencopy_run_id=$(run_benchmarks $kit_root/configs/RunConfig-OpenJDK-GenCopy-Complete.pm)
+# Save result
+mkdir -p $result_repo_dir/openjdk/gencopy
+cp -r $kit_root/running/results/log/$gencopy $result_repo_dir/openjdk/gencopy
+
 # Commit result
 commit_result_repo 'OpenJDK Binding: '$openjdk_rev
 

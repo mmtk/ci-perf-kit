@@ -36,12 +36,14 @@ ensure_empty_dir $openjdk_binding_trunk/repos/mmtk-core
 cp -r $mmtk_core_trunk/* $openjdk_binding_trunk/repos/mmtk-core/
 # SemiSpace
 build_openjdk_with_mmtk $openjdk_binding_trunk semispace release $kit_build/jdk-mmtk-trunk-semispace
+# build_openjdk_with_mmtk $openjdk_binding_trunk gencopy release $kit_build/jdk-mmtk-trunk-gencopy
 
 # Build for branch
 ensure_empty_dir $openjdk_binding_branch/repos/mmtk-core
 cp -r $mmtk_core_branch/* $openjdk_binding_branch/repos/mmtk-core/
 # SemiSpace
 build_openjdk_with_mmtk $openjdk_binding_branch semispace release $kit_build/jdk-mmtk-branch-semispace
+# build_openjdk_with_mmtk $openjdk_binding_branch gencopy release $kit_build/jdk-mmtk-branch-gencopy
 
 # Build MicroBM
 cd $microbm_root
@@ -63,3 +65,5 @@ echo "* branch:  [$mmtk_branch_rev](https://github.com/mmtk/mmtk-core/commit/$mm
 echo "" >> $output_file
 
 python ../scripts/rebench_report.py rebench microbm.conf CI_SemiSpace >> $output_file
+# GenCopy takes too long (semispace runs finish in 1h30m. But GenCopy timed out for 10h)
+# python ../scripts/rebench_report.py rebench microbm.conf CI_GenCopy >> $output_file
