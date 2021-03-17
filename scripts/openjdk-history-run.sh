@@ -38,7 +38,7 @@ build_openjdk_with_mmtk $openjdk_binding gencopy release $kit_build/jdk-mmtk-gen
 gencopy_run_id=$(run_benchmarks $kit_root/configs/RunConfig-OpenJDK-GenCopy-Complete.pm)
 # Save result
 mkdir -p $result_repo_dir/openjdk/gencopy
-cp -r $kit_root/running/results/log/$gencopy $result_repo_dir/openjdk/gencopy
+cp -r $kit_root/running/results/log/$gencopy_run_id $result_repo_dir/openjdk/gencopy
 
 # Commit result
 commit_result_repo 'OpenJDK Binding: '$openjdk_rev
