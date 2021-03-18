@@ -49,14 +49,21 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
 
         y, std = history_per_run(runs, plan, bm, data_key)
         x = log_timeline(len(y))
-        print(x)
         x_labels = list(runs.keys())
         x_labels.sort()
 
         y_cur_aboslute = y[-1]
 
         # From now, all y's are normalized to this baseline
-        nonzero_y = [i for i in y[:-1] if i != 0] # we dont want 0 as baseline, and we should not use the most recent data as baseline
+        if len(y) == 1:
+            if y[0] != 0:
+                nonzero_y = y
+            else:
+                # We should almost never run to this.
+                print("Unable to plot the graph")
+                sys.exit(1)
+        else:
+            nonzero_y = [i for i in y[:-1] if i != 0] # we dont want 0 as baseline, and we should not use the most recent data as baseline
         y_baseline = min(nonzero_y)
         y_max = max(nonzero_y) / y_baseline
         y_min = min(nonzero_y) / y_baseline
