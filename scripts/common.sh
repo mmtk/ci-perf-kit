@@ -83,8 +83,24 @@ build_openjdk() {
     build_path=$3
 
     cd $openjdk_path
-    export DEBUG_LEVEl=$debug_level
-    sh configure --disable-warnings-as-errors --with-debug-level=$DEBUG_LEVEL
+    export DEBUG_LEVEL=$debug_level
+    sh configure --disable-warnings-as-errors --with-debug-level=$DEBUG_LEVEL --with-jvm-features=zgc
+    make CONF=linux-x86_64-normal-server-$DEBUG_LEVEL
+
+    # copy to build_path
+    cp -r $openjdk_path/build/linux-x86_64-normal-server-$DEBUG_LEVEL $build_path
+}
+
+# build_openjdk_with_features 'openjdk_path' 'debug_level' 'build_path' 'features'
+build_openjdk_with_features() {
+    openjdk_path=$1
+    debug_level=$2
+    build_path=$3
+    features=$4
+
+    cd $openjdk_path
+    export DEBUG_LEVEL=$debug_level
+    sh configure --disable-warnings-as-errors --with-debug-level=$DEBUG_LEVEL --with-jvm-features=$features
     make CONF=linux-x86_64-normal-server-$DEBUG_LEVEL
 
     # copy to build_path
