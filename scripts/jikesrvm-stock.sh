@@ -7,7 +7,7 @@ jikesrvm_path=$(realpath $1)
 
 # Build
 ensure_empty_dir $kit_build
-# checkout_result_repo
+checkout_result_repo
 
 cd $jikesrvm_path
 
@@ -22,4 +22,4 @@ mkdir -p $result_repo_dir/jikesrvm_stock
 cp -r $kit_root/running/results/log/$stock_run_id $result_repo_dir/jikesrvm_stock
 
 # Make sure this is commented out during testing
-# commit_result_repo 'JikesRVM Stock GC'
+commit_result_repo 'JikesRVM Stock GC'

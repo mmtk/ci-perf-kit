@@ -25,4 +25,4 @@ mkdir -p $result_repo_dir/openjdk_stock
 cp -r $kit_root/running/results/log/$stock_run_id $result_repo_dir/openjdk_stock
 
 # Make sure this is commented out during testing
-# commit_result_repo 'OpenJDK Stock GC'
+commit_result_repo 'OpenJDK Stock GC'

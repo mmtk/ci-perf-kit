@@ -5,4 +5,4 @@ plans:
   - plan: semispace
     baseline: ['jdk-g1']
   - plan: gencopy
-    baseline: ['jdk-g1', 'jdk-zgc']
+    baseline: ['jdk-g1']
