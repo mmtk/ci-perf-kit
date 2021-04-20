@@ -63,7 +63,7 @@ $remotedir = $rootdir;          # same directory structure on both machines
 # Misc variables
 #
 $standalonemode = 0;            # if 1, then stop daemons (including network!)
-$targetinvocations = 5;        # how many invocations of each benchmark?
+$targetinvocations = 3;        # how many invocations of each benchmark?
 $defaulttimingiteration = 2;    # which iteration of the benchmark to time
 $heaprange = 6;                 # controls x-axis range
 $maxinvocations = $targetinvocations;
@@ -193,11 +193,11 @@ $perfevents = "";
 		#   # G1
 		#   "jdk-g1|ms|s|c2|g1|xmx8000M|xms8000M|openjdkprobe",
 		"jdk-epsilon|epsilon|ms|s|c2|xmx8000M|xms8000M",
-		"jdk-g1|g1|ms|s|c2",
-		"jdk-zgc|zgc|ms|s|c2",
-		"jdk-parallelgc|parallelgc|ms|s|c2",
-		"jdk-serialgc|serialgc|ms|s|c2",
-		"jdk-cms|cms|ms|s|c2",
+		"jdk-g1|g1|ms|s|c2|i-5",
+		"jdk-zgc|zgc|ms|s|c2|i-5",
+		"jdk-parallelgc|parallelgc|ms|s|c2|i-5",
+		"jdk-serialgc|serialgc|ms|s|c2|i-5",
+		"jdk-cms|cms|ms|s|c2|i-5",
 	      );
 
 
