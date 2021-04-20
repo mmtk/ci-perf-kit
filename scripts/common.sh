@@ -53,7 +53,7 @@ build_jikesrvm() {
     cd $jikesrvm_path
 
     # build
-    bin/buildit localhost $plan -j $JAVA_HOME
+    bin/buildit localhost $plan -j $JAVA_HOME -quick
 
     # copy to build_path
     cp -r $jikesrvm_path'/dist/'$plan'_x86_64-linux' $build_path/
