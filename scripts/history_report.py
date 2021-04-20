@@ -12,7 +12,7 @@ from plotly.subplots import make_subplots
 import pprint
 pp = pprint.PrettyPrinter(indent=2)
 
-if len(sys.argv) != 4:
+if len(sys.argv) != 5:
     print("Usage: python history_report.py <config> <result_repo_vm_root> <result_repo_baseline_root> <output_dir>")
 
 config_path = sys.argv[1]

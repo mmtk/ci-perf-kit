@@ -105,8 +105,14 @@ def get_config_for_plan(config, plan):
 
 # Get the last log from baseline_root
 def parse_baseline(result_repo_baseline_root):
+    if not os.path.isdir(result_repo_baseline_root):
+        return None, []
+
     # get baseline logs
     baseline_logs = os.listdir(result_repo_baseline_root)
+    if len(baseline_logs) == 0:
+        return None, []
+        
     baseline_logs.sort()
     latest_baseline_log = baseline_logs[-1]
     print("Latest baseline log: %s" % latest_baseline_log)
