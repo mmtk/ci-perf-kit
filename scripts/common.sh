@@ -21,7 +21,7 @@ ensure_env() {
     fi
 }
 
-# build_jikesrvm 'binding_path' 'plan' 'build_path'
+# build_jikesrvm_with_mmtk 'binding_path' 'plan' 'build_path'
 # Env: JAVA_HOME
 build_jikesrvm_with_mmtk() {
     ensure_env JAVA_HOME
@@ -36,6 +36,24 @@ build_jikesrvm_with_mmtk() {
 
     # build
     python scripts/testMMTk.py -g $plan -j $JAVA_HOME --build-only -- -quick --answer-yes --use-third-party-heap=../.. --use-third-party-build-configs=../../jikesrvm/build/configs --use-external-source=../../jikesrvm/rvm/src
+
+    # copy to build_path
+    cp -r $jikesrvm_path'/dist/'$plan'_x86_64-linux' $build_path/
+}
+
+# build_jikesrvm 'jikesrvm_path' 'plan' 'build_path'
+# Env: JAVA_HOME
+build_jikesrvm() {
+    ensure_env JAVA_HOME
+
+    jikesrvm_path=$1
+    plan=$2
+    build_path=$3
+
+    cd $jikesrvm_path
+
+    # build
+    bin/buildit localhost $plan -j $JAVA_HOME
 
     # copy to build_path
     cp -r $jikesrvm_path'/dist/'$plan'_x86_64-linux' $build_path/

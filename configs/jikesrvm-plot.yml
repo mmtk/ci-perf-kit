@@ -1,0 +1,6 @@
+name: jikesrvm
+plans:
+  - plan: nogc
+    baseline: ['JavaMMTk_NoGC']
+  - plan: semispace
+    baseline: ['JavaMMTk_SemiSpace']

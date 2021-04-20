@@ -7,6 +7,8 @@ openjdk_path=$(realpath $1)
 
 # Build
 ensure_empty_dir $kit_build
+checkout_result_repo
+
 build_openjdk_with_features $openjdk_path release $kit_build/jdk-stock zgc
 
 ln -s $kit_build/jdk-stock $kit_build/jdk-epsilon
