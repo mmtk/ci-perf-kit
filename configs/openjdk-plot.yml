@@ -1,0 +1,8 @@
+name: openjdk
+plans:
+  - plan: nogc
+    baseline: ['jdk-epsilon']
+  - plan: semispace
+    baseline: ['jdk-g1', 'jdk-zgc']
+  - plan: gencopy
+    baseline: ['jdk-g1', 'jdk-zgc']

@@ -40,4 +40,4 @@ ensure_empty_dir $output_dir
 cd $kit_root
 start_venv python-env
 pip3 install -r scripts/requirements.txt
-python3 scripts/history_report.py $result_repo_dir/jikesrvm $output_dir jikesrvm
+python3 scripts/history_report.py configs/jikesrvm-plot.yml $result_repo_dir/jikesrvm $result_repo_dir/jikesrvm_stock $output_dir

@@ -23,7 +23,9 @@ LABEL_OFFSET = X_INTERVAL_3 * 3
 # plan: the plan to plot
 # benchmarks: benchmarks to plot
 # start_date, end_date: plot data between the given date range
-def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
+# data_key: the data to render
+# baseline: the baseline to plot as a dict {baseline: {benchmark: avg}}. None means no baseline, or no data for a certain benchmark.
+def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baseline):
     layout = {
         "title": plan,
         # "margin": {"t": 80},
@@ -36,6 +38,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
     
     traces = []
     annotations = []
+    baseline_hlines = []
 
     # we want all the traces use the same Y range so it is easier to interpret the plot. These two variables record the upper and lower of Y range
     y_range_upper = - float("inf")
@@ -43,7 +46,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
 
     for bm in benchmarks:
         # extract results
-        print(plan + ' ' + bm)
+        print("Plotting %s %s..." % (plan, bm))
 
         is_last_row = row == n_benchmarks
 
@@ -184,7 +187,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
             # "bordercolor": 'black',
             # "borderwidth": 1,
         }
-        print(annotation)
+        # print(annotation)
 
         # highlight current
         current = y[-1]
@@ -278,6 +281,50 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
             "text": ["moving avg - std dev: %s: %.2f" % (x, y) for (x, y) in zip(x_labels, variance_down)],
         }})
 
+        # baseline - we will draw one horizontal line per each baseline
+        baseline_opacity = 0.6
+        baseline_color = "orange"
+        baseline_trace = {
+            "hoverinfo": "text",
+            "mode": "lines",
+            "line": {"width": 1, "color": baseline_color, "dash": "dash"},
+            "x": x,
+            "xaxis": x_axis,
+            "yaxis": y_axis,
+            "showlegend": False,
+            "opacity": baseline_opacity,
+        }
+        baseline_label = {
+            "xref": x_axis,
+            "yref": y_axis,
+            "x": x[0],
+            "font": {"color": baseline_color, "size": 12},
+            "showarrow": False,
+            "xanchor": "center",
+            "yanchor": "top",
+            "opacity": baseline_opacity,
+        }
+        if baseline is not None:
+            for build in baseline:
+                if bm in baseline[build] and baseline[build][bm] is not None:
+                    # normalize and update y range
+                    hline = baseline[build][bm] / y_baseline
+                    if hline > y_range_upper:
+                        y_range_upper = hline
+                    if hline < y_range_lower:
+                        y_range_lower = hline
+
+                    print("%s baseline %s: %s" % (bm, build, hline))
+
+                    traces.append({**baseline_trace, **{
+                        "y": [hline] * len(x),
+                        "text": "%s: %.2f" % (build, hline),
+                    }})
+                    # annotations.append({**baseline_label, **{
+                    #     "y": hline,
+                    #     "text": "%s: %.2f" % (build, hline),
+                    # }})
+
         row += 1
 
     # fix range for all the traces
@@ -288,6 +335,8 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key):
     fig = Figure(data = Data(traces), layout = layout)
     for anno in annotations:
         fig.add_annotation(anno)
+    for line in baseline_hlines:
+        fig.add_shape(line)
     return fig
 
 
@@ -399,6 +448,7 @@ def moving_average(array_numbers, p):
 # Returns two arrays:
 # The first array is average execution time for the benchmark on one day.
 # The second array represents standard deviation.
+# - This is no longer used.
 def history_per_day(runs, plan, benchmark, start_date, end_date, data_key):
     # ordered runs
     run_ids = list(runs.keys())
@@ -443,7 +493,7 @@ def history_per_run(runs, plan, benchmark, data_key):
         if result is None:
             result = 0, 0
         
-        print("Run for %s: %s +/- %s" % (rid, result[0], result[1]))
+        # print("Run for %s: %s +/- %s" % (rid, result[0], result[1]))
         avg.append(result[0])
         std.append(result[1])
 
@@ -455,7 +505,7 @@ def normalize_history(arr):
     if (len(arr)) == 0:
         return arr
 
-    print(arr)
+    # print(arr)
     ret = []
     first_non_zero = None
     for x in arr:
@@ -511,3 +561,19 @@ def average_time(run, plan, benchmark, data_key):
                 return sum(bm_run[data_key]) / len(bm_run[data_key]), np.std(bm_run[data_key])
             else:
                 return None
+
+
+# Given an array of results {benchmark, build, data (such as execution_times), log_name}, return a dict {build: {benchmark: avg}}
+def calculate_baseline(baseline_results, baseline_builds, data_key):
+    ret = {}
+    for b in baseline_builds:
+        avg_per_bm = {}
+        for r in baseline_results:
+            if r['build'] == b:
+                if r[data_key] and len(r[data_key]) != 0:
+                    avg = sum(r[data_key]) / len(r[data_key])
+                else:
+                    avg = None
+                avg_per_bm[r['benchmark']] = avg
+        ret[b] = avg_per_bm
+    return ret

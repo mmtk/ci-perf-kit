@@ -85,6 +85,42 @@ def parse_run(log_folder, n_invocations = None):
 # Given a run id, return the date
 def parse_run_date(run_id):
     from datetime import datetime
-    matcher = re.match(".*-(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})-(.*)-(?<hour>\d{2})(?<minute>\d{2})(?<second>\d{2})", run_id)
+    matcher = re.match(".*-(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})-(.*)-(?P<hour>\d{2})(?P<minute>\d{2})(?P<second>\d{2})", run_id)
     if matcher:
-        return datetime.datetime(int(matcher['year']), int(matcher['month']), int(matcher['day']), int(matcher['hour']), int(matcher['minute']), int(matcher['second']))
+        return datetime(int(matcher['year']), int(matcher['month']), int(matcher['day']), int(matcher['hour']), int(matcher['minute']), int(matcher['second']))
+
+# Given a yaml file path, return the file
+def parse_yaml(path):
+    import yaml
+    with open(path, 'r') as file:
+        content = file.read()
+        return yaml.load(content, Loader=yaml.FullLoader)
+
+# Given a parsed config (returned from parse_yaml) and a plan, return the config for the plan
+def get_config_for_plan(config, plan):
+    for p in config['plans']:
+        if p['plan'] == plan:
+            return p
+    return None
+
+# Get the last log from baseline_root
+def parse_baseline(result_repo_baseline_root):
+    if not os.path.isdir(result_repo_baseline_root):
+        return None, []
+
+    # get baseline logs
+    baseline_logs = os.listdir(result_repo_baseline_root)
+    if len(baseline_logs) == 0:
+        return None, []
+        
+    sort_logs(baseline_logs)
+    latest_baseline_log = baseline_logs[-1]
+    print("Latest baseline log: %s" % latest_baseline_log)
+
+    # parse baseline
+    baseline_results = parse_run(os.path.join(result_repo_baseline_root, latest_baseline_log))
+    return baseline_results
+
+def sort_logs(logs):
+    # sort logs by date (in case we have logs from different machines)
+    logs.sort(key = lambda x: parse_run_date(x))
