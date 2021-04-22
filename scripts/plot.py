@@ -282,24 +282,27 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
         }})
 
         # baseline - we will draw one horizontal line per each baseline
+        baseline_opacity = 0.6
+        baseline_color = "orange"
         baseline_trace = {
             "hoverinfo": "text",
             "mode": "lines",
-            "line": {"dash": "dash"},
-            "line_color": "orange",
+            "line": {"width": 1, "color": baseline_color, "dash": "dash"},
             "x": x,
             "xaxis": x_axis,
             "yaxis": y_axis,
             "showlegend": False,
+            "opacity": baseline_opacity,
         }
         baseline_label = {
             "xref": x_axis,
             "yref": y_axis,
             "x": x[0],
-            "font": {"color": "orange", "size": 12},
+            "font": {"color": baseline_color, "size": 12},
             "showarrow": False,
             "xanchor": "center",
             "yanchor": "top",
+            "opacity": baseline_opacity,
         }
         if baseline is not None:
             for build in baseline:
@@ -317,10 +320,10 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
                         "y": [hline] * len(x),
                         "text": "%s: %.2f" % (build, hline),
                     }})
-                    annotations.append({**baseline_label, **{
-                        "y": hline,
-                        "text": "%s: %.2f" % (build, hline),
-                    }})
+                    # annotations.append({**baseline_label, **{
+                    #     "y": hline,
+                    #     "text": "%s: %.2f" % (build, hline),
+                    # }})
 
         row += 1
 
