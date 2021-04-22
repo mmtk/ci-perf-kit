@@ -53,7 +53,7 @@ for plan in plans:
         continue
     
     runs = {}
-    logs.sort()
+    parse.sort_logs(logs)
     last_run = None
     for l in logs:
         run_id, results = parse.parse_run(os.path.join(result_repo_vm_root, plan, l))
