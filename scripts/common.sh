@@ -35,10 +35,10 @@ build_jikesrvm_with_mmtk() {
     cd $jikesrvm_path
 
     # build
-    python scripts/testMMTk.py -g $plan -j $JAVA_HOME --build-only -- -quick --answer-yes --use-third-party-heap=../.. --use-third-party-build-configs=../../jikesrvm/build/configs --use-external-source=../../jikesrvm/rvm/src
+    python scripts/testMMTk.py -g $plan -j $JAVA_HOME --build-only -- -quick --answer-yes --use-third-party-heap=../.. --use-third-party-build-configs=../../jikesrvm/build/configs --use-external-source=../../jikesrvm/rvm/src --m32
 
     # copy to build_path
-    cp -r $jikesrvm_path'/dist/'$plan'_x86_64-linux' $build_path/
+    cp -r $jikesrvm_path'/dist/'$plan'_x86_64_m32-linux' $build_path/
 }
 
 # build_jikesrvm 'jikesrvm_path' 'plan' 'build_path'
@@ -56,7 +56,7 @@ build_jikesrvm() {
     bin/buildit localhost $plan -j $JAVA_HOME -quick
 
     # copy to build_path
-    cp -r $jikesrvm_path'/dist/'$plan'_x86_64-linux' $build_path/
+    cp -r $jikesrvm_path'/dist/'$plan'_x86_64_m32-linux' $build_path/
 }
 
 # openjdk_binding_use_local_mmtk 'binding_path'

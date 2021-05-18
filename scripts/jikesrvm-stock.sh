@@ -11,8 +11,8 @@ checkout_result_repo
 
 cd $jikesrvm_path
 
-build_jikesrvm $jikesrvm_path FastAdaptiveNoGC $kit_build/JavaMMTk_NoGC_x86_64-linux
-build_jikesrvm $jikesrvm_path FastAdaptiveSemiSpace $kit_build/JavaMMTk_SemiSpace_x86_64-linux
+build_jikesrvm $jikesrvm_path FastAdaptiveNoGC $kit_build/JavaMMTk_NoGC_x86_64_m32-linux
+build_jikesrvm $jikesrvm_path FastAdaptiveSemiSpace $kit_build/JavaMMTk_SemiSpace_x86_64_m32-linux
 
 # Run
 stock_run_id=$(run_benchmarks $kit_root/configs/RunConfig-JikesRVM-Stock.pm)
