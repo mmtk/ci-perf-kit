@@ -17,7 +17,7 @@ checkout_result_repo
 cd $jikesrvm
 
 # NoGC
-build_jikesrvm_with_mmtk $jikesrvm_binding RFastAdaptiveNoGC $kit_build/NoGC_x86_64-linux
+build_jikesrvm_with_mmtk $jikesrvm_binding RFastAdaptiveNoGC $kit_build/NoGC_x86_64_m32-linux
 # Run for NoGC
 nogc_run_id=$(run_benchmarks $kit_root/configs/RunConfig-JikesRVM-NoGC-Complete.pm)
 # Save result
@@ -25,7 +25,7 @@ mkdir -p $result_repo_dir/jikesrvm/nogc
 cp -r $kit_root/running/results/log/$nogc_run_id $result_repo_dir/jikesrvm/nogc
 
 # SemiSpace
-build_jikesrvm_with_mmtk $jikesrvm_binding RFastAdaptiveSemiSpace $kit_build/SemiSpace_x86_64-linux
+build_jikesrvm_with_mmtk $jikesrvm_binding RFastAdaptiveSemiSpace $kit_build/SemiSpace_x86_64_m32-linux
 # Run for SemiSpace
 ss_run_id=$(run_benchmarks $kit_root/configs/RunConfig-JikesRVM-SemiSpace-Complete.pm)
 # Save result

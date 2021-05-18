@@ -30,14 +30,14 @@ ensure_empty_dir $kit_build
 # Trunk
 ensure_empty_dir $jikesrvm_binding_trunk/repos/mmtk-core
 cp -r $mmtk_core_trunk/* $jikesrvm_binding_trunk/repos/mmtk-core/
-build_jikesrvm_with_mmtk $jikesrvm_binding_trunk RFastAdaptiveNoGC $kit_build/NoGC_Trunk_x86_64-linux
-build_jikesrvm_with_mmtk $jikesrvm_binding_trunk RFastAdaptiveSemiSpace $kit_build/SemiSpace_Trunk_x86_64-linux
+build_jikesrvm_with_mmtk $jikesrvm_binding_trunk RFastAdaptiveNoGC $kit_build/NoGC_Trunk_x86_64_m32-linux
+build_jikesrvm_with_mmtk $jikesrvm_binding_trunk RFastAdaptiveSemiSpace $kit_build/SemiSpace_Trunk_x86_64_m32-linux
 
 # Branch
 ensure_empty_dir $jikesrvm_binding_branch/repos/mmtk-core
 cp -r $mmtk_core_branch/* $jikesrvm_binding_branch/repos/mmtk-core/
-build_jikesrvm_with_mmtk $jikesrvm_binding_branch RFastAdaptiveNoGC $kit_build/NoGC_Branch_x86_64-linux
-build_jikesrvm_with_mmtk $jikesrvm_binding_branch RFastAdaptiveSemiSpace $kit_build/SemiSpace_Branch_x86_64-linux
+build_jikesrvm_with_mmtk $jikesrvm_binding_branch RFastAdaptiveNoGC $kit_build/NoGC_Branch_x86_64_m32-linux
+build_jikesrvm_with_mmtk $jikesrvm_binding_branch RFastAdaptiveSemiSpace $kit_build/SemiSpace_Branch_x86_64_m32-linux
 
 # Run
 cd $kit_root
