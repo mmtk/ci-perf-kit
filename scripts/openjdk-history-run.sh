@@ -4,7 +4,7 @@ set -ex
 . $(dirname "$0")/common.sh
 
 openjdk_binding=$(realpath $1)
-output_dir=$(realpath $2)
+output_dir=$(ensure_realpath $2)
 openjdk_rev=$(git -C $openjdk_binding rev-parse HEAD)
 
 # OpenJDK root
