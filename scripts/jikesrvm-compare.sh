@@ -7,7 +7,7 @@ jikesrvm_binding_trunk=$(realpath $1)
 mmtk_core_trunk=$(realpath $2)
 jikesrvm_binding_branch=$(realpath $3)
 mmtk_core_branch=$(realpath $4)
-output_file=$(realpath $5)
+output_file=$(ensure_realpath $5)
 
 jikesrvm_trunk_rev=$(git -C $jikesrvm_binding_trunk rev-parse HEAD)
 mmtk_trunk_rev=$(git -C $mmtk_core_trunk rev-parse HEAD)
