@@ -53,7 +53,8 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
         y, std = history_per_run(runs, plan, bm, data_key)
         x = log_timeline(len(y))
         x_labels = list(runs.keys())
-        x_labels.sort()
+        # We have to sort by date, run_id includes the machine name, we cannot sort by alphabet
+        x_labels.sort(key = lambda x: parse.parse_run_date(x))
 
         y_cur_aboslute = y[-1]
 
@@ -358,7 +359,8 @@ def plot_multi_plans_history(runs, plans, benchmarks, start_date, end_date, data
             y, std = history_per_run(runs, p, bm, data_key)
             x = list(range(0, len(y)))
             x_labels = list(runs.keys())
-            x_labels.sort()
+            # We have to sort by date, run_id includes the machine name, we cannot sort by alphabet
+            x_labels.sort(key = lambda x: parse.parse_run_date(x))
 
             trace = {
                 "name": p,
