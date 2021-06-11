@@ -4,7 +4,7 @@ set -ex
 . $(dirname "$0")/common.sh
 
 jikesrvm_binding=$(realpath $1)
-output_dir=$(ensure_realpath $2)
+output_dir=$(realpath -m $2)
 jikesrvm_rev=$(git -C $jikesrvm_binding rev-parse HEAD)
 
 # JikesRVM root

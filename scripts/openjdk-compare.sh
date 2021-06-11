@@ -7,7 +7,7 @@ openjdk_binding_trunk=$(realpath $1)
 mmtk_core_trunk=$(realpath $2)
 openjdk_binding_branch=$(realpath $3)
 mmtk_core_branch=$(realpath $4)
-output_file=$(ensure_realpath $5)
+output_file=$(realpath -m $5)
 
 openjdk_trunk_rev=$(git -C $openjdk_binding_trunk rev-parse HEAD)
 mmtk_trunk_rev=$(git -C $mmtk_core_trunk rev-parse HEAD)

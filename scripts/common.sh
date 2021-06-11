@@ -145,16 +145,6 @@ ensure_empty_dir() {
     rm -rf $path/*
 }
 
-# ensure_realpath 'path'
-# Make sure the path exists and return its real path
-ensure_realpath() {
-    path=$1
-
-    # make sure path exists. But we cannot delete stuff under the path.
-    mkdir -p $path
-    realpath $1
-}
-
 # start_venv 'venv_path'
 start_venv() {
     venv_path=$1
