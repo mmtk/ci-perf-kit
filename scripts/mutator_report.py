@@ -36,7 +36,6 @@ if (len(logs)) == 0:
     sys.exit(1)
 
 runs = {}
-parse.sort_logs(logs)
 last_run = None
 for l in logs:
     run_id, results = parse.parse_run(os.path.join(result_repo_mutator_root, l))
