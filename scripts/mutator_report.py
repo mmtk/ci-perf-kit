@@ -49,6 +49,6 @@ print(last_run)
 print(benchmarks)
 print(plans)
 
-fig = plot.plot_multi_plans_history(runs, plans, benchmarks, from_date, to_date, "time.mu")
+fig = plot.plot_multi_plans_history(runs, plans, benchmarks, from_date, to_date, "time.other")
 path = os.path.join(output_dir, "mutator_history.html")
 fig.write_html(path)
