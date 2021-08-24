@@ -304,7 +304,7 @@ public class OpenJDKProbe implements Probe, Runnable {
             // for plotty
             System.out.println("============================ MMTk Statistics Totals ============================");
             long totalGCCollections = youngCollections + oldCollections;
-            System.out.println("GC time.mu time.gc time.jitc time.ygc collections.young time.ogc collections.old");
+            System.out.println("GC time.other time.stw time.jitc time.ygc collections.young time.ogc collections.old");
             System.out.println(totalGCCollections + " " + mutatorTime + " " + gcTime + " " + elapsedJITCTime + " " + elapsedYoungCollectionsTime + " " + youngCollections + " " + elapsedOldCollectionsTime + " " + oldCollections);
             System.out.println("Total time: " + TimeUnit.NANOSECONDS.toMillis(elapsedTime) + " ms");
             System.out.println("------------------------------ End MMTk Statistics -----------------------------");
