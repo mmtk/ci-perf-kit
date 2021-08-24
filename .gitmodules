@@ -4,3 +4,6 @@
 [submodule "ReBench"]
 	path = ReBench
 	url = git@github.com:mmtk/ReBench.git
+[submodule "running-ng"]
+	path = running-ng
+	url = https://github.com/anupli/running-ng.git

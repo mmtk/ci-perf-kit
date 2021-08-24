@@ -124,3 +124,7 @@ def parse_baseline(result_repo_baseline_root):
 def sort_logs(logs):
     # sort logs by date (in case we have logs from different machines)
     logs.sort(key = lambda x: parse_run_date(x))
+
+def list_logs(path):
+    files = os.listdir(path)
+    return filter(lambda f: f.endswith(".log.gz"), files)

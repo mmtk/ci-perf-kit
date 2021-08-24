@@ -1,0 +1,6 @@
+includes:
+  - "./base.yml"
+
+configs:
+  - "jdk-mmtk-trunk|ms|s|c2|tph|probes_cp|probes_rustmmtk|semispace"
+  - "jdk-mmtk-branch|ms|s|c2|tph|probes_cp|probes_rustmmtk|semispace"

@@ -1,0 +1,13 @@
+includes:
+    - "../../ci_base.yml"
+    - "../benchmarks.yml"
+
+runtimes:
+  jdk-mmtk-trunk:
+    type: OpenJDK
+    release: 11
+    home: "./build/jdk-mmtk-trunk/jdk"
+  jdk-mmtk-branch:
+    type: OpenJDK
+    release: 11
+    home: "./build/jdk-mmtk-branch/jdk"

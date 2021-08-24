@@ -1,0 +1,73 @@
+modifiers:
+    # OpenJDK options
+    tph:
+      type: JVMArg
+      val: "-XX:+UseThirdPartyHeap"
+    c2:
+      type: JVMArg
+      val: "-XX:-TieredCompilation -Xcomp"
+      excludes:
+        # These two benchmarks exit with code 1
+        dacapochopin-69a704e:
+          - tradebeans
+          - tradesoap
+    ms:
+      type: JVMArg
+      val: "-XX:MetaspaceSize=500M -XX:+DisableExplicitGC"
+    s:
+      type: JVMArg
+      val: "-server"
+    heap120g:
+      type: JVMArg
+      val: "-Xms120G -Xmx120G"
+
+    # Probes
+    probes_cp:
+      type: JVMClasspath
+      val: "../probes/rust_mmtk/java ../probes/probes.jar"
+    probes_rustmmtk:
+      type: JVMArg
+      val: "-Dprobes=RustMMTk -Djava.library.path=../probes/rust_mmtk"
+
+    # Select GC algorithm
+    ## Rust MMTk
+    mmtk_gc:
+      type: EnvVar
+      var: "MMTK_PLAN"
+      val: "{0}"
+    semispace:
+      type: EnvVar
+      var: "MMTK_PLAN"
+      val: "SemiSpace"
+    immix:
+      type: EnvVar
+      var: "MMTK_PLAN"
+      val: "Immix"
+    gencopy:
+      type: EnvVar
+      var: "MMTK_PLAN"
+      val: "GenCopy"
+    marksweep:
+      type: EnvVar
+      var: "MMTK_PLAN"
+      val: "MarkSweep"
+    nogc:
+      type: EnvVar
+      var: "MMTK_PLAN"
+      val: "NoGC"
+    ## OpenJDK HotSpot
+    hotspot_gc:
+      type: JVMArg
+      val: "-XX:-UseCompressedOops -XX:+UnlockExperimentalVMOptions -XX:+Use{0}GC"
+    sgc:
+      type: JVMArg
+      val: "-XX:+UseSerialGC"
+    g1:
+      type: JVMArg
+      val: "-XX:-UseCompressedOops -XX:+UseG1GC"
+    epsilon:
+      type: JVMArg
+      val: "-XX:-UseCompressedOops -XX:+UnlockExperimentalVMOptions -XX:+UseEpsilonGC -XX:-EpsilonElasticTLAB -XX:TLABSize=32K -XX:-ResizeTLAB"
+    cms:
+      type: JVMArg
+      val: "-XX:-UseCompressedOops -XX:+UseConcMarkSweepGC -XX:TLABSize=32K -XX:-ResizeTLAB"

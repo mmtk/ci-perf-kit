@@ -1,15 +1,20 @@
 # root dir of this perf kit
 kit_root=$(realpath $(dirname "$0")/..)
 # where we put all the builds
-kit_build=$kit_root/running/build
+kit_build=$kit_root/build
 # where we put all the scripts
 kit_script=$kit_root/scripts
 # where we put all the configs
 config_dir=$kit_root/configs
 # where result logs are stored
-log_dir=$kit_root/running/results/log
+log_dir=$kit_root/logs-ng
 # where we put results
 result_repo_dir=$kit_root/result_repo
+
+# compare benchmarking invocations
+compare_invocations=5
+# history benchmarking invocations
+history_invocations=5
 
 # ensure_env 'var_name'
 ensure_env() {
@@ -86,7 +91,7 @@ build_openjdk_with_mmtk() {
 
     cd $openjdk_path
     export DEBUG_LEVEL=$debug_level
-    export MMTK_PLAN=$plan
+    # export MMTK_PLAN=$plan
     sh configure --disable-warnings-as-errors --with-debug-level=$DEBUG_LEVEL
     make CONF=linux-x86_64-normal-server-$DEBUG_LEVEL THIRD_PARTY_HEAP=$PWD/../../openjdk
 
@@ -127,11 +132,13 @@ build_openjdk_with_features() {
 
 # run_benchmarks 'config'
 run_benchmarks() {
-    config=$1
+    outdir=$1
+    config=$2
+    invocations=$3
 
-    cp $config $kit_root/running/bin/RunConfig.pm
-    output=$($kit_root/running/bin/runbms 16 16)
-    run_id=$(echo $output | cut -d ' ' -f 3) # output is something like: 'Run id: fox-2020-05-13-Wed-124656'
+    output=$(running runbms $1 $2 -i $3)
+    # Get the second line
+    run_id=$(echo $output | cut -d ' ' -f 3)
 
     echo $run_id
 }
@@ -149,6 +156,7 @@ ensure_empty_dir() {
 start_venv() {
     venv_path=$1
 
+    ensure_empty_dir $venv_path
     python3 -m venv $venv_path
     source $venv_path/bin/activate
 }
@@ -183,3 +191,8 @@ commit_result_repo() {
         echo "SKIP_UPLOAD_RESULT is set, skip uploading result"
     fi
 }
+
+# start venv, and install running-ng
+start_venv python-env
+pip3 install -e running-ng
+pip3 install -r scripts/requirements.txt

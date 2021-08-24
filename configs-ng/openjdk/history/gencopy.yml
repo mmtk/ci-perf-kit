@@ -1,0 +1,5 @@
+includes:
+    - "./base.yml"
+
+configs:
+    - "jdk-mmtk|ms|s|c2|tph|probes_cp|probes_rustmmtk|gencopy"
