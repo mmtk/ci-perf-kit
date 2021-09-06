@@ -67,7 +67,14 @@ modifiers:
       val: "-XX:-UseCompressedOops -XX:+UseG1GC"
     epsilon:
       type: JVMArg
-      val: "-XX:-UseCompressedOops -XX:+UnlockExperimentalVMOptions -XX:+UseEpsilonGC -XX:-EpsilonElasticTLAB -XX:TLABSize=32K -XX:-ResizeTLAB"
+      # val: "-XX:-UseCompressedOops -XX:+UnlockExperimentalVMOptions -XX:+UseEpsilonGC -XX:-EpsilonElasticTLAB -XX:TLABSize=32K -XX:-ResizeTLAB"
+      val: "-XX:-UseCompressedOops -XX:+UnlockExperimentalVMOptions -XX:+UseEpsilonGC"
     cms:
       type: JVMArg
       val: "-XX:-UseCompressedOops -XX:+UseConcMarkSweepGC -XX:TLABSize=32K -XX:-ResizeTLAB"
+    zgc:
+      type: JVMArg
+      val: "-XX:-UseCompressedOops -XX:+UnlockExperimentalVMOptions -XX:+UseZGC"
+    pgc:
+      type: JVMArg
+      val: "-XX:-UseCompressedOops -XX:+UseParallelGC"

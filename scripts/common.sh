@@ -15,6 +15,8 @@ result_repo_dir=$kit_root/result_repo
 compare_invocations=5
 # history benchmarking invocations
 history_invocations=5
+# stock GC benchmarking invocations
+stock_invocations=2
 
 # ensure_env 'var_name'
 ensure_env() {

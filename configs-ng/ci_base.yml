@@ -2,6 +2,9 @@ includes:
     - "../running-ng/config/base/suites.yml"
     - "./ci_modifiers.yml"
 
+overrides:
+    "suites.dacapochopin-69a704e.timeout": 240
+
 # Can override with command line argument -i
 invocations: 5
 # Can override with command line argument -m
