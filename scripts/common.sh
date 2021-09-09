@@ -12,7 +12,7 @@ log_dir=$kit_root/logs-ng
 result_repo_dir=$kit_root/result_repo
 
 # compare benchmarking invocations
-compare_invocations=5
+compare_invocations=2
 # history benchmarking invocations
 history_invocations=5
 # stock GC benchmarking invocations
@@ -42,7 +42,7 @@ build_jikesrvm_with_mmtk() {
     cd $jikesrvm_path
 
     # build
-    python scripts/testMMTk.py -g $plan -j $JAVA_HOME --build-only -- -quick --answer-yes --use-third-party-heap=../.. --use-third-party-build-configs=../../jikesrvm/build/configs --use-external-source=../../jikesrvm/rvm/src --m32
+    python2 scripts/testMMTk.py -g $plan -j $JAVA_HOME --build-only -- -quick --answer-yes --use-third-party-heap=../.. --use-third-party-build-configs=../../jikesrvm/build/configs --use-external-source=../../jikesrvm/rvm/src --m32
 
     # copy to build_path
     cp -r $jikesrvm_path'/dist/'$plan'_x86_64_m32-linux' $build_path/
@@ -132,12 +132,30 @@ build_openjdk_with_features() {
     cp -r $openjdk_path/build/linux-x86_64-normal-server-$DEBUG_LEVEL $build_path
 }
 
-# run_benchmarks 'config'
+# run_benchmarks 'log_dir' 'config' 'invocations'
 run_benchmarks() {
     outdir=$1
     config=$2
     invocations=$3
 
+    # factor 8 4 gives roughly 3x minheap as heap size
+    output=$(running runbms $1 $2 8 4 -i $3)
+    # Get the second line
+    run_id=$(echo $output | cut -d ' ' -f 3)
+
+    echo $run_id
+}
+
+# To run benchmarks with this, the config should provide a specific heap size for each build.
+# Min heap size or a multiple of min heap size won't be applied to each benchmark. This would
+# mostly be used for NoGC (for which we run with largest possible heap size)
+# run_benchmarks_custom_heap 'log_dir' 'config' 'invocations'
+run_benchmarks_custom_heap() {
+    outdir=$1
+    config=$2
+    invocations=$3
+
+    # factor 8 4 gives roughly 3x minheap as heap size
     output=$(running runbms $1 $2 -i $3)
     # Get the second line
     run_id=$(echo $output | cut -d ' ' -f 3)

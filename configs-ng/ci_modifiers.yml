@@ -17,9 +17,18 @@ modifiers:
     s:
       type: JVMArg
       val: "-server"
+
+    # JikesRVM options
+    ig:
+      type: JVMArg
+      val: "-X:gc:ignoreSystemGC=true"
+
     heap120g:
       type: JVMArg
       val: "-Xms120G -Xmx120G"
+    heap4g:
+      type: JVMArg
+      val: "-Xms4000M -Xmx4000M"
 
     # Probes
     probes_cp:
