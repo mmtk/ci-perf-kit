@@ -14,13 +14,9 @@ overrides:
         - hsqldb
 
 runtimes:
-    NoGC_Trunk:
+    NoGC:
         type: JikesRVM
-        home: "./build/NoGC_Trunk_x86_64_m32-linux"
-    NoGC_Branch:
-        type: JikesRVM
-        home: "./build/NoGC_Branch_x86_64_m32-linux"
+        home: "./build/NoGC_x86_64_m32-linux"
 
 configs:
-    - "NoGC_Trunk|ig|heap4g"
-    - "NoGC_Branch|ig|heap4g"
+    - "NoGC|ig|heap4g"

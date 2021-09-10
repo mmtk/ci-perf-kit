@@ -138,6 +138,8 @@ run_benchmarks() {
     config=$2
     invocations=$3
 
+    cd $kit_root
+
     # factor 8 4 gives roughly 3x minheap as heap size
     output=$(running runbms $1 $2 8 4 -i $3)
     # Get the second line
@@ -154,6 +156,8 @@ run_benchmarks_custom_heap() {
     outdir=$1
     config=$2
     invocations=$3
+
+    cd $kit_root
 
     # factor 8 4 gives roughly 3x minheap as heap size
     output=$(running runbms $1 $2 -i $3)

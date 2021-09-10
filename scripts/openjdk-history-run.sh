@@ -56,6 +56,4 @@ commit_result_repo 'OpenJDK Binding: '$openjdk_rev
 # plot result
 ensure_empty_dir $output_dir
 cd $kit_root
-# start_venv python-env
-# pip3 install -r scripts/requirements.txt
 python3 scripts/history_report.py configs/openjdk-plot.yml $result_repo_dir/openjdk $result_repo_dir/openjdk_stock $output_dir
