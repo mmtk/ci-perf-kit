@@ -229,6 +229,6 @@ commit_result_repo() {
 }
 
 # start venv, and install running-ng
-start_venv python-env
-pip3 install -e running-ng
-pip3 install -r scripts/requirements.txt
+start_venv $kit_root/python-env
+pip3 install -e $kit_root/running-ng
+pip3 install -r $kit_root/scripts/requirements.txt
