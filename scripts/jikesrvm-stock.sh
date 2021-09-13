@@ -21,10 +21,7 @@ run2_id=$(run_benchmarks $log_dir $kit_root/configs-ng/jikesrvm/stock/other.yml 
 
 # Save result
 mkdir -p $result_repo_dir/jikesrvm_stock
-# Copy run1
-cp -r $log_dir/$run1_id $result_repo_dir/jikesrvm_stock
-# Copy the logs in run2 to the run1 folder (pretending they are the same run)
-cp -r $log_dir/$run2_id/* $result_repo_dir/jikesrvm_stock/$run1_id/
+merge_runs $log_dir/$run1_id $log_dir/$run2_id $result_repo_dir
 
 # Make sure this is commented out during testing
 commit_result_repo 'JikesRVM Stock GC'

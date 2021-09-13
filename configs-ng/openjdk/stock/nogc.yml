@@ -10,8 +10,3 @@ runtimes:
 
 configs:
     - "jdk-mmtk|ms|s|c2|epsilon|heap120g"
-    - "jdk-mmtk|ms|s|c2|sgc"
-    - "jdk-mmtk|ms|s|c2|pgc"
-    - "jdk-mmtk|ms|s|c2|g1"
-    - "jdk-mmtk|ms|s|c2|zgc"
-    - "jdk-mmtk|ms|s|c2|cms"

@@ -167,6 +167,17 @@ run_benchmarks_custom_heap() {
     echo $run_id
 }
 
+# merge_runs 'run1' 'run2' 'dest'
+# Copy run1 to dest/, then copy the contents in run2 to dest/run1
+merge_runs() {
+    run1=$1
+    run2=$2
+    dest=$3
+
+    cp -r $run1 $dest
+    cp -r $run2/* $dest/$run1/
+}
+
 # prepare_dir 'path'
 # Make sure the dir exists and is empty
 ensure_empty_dir() {
