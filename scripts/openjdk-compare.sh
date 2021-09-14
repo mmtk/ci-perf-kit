@@ -55,7 +55,7 @@ echo "" >> $output_file
 ensure_empty_dir $log_dir
 
 # NoGC
-nogc_run_id=$(run_benchmarks $log_dir $kit_root/configs-ng/openjdk/compare/nogc.yml $compare_invocations)
+nogc_run_id=$(run_benchmarks_custom_heap $log_dir $kit_root/configs-ng/openjdk/compare/nogc.yml $compare_invocations)
 python $kit_root/scripts/compare_report.py $log_dir/$nogc_run_id NoGC jdk-mmtk-trunk jdk-mmtk-branch $compare_invocations >> $output_file
 
 # SemiSpace
