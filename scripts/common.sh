@@ -222,7 +222,7 @@ commit_result_repo() {
         git add .
         git commit -m "$message"
         git pull --rebase # pull any new commit (if any)
-        git push    
+        git push -u origin $RESULT_REPO_BRANCH    
     else
         echo "SKIP_UPLOAD_RESULT is set, skip uploading result"
     fi
