@@ -14,7 +14,7 @@ result_repo_dir=$kit_root/result_repo
 # compare benchmarking invocations
 compare_invocations=2
 # history benchmarking invocations
-history_invocations=5
+history_invocations=2
 # stock GC benchmarking invocations
 stock_invocations=2
 
