@@ -140,8 +140,8 @@ run_benchmarks() {
 
     cd $kit_root
 
-    # factor 8 4 gives roughly 3x minheap as heap size
-    output=$(running runbms $1 $2 8 4 -i $3)
+    # factor 8 8 gives 6x minheap as heap size
+    output=$(running runbms $1 $2 8 8 -i $3)
     # Get the second line
     run_id=$(echo $output | cut -d ' ' -f 3)
 
