@@ -17,7 +17,7 @@ run2_id=$(run_benchmarks $log_dir $kit_root/configs-ng/openjdk/stock/other.yml $
 
 # Save result
 mkdir -p $result_repo_dir/openjdk_stock
-merge_runs $log_dir/$run1_id $log_dir/$run2_id $result_repo_dir
+merge_runs $run1_id $run2_id $result_repo_dir/openjdk_stock
 
 # Make sure this is commented out during testing
 commit_result_repo 'OpenJDK Stock GC'
