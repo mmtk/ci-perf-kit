@@ -210,6 +210,7 @@ checkout_result_repo() {
     # git clone ssh://git@github.com/$RESULT_REPO.git $result_repo_dir --branch=$RESULT_REPO_BRANCH
     git clone https://$RESULT_REPO_ACCESS_TOKEN@github.com/$RESULT_REPO.git $result_repo_dir
     git --git-dir $result_repo_dir/.git checkout -B $RESULT_REPO_BRANCH
+    git --git-dir $result_repo_dir/.git branch -u origin/$RESULT_REPO_BRANCH $RESULT_REPO_BRANCH
 }
 
 # commit_result_repo_dir 'message'
@@ -222,7 +223,7 @@ commit_result_repo() {
         git add .
         git commit -m "$message"
         git pull --rebase # pull any new commit (if any)
-        git push -u origin $RESULT_REPO_BRANCH    
+        git push
     else
         echo "SKIP_UPLOAD_RESULT is set, skip uploading result"
     fi
