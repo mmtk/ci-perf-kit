@@ -210,7 +210,7 @@ checkout_result_repo() {
     # git clone ssh://git@github.com/$RESULT_REPO.git $result_repo_dir --branch=$RESULT_REPO_BRANCH
     git clone https://$RESULT_REPO_ACCESS_TOKEN@github.com/$RESULT_REPO.git $result_repo_dir
     git --git-dir $result_repo_dir/.git checkout -B $RESULT_REPO_BRANCH
-    git --git-dir $result_repo_dir/.git branch -u origin/$RESULT_REPO_BRANCH $RESULT_REPO_BRANCH
+    # git --git-dir $result_repo_dir/.git branch -u origin/$RESULT_REPO_BRANCH $RESULT_REPO_BRANCH
 }
 
 # commit_result_repo_dir 'message'
