@@ -66,6 +66,7 @@ for plan in plans:
     benchmarks = [r['benchmark'] for r in runs[last_run]]
 
     print("Plan: %s" % plan)
+    print("Runs: %s" % runs)
     print("Last run: %s" % last_run)
     print("Benchmarks: %s" % benchmarks)
 

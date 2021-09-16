@@ -34,6 +34,9 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
     }
     
     n_benchmarks = len(benchmarks)
+    if (n_benchmarks == 0):
+        print("Unable to plot history for %s: no benchmark result found." % plan)
+        exit(1)
     row = 1
     
     traces = []
