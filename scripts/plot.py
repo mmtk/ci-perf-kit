@@ -72,6 +72,17 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
                 continue
         else:
             nonzero_y = [i for i in y[:-1] if i != 0] # we dont want 0 as baseline, and we should not use the most recent data as baseline
+
+        # Special case: if we do not have a non-zero y value in the past but we do have a valid y value for the most recent point, we simply use it.
+        if len(nonzero_y) == 0 and y_cur_aboslute != 0:
+            nonzero_y = [y_cur_aboslute]
+
+        if len(nonzero_y) == 0:
+            print("No value for %s on %s, we cannot plot the graph!!!" % (plan, bm))
+            # Give one point to y so we will draw an empty graph for it.
+            nonzero_y = [1]
+            y = [1]
+
         y_baseline = min(nonzero_y)
         y_max = max(nonzero_y) / y_baseline
         y_min = min(nonzero_y) / y_baseline
