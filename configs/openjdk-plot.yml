@@ -10,3 +10,5 @@ plans:
     baseline: ['jdk-g1', 'jdk-zgc']
   - plan: marksweep
     baseline: ['jdk-g1', 'jdk-zgc']
+  - plan: genimmix
+    baseline: ['jdk-g1', 'jdk-zgc']

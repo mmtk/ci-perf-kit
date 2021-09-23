@@ -56,6 +56,10 @@ modifiers:
       type: EnvVar
       var: "MMTK_PLAN"
       val: "GenCopy"
+    genimmix:
+      type: EnvVar
+      var: "MMTK_PLAN"
+      val: "GenImmix"
     marksweep:
       type: EnvVar
       var: "MMTK_PLAN"

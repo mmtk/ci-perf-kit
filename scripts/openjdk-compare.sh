@@ -66,6 +66,10 @@ python $kit_root/scripts/compare_report.py $log_dir/$ss_run_id SemiSpace jdk-mmt
 gencopy_run_id=$(run_benchmarks $log_dir $kit_root/configs-ng/openjdk/compare/gencopy.yml $compare_invocations)
 python $kit_root/scripts/compare_report.py $log_dir/$gencopy_run_id GenCopy jdk-mmtk-trunk jdk-mmtk-branch $compare_invocations >> $output_file
 
+# GenImmix
+genimmix_run_id=$(run_benchmarks $log_dir $kit_root/configs-ng/openjdk/compare/genimmix.yml $compare_invocations)
+python $kit_root/scripts/compare_report.py $log_dir/$genimmix_run_id GenImmix jdk-mmtk-trunk jdk-mmtk-branch $compare_invocations >> $output_file
+
 # MarkSweep
 ms_run_id=$(run_benchmarks $log_dir $kit_root/configs-ng/openjdk/compare/marksweep.yml $compare_invocations)
 python $kit_root/scripts/compare_report.py $log_dir/$ms_run_id MarkSweep jdk-mmtk-trunk jdk-mmtk-branch $compare_invocations >> $output_file

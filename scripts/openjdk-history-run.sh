@@ -21,7 +21,7 @@ build_openjdk_with_mmtk $openjdk_binding _ release $kit_build/jdk-mmtk
 cd $kit_root
 
 # Run For NoGC
-nogc_run_id=$(run_benchmarks $log_dir $kit_root/configs-ng/openjdk/history/nogc.yml $history_invocations)
+nogc_run_id=$(run_benchmarks_custom_heap $log_dir $kit_root/configs-ng/openjdk/history/nogc.yml $history_invocations)
 # Save result
 mkdir -p $result_repo_dir/openjdk/nogc
 cp -r $log_dir/$nogc_run_id $result_repo_dir/openjdk/nogc
@@ -37,6 +37,12 @@ gencopy_run_id=$(run_benchmarks $log_dir $kit_root/configs-ng/openjdk/history/ge
 # Save result
 mkdir -p $result_repo_dir/openjdk/gencopy
 cp -r $log_dir/$gencopy_run_id $result_repo_dir/openjdk/gencopy
+
+# Run For GenImmix
+genimmix_run_id=$(run_benchmarks $log_dir $kit_root/configs-ng/openjdk/history/genimmix.yml $history_invocations)
+# Save result
+mkdir -p $result_repo_dir/openjdk/genimmix
+cp -r $log_dir/$genimmix_run_id $result_repo_dir/openjdk/genimmix
 
 # Run For MarkSweep
 ms_run_id=$(run_benchmarks $log_dir $kit_root/configs-ng/openjdk/history/marksweep.yml $history_invocations)
