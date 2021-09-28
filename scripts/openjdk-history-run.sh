@@ -15,7 +15,7 @@ checkout_result_repo
 
 # --- Build ---
 cd $openjdk
-build_openjdk_with_mmtk $openjdk_binding _ release $kit_build/jdk-mmtk
+build_openjdk_with_mmtk $openjdk_binding release $kit_build/jdk-mmtk
 
 # --- Run ---
 cd $kit_root

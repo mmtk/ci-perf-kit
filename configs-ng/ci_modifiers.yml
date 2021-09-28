@@ -37,6 +37,9 @@ modifiers:
     probes_rustmmtk:
       type: JVMArg
       val: "-Dprobes=RustMMTk -Djava.library.path=../probes/rust_mmtk"
+    probes_openjdk:
+      type: JVMArg
+      val: "-Dprobes=OpenJDK"
 
     # Select GC algorithm
     ## Rust MMTk

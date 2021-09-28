@@ -82,10 +82,28 @@ jikesrvm_binding_use_local_mmtk() {
     sed -i s/^#[[:space:]]mmtk/mmtk/g $binding_path/mmtk/Cargo.toml
 }
 
-# build_openjdk ’binding_path' 'plan' 'debug_level' 'build_path'
+# build_openjdk ’binding_path' 'debug_level' 'build_path'
 build_openjdk_with_mmtk() {
     binding_path=$1
-    plan=$2
+    debug_level=$2
+    build_path=$3
+
+    openjdk_path=$binding_path/repos/openjdk
+
+    cd $openjdk_path
+    export DEBUG_LEVEL=$debug_level
+    # export MMTK_PLAN=$plan
+    sh configure --disable-warnings-as-errors --with-debug-level=$DEBUG_LEVEL
+    make CONF=linux-x86_64-normal-server-$DEBUG_LEVEL THIRD_PARTY_HEAP=$PWD/../../openjdk
+
+    # copy to build_path
+    cp -r $openjdk_path/build/linux-x86_64-normal-server-$DEBUG_LEVEL $build_path
+}
+
+# build_openjdk ’binding_path' 'features' 'debug_level' 'build_path'
+build_openjdk_with_mmtk_features() {
+    binding_path=$1
+    features=$2
     debug_level=$3
     build_path=$4
 
@@ -93,7 +111,7 @@ build_openjdk_with_mmtk() {
 
     cd $openjdk_path
     export DEBUG_LEVEL=$debug_level
-    # export MMTK_PLAN=$plan
+    export MMTK_PLAN=$features
     sh configure --disable-warnings-as-errors --with-debug-level=$DEBUG_LEVEL
     make CONF=linux-x86_64-normal-server-$DEBUG_LEVEL THIRD_PARTY_HEAP=$PWD/../../openjdk
 
@@ -139,7 +157,7 @@ run_benchmarks() {
     invocations=$3
 
     cd $kit_root
-
+c
     # factor 8 8 gives 6x minheap as heap size
     output=$(running runbms $1 $2 8 8 -i $3)
     # Get the second line

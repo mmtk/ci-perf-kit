@@ -1,0 +1,44 @@
+includes:
+    - "../../ci_base.yml"
+    - "../benchmarks.yml"
+
+# Though we can choose plans at runtime, we put them to different builds
+# so our script can easily figure out the build.
+runtimes:
+    jdk-mmtk-nogc:
+        type: OpenJDK
+        release: 11
+        home: "./build/jdk-mmtk-nogc/jdk"
+    jdk-mmtk-semispace:
+        type: OpenJDK
+        release: 11
+        home: "./build/jdk-mmtk-semispace/jdk"
+    jdk-mmtk-immix:
+        type: OpenJDK
+        release: 11
+        home: "./build/jdk-mmtk-immix/jdk"
+    jdk-stock-g1:
+        type: OpenJDK
+        release: 11
+        home: "./build/jdk-stock-g1/jdk"
+    jdk-stock-epsilon:
+        type: OpenJDK
+        release: 11
+        home: "./build/jdk-stock-epsilon/jdk"
+    jdk-mmtk-lock-free-nogc:
+        type: OpenJDK
+        release: 11
+        home: "./build/jdk-mmtk-lock-free-nogc/jdk"
+    jdk-mmtk-no-zeroing-nogc:
+        type: OpenJDK
+        release: 11
+        home: "./build/jdk-mmtk-no-zeroing-nogc/jdk"
+
+configs:
+    - "jdk-stock-epsilon|ms|s|c2|probes_cp|probes_openjdk|heap120g|epsilon"
+    - "jdk-stock-g1|ms|s|c2|probes_cp|probes_openjdk|heap120g|g1"
+    - "jdk-mmtk-nogc|ms|s|c2|tph|probes_cp|probes_rustmmtk|heap120g|nogc"
+    - "jdk-mmtk-lock-free-nogc|ms|s|c2|tph|probes_cp|probes_rustmmtk|heap120g|nogc"
+    - "jdk-mmtk-no-zeroing-nogc|ms|s|c2|tph|probes_cp|probes_rustmmtk|heap120g|nogc"
+    - "jdk-mmtk-semispace|ms|s|c2|tph|probes_cp|probes_rustmmtk|heap120g|semispace"
+    - "jdk-mmtk-immix|ms|s|c2|tph|probes_cp|probes_rustmmtk|heap120g|immix"
