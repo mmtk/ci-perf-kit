@@ -7,7 +7,7 @@ overrides:
     "suites.dacapobach.callback": "DacapoBachCallback"
     "suites.dacapobach-mr1.callback": "DacapoBachCallback"
     "suites.dacapobach-mr1-java6.callback": "DacapoBachCallback"
-    "suites.dacapochopin-69a704e.callback": "DacapoChopinCallback"
+    "suites.dacapochopin-69a704e.callback": "probe.DacapoChopinCallback"
 
 # Though we can choose plans at runtime, we put them to different builds
 # so our script can easily figure out the build.

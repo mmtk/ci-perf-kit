@@ -12,9 +12,11 @@ openjdk=$openjdk_binding/repos/openjdk
 checkout_result_repo
 
 # Build probes
-cd $kit_root/probes/openjdk
-make
-cd $kit_root/probes/rust_mmtk
+# cd $kit_root/probes/openjdk
+# make
+# cd $kit_root/probes/rust_mmtk
+# make
+cd $kit_root/probes
 make
 
 # Build

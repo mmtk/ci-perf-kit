@@ -7,3 +7,6 @@
 [submodule "running-ng"]
 	path = running-ng
 	url = git@github.com:anupli/running-ng.git
+[submodule "probes"]
+	path = probes
+	url = git@github.com:anupli/probes.git

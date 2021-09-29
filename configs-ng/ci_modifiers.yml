@@ -30,13 +30,13 @@ modifiers:
       type: JVMArg
       val: "-Xms4000M -Xmx4000M"
 
-    # Probes
+    # Probes - path is based on the root directory of ci-perf-kit
     probes_cp:
       type: JVMClasspath
-      val: "../probes/rust_mmtk/java ../probes/probes.jar"
+      val: "./probes/rust_mmtk/java ./probes/probes.jar"
     probes_rustmmtk:
       type: JVMArg
-      val: "-Dprobes=RustMMTk -Djava.library.path=../probes/rust_mmtk"
+      val: "-Dprobes=RustMMTk -Djava.library.path=./probes/native/rust_mmtk"
     probes_openjdk:
       type: JVMArg
       val: "-Dprobes=OpenJDK"
