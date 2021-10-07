@@ -12,11 +12,11 @@ log_dir=$kit_root/logs-ng
 result_repo_dir=$kit_root/result_repo
 
 # compare benchmarking invocations
-compare_invocations=2
+compare_invocations=20
 # history benchmarking invocations
-history_invocations=2
+history_invocations=20
 # stock GC benchmarking invocations
-stock_invocations=2
+stock_invocations=20
 
 # ensure_env 'var_name'
 ensure_env() {
