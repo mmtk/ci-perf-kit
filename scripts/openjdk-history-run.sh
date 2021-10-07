@@ -13,32 +13,48 @@ openjdk=$openjdk_binding/repos/openjdk
 ensure_empty_dir $kit_build
 checkout_result_repo
 
-# Build
+# --- Build ---
 cd $openjdk
+build_openjdk_with_mmtk $openjdk_binding release $kit_build/jdk-mmtk
 
-# NoGC
-build_openjdk_with_mmtk $openjdk_binding nogc release $kit_build/jdk-mmtk-nogc
+# --- Run ---
+cd $kit_root
+
 # Run For NoGC
-nogc_run_id=$(run_benchmarks $kit_root/configs/RunConfig-OpenJDK-NoGC-Complete.pm)
+nogc_run_id=$(run_benchmarks_custom_heap $log_dir $kit_root/configs-ng/openjdk/history/nogc.yml $history_invocations)
 # Save result
 mkdir -p $result_repo_dir/openjdk/nogc
-cp -r $kit_root/running/results/log/$nogc_run_id $result_repo_dir/openjdk/nogc
+cp -r $log_dir/$nogc_run_id $result_repo_dir/openjdk/nogc
 
-# SemiSpace
-build_openjdk_with_mmtk $openjdk_binding semispace release $kit_build/jdk-mmtk-semispace
-# Run For SemiSpace
-ss_run_id=$(run_benchmarks $kit_root/configs/RunConfig-OpenJDK-SemiSpace-Complete.pm)
+# Run for SemiSpace
+ss_run_id=$(run_benchmarks $log_dir $kit_root/configs-ng/openjdk/history/semispace.yml $history_invocations)
 # Save result
 mkdir -p $result_repo_dir/openjdk/semispace
-cp -r $kit_root/running/results/log/$ss_run_id $result_repo_dir/openjdk/semispace
+cp -r $log_dir/$ss_run_id $result_repo_dir/openjdk/semispace
 
-# GenCopy
-build_openjdk_with_mmtk $openjdk_binding gencopy release $kit_build/jdk-mmtk-gencopy
 # Run For GenCopy
-gencopy_run_id=$(run_benchmarks $kit_root/configs/RunConfig-OpenJDK-GenCopy-Complete.pm)
+gencopy_run_id=$(run_benchmarks $log_dir $kit_root/configs-ng/openjdk/history/gencopy.yml $history_invocations)
 # Save result
 mkdir -p $result_repo_dir/openjdk/gencopy
-cp -r $kit_root/running/results/log/$gencopy_run_id $result_repo_dir/openjdk/gencopy
+cp -r $log_dir/$gencopy_run_id $result_repo_dir/openjdk/gencopy
+
+# Run For GenImmix
+genimmix_run_id=$(run_benchmarks $log_dir $kit_root/configs-ng/openjdk/history/genimmix.yml $history_invocations)
+# Save result
+mkdir -p $result_repo_dir/openjdk/genimmix
+cp -r $log_dir/$genimmix_run_id $result_repo_dir/openjdk/genimmix
+
+# Run For MarkSweep
+ms_run_id=$(run_benchmarks $log_dir $kit_root/configs-ng/openjdk/history/marksweep.yml $history_invocations)
+# Save result
+mkdir -p $result_repo_dir/openjdk/marksweep
+cp -r $log_dir/$ms_run_id $result_repo_dir/openjdk/marksweep
+
+# Run For Immix
+ix_run_id=$(run_benchmarks $log_dir $kit_root/configs-ng/openjdk/history/immix.yml $history_invocations)
+# Save result
+mkdir -p $result_repo_dir/openjdk/immix
+cp -r $log_dir/$ix_run_id $result_repo_dir/openjdk/immix
 
 # Commit result
 commit_result_repo 'OpenJDK Binding: '$openjdk_rev
@@ -46,6 +62,4 @@ commit_result_repo 'OpenJDK Binding: '$openjdk_rev
 # plot result
 ensure_empty_dir $output_dir
 cd $kit_root
-start_venv python-env
-pip3 install -r scripts/requirements.txt
 python3 scripts/history_report.py configs/openjdk-plot.yml $result_repo_dir/openjdk $result_repo_dir/openjdk_stock $output_dir

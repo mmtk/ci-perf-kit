@@ -77,7 +77,7 @@ def parse_run(log_folder, n_invocations = None):
     run_id = os.path.basename(os.path.normpath(log_folder))
 
     results = []
-    logs = os.listdir(log_folder)
+    logs = list_logs(log_folder)
     for l in logs:
         results.append(parse_log(os.path.join(log_folder, l), n_invocations))
     return run_id, results
@@ -98,6 +98,8 @@ def parse_yaml(path):
 
 # Given a parsed config (returned from parse_yaml) and a plan, return the config for the plan
 def get_config_for_plan(config, plan):
+    print(config)
+    print(plan)
     for p in config['plans']:
         if p['plan'] == plan:
             return p
@@ -109,7 +111,7 @@ def parse_baseline(result_repo_baseline_root):
         return None, []
 
     # get baseline logs
-    baseline_logs = os.listdir(result_repo_baseline_root)
+    baseline_logs = list_logs(result_repo_baseline_root)
     if len(baseline_logs) == 0:
         return None, []
         
@@ -124,3 +126,8 @@ def parse_baseline(result_repo_baseline_root):
 def sort_logs(logs):
     # sort logs by date (in case we have logs from different machines)
     logs.sort(key = lambda x: parse_run_date(x))
+
+def list_logs(path):
+    files = os.listdir(path)
+    filtered = list(filter(lambda f: f.endswith(".log.gz"), files))
+    return filtered

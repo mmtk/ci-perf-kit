@@ -4,3 +4,5 @@ plans:
     baseline: ['JavaMMTk_NoGC']
   - plan: semispace
     baseline: ['JavaMMTk_SemiSpace']
+  - plan: marksweep
+    baseline: [‘JavaMMTk_MarkSweep']

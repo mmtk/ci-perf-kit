@@ -35,14 +35,14 @@ ensure_empty_dir $kit_build
 ensure_empty_dir $openjdk_binding_trunk/repos/mmtk-core
 cp -r $mmtk_core_trunk/* $openjdk_binding_trunk/repos/mmtk-core/
 # SemiSpace
-build_openjdk_with_mmtk $openjdk_binding_trunk semispace release $kit_build/jdk-mmtk-trunk-semispace
+build_openjdk_with_mmtk_features $openjdk_binding_trunk semispace release $kit_build/jdk-mmtk-trunk-semispace
 # build_openjdk_with_mmtk $openjdk_binding_trunk gencopy release $kit_build/jdk-mmtk-trunk-gencopy
 
 # Build for branch
 ensure_empty_dir $openjdk_binding_branch/repos/mmtk-core
 cp -r $mmtk_core_branch/* $openjdk_binding_branch/repos/mmtk-core/
 # SemiSpace
-build_openjdk_with_mmtk $openjdk_binding_branch semispace release $kit_build/jdk-mmtk-branch-semispace
+build_openjdk_with_mmtk_features $openjdk_binding_branch semispace release $kit_build/jdk-mmtk-branch-semispace
 # build_openjdk_with_mmtk $openjdk_binding_branch gencopy release $kit_build/jdk-mmtk-branch-gencopy
 
 # Build MicroBM
@@ -51,8 +51,7 @@ mvn clean install
 rm -f ci.data
 
 # install rebench
-start_venv $microbm_root/venv
-pip install $rebench_root
+pip3 install $rebench_root
 
 echo "OpenJDK Micro Benchmarks" >> $output_file
 echo "===" >> $output_file

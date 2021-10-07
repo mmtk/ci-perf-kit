@@ -1,0 +1,31 @@
+includes:
+    - "../../ci_base.yml"
+    - "../benchmarks.yml"
+
+# Override minheap for JikesRVM. Include this for all JikesRVM runs.
+overrides:
+    "suites.dacapo2006.minheap":
+        antlr: 24
+        chart: 49
+        eclipse: 84
+        hsqldb: 127
+    "suites.dacapobach-mr1-java6.minheap":
+        avrora: 50
+        fop: 40
+        jython: 40
+        luindex: 22
+        pmd: 49
+        sunflow: 54
+        xalan: 54
+
+runtimes:
+    JavaMMTk_SemiSpace:
+        type: JikesRVM
+        home: ./build/JavaMMTk_SemiSpace_x86_64_m32-linux
+    JavaMMTk_MarkSweep:
+        type: JikesRVM
+        home: ./build/JavaMMTk_MarkSweep_x86_64_m32-linux
+
+configs:
+    - "JavaMMTk_SemiSpace"
+    - "JavaMMTk_MarkSweep"
