@@ -1,21 +1,5 @@
 includes:
-    - "./base.yml"
-
-# Override minheap for JikesRVM. Include this for all JikesRVM runs.
-overrides:
-    "suites.dacapo2006.minheap":
-        antlr: 24
-        chart: 49
-        eclipse: 84
-        hsqldb: 127
-    "suites.dacapobach-mr1-java6.minheap":
-        avrora: 50
-        fop: 40
-        jython: 40
-        luindex: 22
-        pmd: 49
-        sunflow: 54
-        xalan: 54
+    - "../jikesrvm_base.yml"
 
 runtimes:
     MarkSweep_Trunk:
