@@ -8,6 +8,8 @@ plans:
     baseline: ['jdk-g1', 'jdk-zgc']
   - plan: immix
     baseline: ['jdk-g1', 'jdk-zgc']
+  - plan: immix_stress
+    baseline: []
   - plan: marksweep
     baseline: ['jdk-g1', 'jdk-zgc']
   - plan: genimmix
