@@ -157,7 +157,7 @@ run_benchmarks() {
     invocations=$3
 
     cd $kit_root
-c
+
     # factor 8 8 gives 6x minheap as heap size
     output=$(running runbms $1 $2 8 8 -i $3)
     # Get the second line
