@@ -2,4 +2,4 @@ includes:
     - "./base.yml"
 
 configs:
-    - "jdk-mmtk|ms|s|c2|tph|probes_cp|probes_rustmmtk|immix|perf_stress|stress_factor-50000000"
+    - "jdk-mmtk|ms|s|c2|tph|probes_cp|probes_rustmmtk|immix_stress|perf_stress|stress_factor-50000000"

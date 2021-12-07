@@ -55,6 +55,10 @@ modifiers:
       type: EnvVar
       var: "MMTK_PLAN"
       val: "Immix"
+    immix_stress:
+      type: EnvVar
+      var: "MMTK_PLAN"
+      val: "Immix"
     gencopy:
       type: EnvVar
       var: "MMTK_PLAN"
