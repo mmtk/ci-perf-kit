@@ -88,7 +88,7 @@ $genadvice = 0;
 		# Do a GC whenever system.gc() is called by the application
 		"ugc" => "-X:gc:observe_user_gc_hints=true",
 		# Do a GC whenever system.gc() is called by the application
-		"ig" => "-X:gc:ignoreSystemGC=true",
+		"ig" => "-X:gc:ignore_system_g_c=true",
 		# Use the replay compiler (formerly pseudoadaptive)
 		"ar" => "-X:aos:aafi=\$advicedir/\$benchmark.aa",
 		# Use the replay compiler (formerly pseudoadaptive)
