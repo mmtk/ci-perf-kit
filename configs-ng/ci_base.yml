@@ -4,6 +4,7 @@ includes:
 
 overrides:
     "suites.dacapochopin-69a704e.timeout": 240
+    # "suites.dacapochopin-69a704e.callback": "probe.DacapoChopinCallback"
 
 # Can override with command line argument -i
 invocations: 5
