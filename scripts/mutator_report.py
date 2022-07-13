@@ -35,12 +35,15 @@ if (len(logs)) == 0:
     print("No logs found")
     sys.exit(1)
 
+excluded_runs = plot.get_excluded_runs_from_env_var('MUTATOR_EXCLUDE_RUNS')
+
 runs = {}
 last_run = None
 for l in logs:
     run_id, results = parse.parse_run(os.path.join(result_repo_mutator_root, l))
-    runs[run_id] = results
-    last_run = run_id
+    if run_id not in excluded_runs:
+        runs[run_id] = results
+        last_run = run_id
 
 # figure out what benchmarks we should plot in the graph. We use the benchmarks that appeared in the last run
 benchmarks = list(set([r['benchmark'] for r in runs[last_run]]))

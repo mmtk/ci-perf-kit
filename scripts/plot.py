@@ -63,6 +63,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
             if y[0] != 0:
                 nonzero_y = y
             else:
+                import sys
                 # We should almost never run to this.
                 print("Unable to plot the graph")
                 sys.exit(1)
@@ -492,7 +493,7 @@ def history_per_day(runs, plan, benchmark, start_date, end_date, data_key):
 def history_per_run(runs, plan, benchmark, data_key):
     # ordered runs
     run_ids = list(runs.keys())
-    run_ids.sort()
+    run_ids.sort(key = lambda x: parse.parse_run_date(x))
 
     avg = []
     std = []
@@ -590,3 +591,12 @@ def calculate_baseline(baseline_results, baseline_builds, data_key):
                 avg_per_bm[r['benchmark']] = avg
         ret[b] = avg_per_bm
     return ret
+
+
+def get_excluded_runs_from_env_var(v):
+    from os import environ
+    excluded_runs = []
+    if v in environ:
+        print("exclude runs: %s" % environ[v])
+        excluded_runs = environ[v].split(',')
+    return excluded_runs

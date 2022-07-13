@@ -46,6 +46,8 @@ else:
 baseline_run_id, baseline_results = parse.parse_baseline(result_repo_baseline_root)
 # pp.pprint(baseline_results)
 
+excluded_runs = plot.get_excluded_runs_from_env_var('HISTORY_EXCLUDE_RUNS')
+
 for plan in plans:
     logs = [x for x in os.listdir(os.path.join(result_repo_vm_root, plan)) if os.path.isdir(os.path.join(result_repo_vm_root, plan, x))]
 
@@ -56,8 +58,9 @@ for plan in plans:
     last_run = None
     for l in logs:
         run_id, results = parse.parse_run(os.path.join(result_repo_vm_root, plan, l))
-        runs[run_id] = results
-        last_run = run_id
+        if run_id not in excluded_runs:
+            runs[run_id] = results
+            last_run = run_id
     
     # figure out what benchmarks we should plot in the graph. We use the benchmarks that appeared in the last run
     benchmarks = [r['benchmark'] for r in runs[last_run]]
