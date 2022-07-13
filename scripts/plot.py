@@ -330,15 +330,18 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
         row += 1
 
     # fix range for all the traces
-    y_range = [y_range_lower - 0.02, y_range_upper + 0.02]
-    for i in range(1, row):
-        layout["yaxis%d" % i]["range"] = y_range
+    # y_range = [y_range_lower - 0.02, y_range_upper + 0.02]
+    # for i in range(1, row):
+    #     layout["yaxis%d" % i]["range"] = y_range
 
     fig = Figure(data = Data(traces), layout = layout)
     for anno in annotations:
         fig.add_annotation(anno)
     for line in baseline_hlines:
         fig.add_shape(line)
+    for i in range(1, row):
+        fig['layout']["yaxis%d" % i].update(autorange = True)
+
     return fig
 
 
