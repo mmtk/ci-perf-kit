@@ -102,7 +102,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
         }
         traces.append({**history_trace, **{
             "line": {"width": 3, "color": "black"},
-            "y": y,
+            "y": make_zero_as_none(y),
             "text": ["history: %s: %.2f" % (x, y) for (x, y) in zip(x_labels, y)],
         }})
         layout["xaxis%d" % row] = {
@@ -433,16 +433,23 @@ def moving_average(array_numbers, p):
 
     n = len(array_numbers)
     ma = []
+
+    zeroes_in_window = 0
     for i in range(0, n):
         if window_len < p:
-            window_sum += array_numbers[i]
             window_len += 1
         else:
             window_sum -= array_numbers[i - p]
-            window_sum += array_numbers[i]
-        
-        ma.append(window_sum / float(window_len))
-    
+            if array_numbers[i - p] == 0:
+                zeroes_in_window -= 1
+
+        if array_numbers[i] == 0:
+            zeroes_in_window += 1
+
+        window_sum += array_numbers[i]
+        assert zeroes_in_window >= 0
+        ma.append(window_sum / float(window_len - zeroes_in_window))
+
     assert len(array_numbers) == len(ma)
     return ma
 
@@ -525,6 +532,10 @@ def normalize_history(arr):
 def normalize_to(arr, base):
     assert base != 0, "Cannot normalize to a zero value"
     return list(map(lambda x: x / base, arr))
+
+
+def make_zero_as_none(arr):
+    return list(map(lambda x: x if x != 0 else None, arr))
 
 
 # Given n points, return their x values (starting from 0) that are dense for the first few values and sparse for the last values.
