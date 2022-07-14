@@ -19,6 +19,8 @@ X_INTERVAL_3 = 5
 # We place the labels (big number/benchmark name/absolute number) on the position of (last point + this offset)
 LABEL_OFFSET = X_INTERVAL_3 * 3
 
+SAME_Y_RANGE_IN_ALL_TRACES = True
+
 # runs: all the runs for a certain build (as a dictionary from run_id -> run results)
 # plan: the plan to plot
 # benchmarks: benchmarks to plot
@@ -133,7 +135,6 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
             "showline": True,
             "zeroline": False,
             "showticklabels": False,
-            # "autorange": False,
             "range": [this_y_lower - 0.02, this_y_upper + 0.02]
         }
 
@@ -335,9 +336,10 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
         row += 1
 
     # fix range for all the traces
-    # y_range = [y_range_lower - 0.02, y_range_upper + 0.02]
-    # for i in range(1, row):
-    #     layout["yaxis%d" % i]["range"] = y_range
+    if SAME_Y_RANGE_IN_ALL_TRACES:
+        y_range = [y_range_lower - 0.02, y_range_upper + 0.02]
+        for i in range(1, row):
+            layout["yaxis%d" % i]["range"] = y_range
 
     fig = Figure(data = Data(traces), layout = layout)
     for anno in annotations:
@@ -345,8 +347,6 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
     for line in baseline_hlines:
         fig.add_shape(line)
 
-    # for i in range(1, row):
-    #     fig['layout']["yaxis%d" % i].update(autorange = True)
     fig.update_layout(hovermode='x')
 
     return fig
