@@ -133,7 +133,8 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
             "showline": True,
             "zeroline": False,
             "showticklabels": False,
-            "autorange": False,
+            # "autorange": False,
+            "range": [this_y_lower - 0.02, this_y_upper + 0.02]
         }
 
         # highlight max/min
@@ -252,7 +253,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
             "type": "scatter",
             "x": x,
             "y": y_moving_average,
-            "text": ["10-p moving avg: %s: %.2f" % (x, y) for (x, y) in zip(x_labels, y_moving_average)],
+            "text": ["10-p moving avg: %s: %s" % (x, "{:.2f}".format(y) if y is not None else "na") for (x, y) in zip(x_labels, y_moving_average)],
             "xaxis": x_axis,
             "yaxis": y_axis,
             "showlegend": False,
@@ -271,16 +272,20 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
             "yaxis": y_axis,
             "showlegend": False,
         }
-        variance_up = list(map(lambda a, b: a + b, y_moving_average, std_dev_moving_average))
+        variance_down = list(map(lambda a, b: a - b if a is not None and b is not None else None, y_moving_average, std_dev_moving_average))
         traces.append({**variance_trace, **{
-            "y": variance_up,
-            "text": ["moving avg + std dev: %s: %.2f" % (x, y) for (x, y) in zip(x_labels, variance_up)],
-        }})
-        variance_down = list(map(lambda a, b: a - b, y_moving_average, std_dev_moving_average))
-        traces.append({**variance_trace, **{
-            "fill": "tonexty",
+            # a hack: fill everything under this line the same as the background color
+            "fill": "tozeroy",
+            "line_color": "#e5ecf6",
             "y": variance_down,
-            "text": ["moving avg - std dev: %s: %.2f" % (x, y) for (x, y) in zip(x_labels, variance_down)],
+            "text": ["moving avg - std dev: %s: %s" % (x, "{:.2f}".format(y) if y is not None else "na") for (x, y) in zip(x_labels, variance_down)],
+        }})
+        variance_up = list(map(lambda a, b: a + b if a is not None and b is not None else None, y_moving_average, std_dev_moving_average))
+        traces.append({**variance_trace, **{
+            # fill things in grey between this trace and the trace above
+            "fill": "tonexty",
+            "y": variance_up,
+            "text": ["moving avg + std dev: %s: %s" % (x, "{:.2f}".format(y) if y is not None else "na") for (x, y) in zip(x_labels, variance_up)],
         }})
 
         # baseline - we will draw one horizontal line per each baseline
@@ -339,8 +344,10 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
         fig.add_annotation(anno)
     for line in baseline_hlines:
         fig.add_shape(line)
-    for i in range(1, row):
-        fig['layout']["yaxis%d" % i].update(autorange = True)
+
+    # for i in range(1, row):
+    #     fig['layout']["yaxis%d" % i].update(autorange = True)
+    fig.update_layout(hovermode='x')
 
     return fig
 
@@ -452,7 +459,10 @@ def moving_average(array_numbers, p):
 
         window_sum += array_numbers[i]
         assert zeroes_in_window >= 0
-        ma.append(window_sum / float(window_len - zeroes_in_window))
+        if window_len > zeroes_in_window:
+            ma.append(window_sum / float(window_len - zeroes_in_window))
+        else:
+            ma.append(None)
 
     assert len(array_numbers) == len(ma)
     return ma
