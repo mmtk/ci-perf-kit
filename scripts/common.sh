@@ -35,7 +35,7 @@ build_jikesrvm_with_mmtk() {
     cd $jikesrvm_path
 
     # build
-    python scripts/testMMTk.py -g $plan -j $JAVA_HOME --build-only -- -quick --answer-yes --use-third-party-heap=../.. --use-third-party-build-configs=../../jikesrvm/build/configs --use-external-source=../../jikesrvm/rvm/src --m32
+    ./bin/buildit localhost $plan -j $JAVA_HOME -quick --answer-yes --use-third-party-heap=../.. --use-third-party-build-configs=../../jikesrvm/build/configs --use-external-source=../../jikesrvm/rvm/src --m32
 
     # copy to build_path
     cp -r $jikesrvm_path'/dist/'$plan'_x86_64_m32-linux' $build_path/
@@ -149,7 +149,7 @@ ensure_empty_dir() {
 start_venv() {
     venv_path=$1
 
-    python3 -m venv $venv_path
+    virtualenv $venv_path
     source $venv_path/bin/activate
 }
 
