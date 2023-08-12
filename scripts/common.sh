@@ -35,7 +35,7 @@ build_jikesrvm_with_mmtk() {
     cd $jikesrvm_path
 
     # build
-    ./bin/buildit localhost $plan -j $JAVA_HOME -quick --answer-yes --use-third-party-heap=../.. --use-third-party-build-configs=../../jikesrvm/build/configs --use-external-source=../../jikesrvm/rvm/src --m32
+    ./bin/buildit localhost $plan -quick --answer-yes --use-third-party-heap=../.. --use-third-party-build-configs=../../jikesrvm/build/configs --use-external-source=../../jikesrvm/rvm/src --m32
 
     # copy to build_path
     cp -r $jikesrvm_path'/dist/'$plan'_x86_64_m32-linux' $build_path/
