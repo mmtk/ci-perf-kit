@@ -6,3 +6,9 @@ plans:
     baseline: ['jdk-g1', 'jdk-zgc']
   - plan: gencopy
     baseline: ['jdk-g1', 'jdk-zgc']
+  - plan: immix
+    baseline: ['jdk-g1', 'jdk-zgc']
+  - plan: genimmix
+    baseline: ['jdk-g1', 'jdk-zgc']
+  - plan: stickyimmix
+    baseline: ['jdk-g1', 'jdk-zgc']

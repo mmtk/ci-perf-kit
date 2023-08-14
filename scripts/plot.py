@@ -71,6 +71,23 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
                 sys.exit(1)
         else:
             nonzero_y = [i for i in y[:-1] if i != 0] # we dont want 0 as baseline, and we should not use the most recent data as baseline
+
+        if len(nonzero_y) == 0:
+            # We do not have any valid data for the benchmark
+            # Find our baseline, and use it as the y_baseline.
+            baseline_perf = 0
+            if baseline is not None:
+                for build in baseline:
+                    if bm in baseline[build] and baseline[build][bm] is not None:
+                        baseline_perf = baseline[build][bm]
+                        if baseline_perf != 0:
+                            break
+            # We don't even have a baseline number for it. Just use 1 (random number)
+            if baseline_perf == 0:
+                baseline_perf = 1
+            nonzero_y = [baseline_perf]
+            print(nonzero_y)
+
         y_baseline = min(nonzero_y)
         y_max = max(nonzero_y) / y_baseline
         y_min = min(nonzero_y) / y_baseline

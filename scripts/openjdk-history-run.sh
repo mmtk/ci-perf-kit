@@ -13,32 +13,39 @@ openjdk=$openjdk_binding/repos/openjdk
 ensure_empty_dir $kit_build
 checkout_result_repo
 
+run_exp() {
+    plan=$1
+    config=$2
+
+    # Build
+    build_openjdk_with_mmtk $openjdk_binding $plan release $kit_build/jdk-mmtk-$plan
+    # Run
+    run_id=$(run_benchmarks $kit_root/configs/$config)
+    # Save result
+    mkdir -p $result_repo_dir/openjdk/$plan
+    cp -r $kit_root/running/results/log/$run_id $result_repo_dir/openjdk/$plan
+}
+
 # Build
 cd $openjdk
 
 # NoGC
-build_openjdk_with_mmtk $openjdk_binding nogc release $kit_build/jdk-mmtk-nogc
-# Run For NoGC
-nogc_run_id=$(run_benchmarks $kit_root/configs/RunConfig-OpenJDK-NoGC-Complete.pm)
-# Save result
-mkdir -p $result_repo_dir/openjdk/nogc
-cp -r $kit_root/running/results/log/$nogc_run_id $result_repo_dir/openjdk/nogc
+run_exp nogc RunConfig-OpenJDK-NoGC-Complete.pm
 
 # SemiSpace
-build_openjdk_with_mmtk $openjdk_binding semispace release $kit_build/jdk-mmtk-semispace
-# Run For SemiSpace
-ss_run_id=$(run_benchmarks $kit_root/configs/RunConfig-OpenJDK-SemiSpace-Complete.pm)
-# Save result
-mkdir -p $result_repo_dir/openjdk/semispace
-cp -r $kit_root/running/results/log/$ss_run_id $result_repo_dir/openjdk/semispace
+run_exp semispace RunConfig-OpenJDK-SemiSpace-Complete.pm
 
 # GenCopy
-build_openjdk_with_mmtk $openjdk_binding gencopy release $kit_build/jdk-mmtk-gencopy
-# Run For GenCopy
-gencopy_run_id=$(run_benchmarks $kit_root/configs/RunConfig-OpenJDK-GenCopy-Complete.pm)
-# Save result
-mkdir -p $result_repo_dir/openjdk/gencopy
-cp -r $kit_root/running/results/log/$gencopy_run_id $result_repo_dir/openjdk/gencopy
+run_exp gencopy RunConfig-OpenJDK-GenCopy-Complete.pm
+
+# Immix
+run_exp immix RunConfig-OpenJDK-Immix-Complete.pm
+
+# GenImmix
+run_exp genimmix RunConfig-OpenJDK-GenImmix-Complete.pm
+
+# StickyImmix
+run_exp stickyimmix RunConfig-OpenJDK-StickyImmix-Complete.pm
 
 # Commit result
 commit_result_repo 'OpenJDK Binding: '$openjdk_rev
