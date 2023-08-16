@@ -65,10 +65,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
             if y[0] != 0:
                 nonzero_y = y
             else:
-                import sys
-                # We should almost never run to this.
-                print("Unable to plot the graph")
-                sys.exit(1)
+                nonzero_y = []
         else:
             nonzero_y = [i for i in y[:-1] if i != 0] # we dont want 0 as baseline, and we should not use the most recent data as baseline
 
