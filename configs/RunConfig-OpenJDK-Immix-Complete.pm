@@ -70,6 +70,7 @@ $maxinvocations = $targetinvocations;
 $arch = "_x86_64_m32-linux";
 $genadvice = 0;
 # $perfevents = "PERF_COUNT_HW_CPU_CYCLES,PERF_COUNT_HW_CACHE_LL:MISS,PERF_COUNT_HW_CACHE_L1D:MISS,PERF_COUNT_HW_CACHE_DTLB:MISS";
+$perfevents = "";
 
 #
 # Runtime rvm flags
@@ -86,7 +87,7 @@ $genadvice = 0;
 		# Do a GC whenever system.gc() is called by the application
 		"ugc" => "-X:gc:observe_user_gc_hints=true",
 		# Do a GC whenever system.gc() is called by the application
-		"ig" => "-X:gc:ignore_system_gc=true",
+		"ig" => "-X:gc:ignoreSystemGC=true",
 		# Use the replay compiler (formerly pseudoadaptive)
 		"ar" => "-X:aos:aafi=\$advicedir/\$benchmark.aa",
 		# Use the replay compiler (formerly pseudoadaptive)
@@ -131,6 +132,11 @@ $genadvice = 0;
                 "sgc" => "-XX:+UseSerialGC",
                 "rapl" => "-X:gc:useRAPL=true",
                 "sjit" => "-Dprobes=StopJIT -Dprobe.stopjit.iteration=".($defaulttimingiteration-2),
+		"tph" => "-XX:+UseThirdPartyHeap",
+        "g1" => "-XX:-UseCompressedOops -XX:+UseG1GC",
+        "epsilon" => "-XX:-UseCompressedOops -XX:+UnlockExperimentalVMOptions -XX:+UseEpsilonGC -XX:TLABSize=32K -XX:-ResizeTLAB",
+        "c2" => "-XX:-TieredCompilation",
+        "ms" => "-XX:MetaspaceSize=100M",
 		);
 # value options
 %valueopts = (
@@ -159,29 +165,28 @@ $genadvice = 0;
               "ascii" => "-X:powermeter:ascii=",
               "perf" => "-X:gc:perfEvents=",
               "rn" => "-X:aos:enable_replay_compile=true -X:aos:cafi=\$advicedir/\$benchmark.\$replayid.ca -X:aos:dcfi=\$advicedir/\$benchmark.\$replayid.dc -X:vm:edgeCounterFile=\$advicedir/\$benchmark.\$replayid.ec",
+			
 	      );
 # configurations
 @gcconfigs = (
-	      "SemiSpace",
+	      "jdk-mmtk-immix|ms|s|c2|tph",
 	      );
 
 
 # directories in which productio jvms can be found
 %jvmroot = (
-	    "ibm-java-i386-60" => "/opt",
-	    "jdk1.7.0" => "/opt",
-	    "jdk1.6.0" => "/opt",
-	    "jdk1.5.0" => "/opt",
-	    "jrmc-1.6.0" => "/opt",
+        "jdk-mmtk-immix" => "$rootdir/build",
 	    );
 
 # set of benchmarks to be run
-@dacapobms = ("luindex", "bloat", "eclipse", "chart", "fop", "hsqldb", "lusearch", "pmd", "xalan");
-@dacapobachbms = ("avrora", "batik", "fop", "h2", "jython", "luindex", "lusearch", "pmd", "sunflow", "tomcat", "tradebeans", "tradesoap", "xalan");
+@dacapobms = ("luindex", "bloat", "chart", "fop", "hsqldb", "lusearch", "pmd", "xalan");
+@dacapobachbms = ("avrora", "batik", "eclipse", "fop", "h2", "jython", "luindex", "lusearch", "pmd", "sunflow", "tomcat", "tradebeans", "tradesoap", "xalan");
 @jksdcapo = ("antlr", "bloat", "chart", "fop", "hsqldb", "jython", "luindex", "lusearch", "pmd", "xalan", "avrora",);
 @jksbach = ("avrora", "sunflow");
 @jksdacapo = (@dacapobms, @jksbach);
 @jvm98bms = ("_202_jess", "_201_compress", "_209_db", "_213_javac", "_222_mpegaudio", "_227_mtrt", "_228_jack");
+@dacapo_9_12 = ("sunflow", "avrora", "h2", "tomcat", "tradebeans", "tradesoap");
+@dacapo_2006 = ("xalan", "sunflow", "pmd", "lusearch", "luindex", "jython", "hsqldb", "fop", "eclipse", "chart", "bloat", "batik", "antlr");
 
 @benchmarks = ("antlr", "bloat", "fop", "hsqldb", "jython", "luindex", "lusearch", "pmd", "xalan");
 
@@ -197,7 +202,6 @@ $genadvice = 0;
 
 # base heap size for each benchmark: minimum heap using MarkCompact 20060801
 %minheap = (
-# values established for immix-asplos-2008 on 20070718 with FastAdaptiveMarkSweep, using 10-iteration replay compilation
             "_201_compress" => 19,
             "_202_jess" => 19,
             "_205_raytrace" => 19,
@@ -233,7 +237,7 @@ $genadvice = 0;
             "xalan" => 54,
             "pjbb2005" => 200,
 	    "pjbb2000" => 214,
-	    );
+);
 # heap size used for -s (slice) option (in this example, 1.5 X min heap)
 %sliceHeapSize = ();
 foreach $bm (keys %minheap) {
@@ -250,12 +254,12 @@ foreach $bm (keys %minheap) {
               "_222_mpegaudio" => 6,
               "_227_mtrt" => 9,
               "_228_jack" => 10,
-              "antlr" => 12,
-              "bloat" => 36,
-              "chart" => 24,
+#              "antlr" => 12,
+#              "bloat" => 36,
+#              "chart" => 24,
 #              "eclipse" => 130,
 #              "fop" => 6,
-              "hsqldb" => 7,
+#              "hsqldb" => 7,
 #              "jython" => 100,
 #              "luindex" => 30,
 #              "lusearch" => 20,
@@ -265,10 +269,11 @@ foreach $bm (keys %minheap) {
               "batik" => 30,
               "eclipse" => 120,
               "fop" => 20,
-              "h2" => 30,
+              "h2" => 100,
               "jython" => 100,
               "luindex" => 30,
               "lusearch" => 30,
+              "lusearch-fix" => 34,
               "pmd" => 30,
               "sunflow" => 30,
               "tomcat" => 30,
@@ -278,47 +283,48 @@ foreach $bm (keys %minheap) {
               "pjbb2005" => 20,
 	      "pjbb2000" => 50,
 	      );
-$bmtimeoutmultiplier = 2;
+$bmtimeoutmultiplier = 4;
 
 $benchmarkroot = "/usr/share/benchmarks";
 
 %bmsuite = (
-	    "_201_compress" => "jvm98",
-	    "_202_jess" => "jvm98",
-	    "_205_raytrace" => "jvm98",
-	    "_209_db" => "jvm98",
-	    "_213_javac" => "jvm98",
-	    "_222_mpegaudio" => "jvm98",
-	    "_227_mtrt" => "jvm98",
-	    "_228_jack" => "jvm98",
-	    # "avrora" => dacapobach,
-	    # "batik" => dacapobach,
-	    # "eclipse" => dacapobach,
-#	    "fop" => dacapobach,  # buggy
-	    # "h2" => dacapobach,
-	    # "jython" => dacapobach,
-	    # "luindex" => dacapobach,
-	    # "lusearch" => dacapobach,
-	    # "pmd" => dacapobach,
-	    # "sunflow" => dacapobach,
-	    # "tomcat" => dacapobach,
-	    # "tradebeans" => dacapobach,
-	    # "tradesoap" => dacapobach,
-	    # "xalan" => dacapobach,
-	    "antlr" => dacapo,
-	    "bloat" => dacapo,
-	    "chart" => dacapo,
-	    "eclipse" => dacapo,
-	    "fop" => dacapo,
-	    "hsqldb" => dacapo,
-	    "jython" => dacapo,
-	    "luindex" => dacapo,
-	    "lusearch" => dacapo,
-	    "pmd" => dacapo,
-	    "xalan" => dacapo,
-	    "pjbb2005" => pjbb2005,
-	    "pjbb2000" => pjbb2000,
-	    );
+	"_201_compress" => "jvm98",
+	"_202_jess" => "jvm98",
+	"_205_raytrace" => "jvm98",
+	"_209_db" => "jvm98",
+	"_213_javac" => "jvm98",
+	"_222_mpegaudio" => "jvm98",
+	"_227_mtrt" => "jvm98",
+	"_228_jack" => "jvm98",
+	"avrora" => dacapobach,
+	"batik" => dacapo,
+	# "eclipse" => dacapobach,
+	# "fop" => dacapobach,  # buggy
+	"h2" => dacapobach,
+	"jython" => dacapo,
+	"luindex" => dacapo,
+	"lusearch" => dacapo,
+	"lusearch-fix" => dacapobach,
+	"pmd" => dacapo,
+	"sunflow" => dacapo,
+	"tomcat" => dacapobach,
+	"tradebeans" => dacapobach,
+	"tradesoap" => dacapobach,
+	"xalan" => dacapo,
+	"antlr" => dacapo,
+	"bloat" => dacapo,
+	"chart" => dacapo,
+    "eclipse" => dacapo,
+    "fop" => dacapo,
+	"hsqldb" => dacapo,
+    # "jython" => dacapo,
+    # "luindex" => dacapo,
+    # "lusearch" => dacapo,
+    # "pmd" => dacapo,
+    # "xalan" => dacapo,
+	"pjbb2005" => pjbb2005,
+	"pjbb2000" => pjbb2000,
+);
 
 # sub-directories from which each benchmark should be run
 $tmp = "/tmp/runbms-".$ENV{USER};
@@ -331,9 +337,9 @@ $tmp = "/tmp/runbms-".$ENV{USER};
 	      );
 
 %bmargs = (
-	   "jvm98" => "-Dprobes=MMTk -cp $rootdir/../probes/probes.jar:. SpecApplication -i[#] [bm]",
-	   "dacapo" => "-Dprobes=MMTk -cp $rootdir/../probes/probes.jar:$benchmarkroot/dacapo/dacapo-2006-10-MR2.jar Harness -c probe.Dacapo2006Callback -n [#] [bm]",
-	   "dacapobach" => "-Dprobes=MMTk -cp $rootdir/../probes/probes.jar:$benchmarkroot/dacapo/dacapo-9.12-bach.jar Harness -c probe.DacapoBachCallback -n [#] [bm]",
+	   "jvm98" => "-cp $rootdir/../probes/probes.jar:. SpecApplication -i[#] [bm]",
+	   "dacapo" => "-Dprobes=MMTk -cp $rootdir/../probes/probes.jar:$benchmarkroot/dacapo/dacapo-2006-10-MR2.jar Harness -n [#] [bm]",
+	   "dacapobach" => "-Dprobes=MMTk -cp $rootdir/../probes/probes.jar:/home/wenyuz/dacapo-9.12-MR1-bach-java6.jar Harness -n [#] [bm]",
 	   "pjbb2005" => "-Dprobes=MMTk -cp $rootdir/../probes/probes.jar:$benchmarkroot/pjbb2005/jbb.jar:$benchmarkroot/pjbb2005/check.jar spec.jbb.JBBmain -propfile $benchmarkroot/pjbb2005/SPECjbb-8x10000.props -c probe.PJBB2005Callback -n [#]",
 	   "pjbb2000" => "-cp pseudojbb.jar spec.jbb.JBBmain -propfile SPECjbb-8x12500.props -n [#] [mmtkstart]",
 	   );

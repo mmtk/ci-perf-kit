@@ -19,6 +19,8 @@ X_INTERVAL_3 = 5
 # We place the labels (big number/benchmark name/absolute number) on the position of (last point + this offset)
 LABEL_OFFSET = X_INTERVAL_3 * 3
 
+SAME_Y_RANGE_IN_ALL_TRACES = True
+
 # runs: all the runs for a certain build (as a dictionary from run_id -> run results)
 # plan: the plan to plot
 # benchmarks: benchmarks to plot
@@ -63,11 +65,26 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
             if y[0] != 0:
                 nonzero_y = y
             else:
-                # We should almost never run to this.
-                print("Unable to plot the graph")
-                sys.exit(1)
+                nonzero_y = []
         else:
             nonzero_y = [i for i in y[:-1] if i != 0] # we dont want 0 as baseline, and we should not use the most recent data as baseline
+
+        if len(nonzero_y) == 0:
+            # We do not have any valid data for the benchmark
+            # Find our baseline, and use it as the y_baseline.
+            baseline_perf = 0
+            if baseline is not None:
+                for build in baseline:
+                    if bm in baseline[build] and baseline[build][bm] is not None:
+                        baseline_perf = baseline[build][bm]
+                        if baseline_perf != 0:
+                            break
+            # We don't even have a baseline number for it. Just use 1 (random number)
+            if baseline_perf == 0:
+                baseline_perf = 1
+            nonzero_y = [baseline_perf]
+            print(nonzero_y)
+
         y_baseline = min(nonzero_y)
         y_max = max(nonzero_y) / y_baseline
         y_min = min(nonzero_y) / y_baseline
@@ -102,7 +119,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
         }
         traces.append({**history_trace, **{
             "line": {"width": 3, "color": "black"},
-            "y": y,
+            "y": make_zero_as_none(y),
             "text": ["history: %s: %.2f" % (x, y) for (x, y) in zip(x_labels, y)],
         }})
         layout["xaxis%d" % row] = {
@@ -132,7 +149,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
             "showline": True,
             "zeroline": False,
             "showticklabels": False,
-            "autorange": False,
+            "range": [this_y_lower - 0.02, this_y_upper + 0.02]
         }
 
         # highlight max/min
@@ -251,7 +268,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
             "type": "scatter",
             "x": x,
             "y": y_moving_average,
-            "text": ["10-p moving avg: %s: %.2f" % (x, y) for (x, y) in zip(x_labels, y_moving_average)],
+            "text": ["10-p moving avg: %s: %s" % (x, "{:.2f}".format(y) if y is not None else "na") for (x, y) in zip(x_labels, y_moving_average)],
             "xaxis": x_axis,
             "yaxis": y_axis,
             "showlegend": False,
@@ -270,16 +287,20 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
             "yaxis": y_axis,
             "showlegend": False,
         }
-        variance_up = list(map(lambda a, b: a + b, y_moving_average, std_dev_moving_average))
+        variance_down = list(map(lambda a, b: a - b if a is not None and b is not None else None, y_moving_average, std_dev_moving_average))
         traces.append({**variance_trace, **{
-            "y": variance_up,
-            "text": ["moving avg + std dev: %s: %.2f" % (x, y) for (x, y) in zip(x_labels, variance_up)],
-        }})
-        variance_down = list(map(lambda a, b: a - b, y_moving_average, std_dev_moving_average))
-        traces.append({**variance_trace, **{
-            "fill": "tonexty",
+            # a hack: fill everything under this line the same as the background color
+            "fill": "tozeroy",
+            "line_color": "#e5ecf6",
             "y": variance_down,
-            "text": ["moving avg - std dev: %s: %.2f" % (x, y) for (x, y) in zip(x_labels, variance_down)],
+            "text": ["moving avg - std dev: %s: %s" % (x, "{:.2f}".format(y) if y is not None else "na") for (x, y) in zip(x_labels, variance_down)],
+        }})
+        variance_up = list(map(lambda a, b: a + b if a is not None and b is not None else None, y_moving_average, std_dev_moving_average))
+        traces.append({**variance_trace, **{
+            # fill things in grey between this trace and the trace above
+            "fill": "tonexty",
+            "y": variance_up,
+            "text": ["moving avg + std dev: %s: %s" % (x, "{:.2f}".format(y) if y is not None else "na") for (x, y) in zip(x_labels, variance_up)],
         }})
 
         # baseline - we will draw one horizontal line per each baseline
@@ -329,15 +350,19 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
         row += 1
 
     # fix range for all the traces
-    y_range = [y_range_lower - 0.02, y_range_upper + 0.02]
-    for i in range(1, row):
-        layout["yaxis%d" % i]["range"] = y_range
+    if SAME_Y_RANGE_IN_ALL_TRACES:
+        y_range = [y_range_lower - 0.02, y_range_upper + 0.02]
+        for i in range(1, row):
+            layout["yaxis%d" % i]["range"] = y_range
 
     fig = Figure(data = Data(traces), layout = layout)
     for anno in annotations:
         fig.add_annotation(anno)
     for line in baseline_hlines:
         fig.add_shape(line)
+
+    fig.update_layout(hovermode='x')
+
     return fig
 
 
@@ -433,16 +458,26 @@ def moving_average(array_numbers, p):
 
     n = len(array_numbers)
     ma = []
+
+    zeroes_in_window = 0
     for i in range(0, n):
         if window_len < p:
-            window_sum += array_numbers[i]
             window_len += 1
         else:
             window_sum -= array_numbers[i - p]
-            window_sum += array_numbers[i]
-        
-        ma.append(window_sum / float(window_len))
-    
+            if array_numbers[i - p] == 0:
+                zeroes_in_window -= 1
+
+        if array_numbers[i] == 0:
+            zeroes_in_window += 1
+
+        window_sum += array_numbers[i]
+        assert zeroes_in_window >= 0
+        if window_len > zeroes_in_window:
+            ma.append(window_sum / float(window_len - zeroes_in_window))
+        else:
+            ma.append(None)
+
     assert len(array_numbers) == len(ma)
     return ma
 
@@ -485,7 +520,7 @@ def history_per_day(runs, plan, benchmark, start_date, end_date, data_key):
 def history_per_run(runs, plan, benchmark, data_key):
     # ordered runs
     run_ids = list(runs.keys())
-    run_ids.sort()
+    run_ids.sort(key = lambda x: parse.parse_run_date(x))
 
     avg = []
     std = []
@@ -525,6 +560,10 @@ def normalize_history(arr):
 def normalize_to(arr, base):
     assert base != 0, "Cannot normalize to a zero value"
     return list(map(lambda x: x / base, arr))
+
+
+def make_zero_as_none(arr):
+    return list(map(lambda x: x if x != 0 else None, arr))
 
 
 # Given n points, return their x values (starting from 0) that are dense for the first few values and sparse for the last values.
@@ -579,3 +618,12 @@ def calculate_baseline(baseline_results, baseline_builds, data_key):
                 avg_per_bm[r['benchmark']] = avg
         ret[b] = avg_per_bm
     return ret
+
+
+def get_excluded_runs_from_env_var(v):
+    from os import environ
+    excluded_runs = []
+    if v in environ:
+        print("exclude runs: %s" % environ[v])
+        excluded_runs = environ[v].split(',')
+    return excluded_runs
