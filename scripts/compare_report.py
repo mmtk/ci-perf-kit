@@ -20,7 +20,7 @@ expected_invocations = int(sys.argv[5])
 run_id = os.path.basename(os.path.normpath(folder))
 
 # list all the logs
-logs = parse.list_logs(folder)
+logs = os.listdir(folder)
 
 results = []
 for l in logs:

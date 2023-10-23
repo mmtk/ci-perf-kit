@@ -11,13 +11,18 @@ checkout_result_repo
 
 build_openjdk_with_features $openjdk_path release $kit_build/jdk-stock zgc
 
-# Run
-run1_id=$(run_benchmarks_custom_heap $log_dir $kit_root/configs-ng/openjdk/stock/nogc.yml $stock_invocations)
-run2_id=$(run_benchmarks $log_dir $kit_root/configs-ng/openjdk/stock/other.yml $stock_invocations)
+ln -s $kit_build/jdk-stock $kit_build/jdk-epsilon
+ln -s $kit_build/jdk-stock $kit_build/jdk-g1
+ln -s $kit_build/jdk-stock $kit_build/jdk-zgc
+ln -s $kit_build/jdk-stock $kit_build/jdk-parallelgc
+ln -s $kit_build/jdk-stock $kit_build/jdk-serialgc
+ln -s $kit_build/jdk-stock $kit_build/jdk-cms
 
+# Run
+stock_run_id=$(run_benchmarks $kit_root/configs/RunConfig-OpenJDK-Stock.pm)
 # Save result
 mkdir -p $result_repo_dir/openjdk_stock
-merge_runs $run1_id $run2_id $result_repo_dir/openjdk_stock
+cp -r $kit_root/running/results/log/$stock_run_id $result_repo_dir/openjdk_stock
 
 # Make sure this is commented out during testing
 commit_result_repo 'OpenJDK Stock GC'

@@ -47,10 +47,7 @@ baseline_run_id, baseline_results = parse.parse_baseline(result_repo_baseline_ro
 # pp.pprint(baseline_results)
 
 for plan in plans:
-    # The path for all logs for the plan, such as /home/yilin/Code/ci-perf-kit/result_repo/openjdk/immix
-    plan_path = os.path.join(result_repo_vm_root, plan)
-    # Get all the runs for the plan, such as ['rat-2021-08-24-Tue-163625']
-    logs = [x for x in os.listdir(plan_path) if os.path.isdir(os.path.join(plan_path, x))]
+    logs = [x for x in os.listdir(os.path.join(result_repo_vm_root, plan)) if os.path.isdir(os.path.join(result_repo_vm_root, plan, x))]
 
     if (len(logs)) == 0:
         continue
@@ -66,7 +63,6 @@ for plan in plans:
     benchmarks = [r['benchmark'] for r in runs[last_run]]
 
     print("Plan: %s" % plan)
-    print("Runs: %s" % runs)
     print("Last run: %s" % last_run)
     print("Benchmarks: %s" % benchmarks)
 

@@ -1,3 +1,0 @@
-includes:
-    - "../../ci_base.yml"
-    - "../benchmarks.yml"
