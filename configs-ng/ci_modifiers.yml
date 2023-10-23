@@ -55,10 +55,6 @@ modifiers:
       type: EnvVar
       var: "MMTK_PLAN"
       val: "Immix"
-    immix_stress:
-      type: EnvVar
-      var: "MMTK_PLAN"
-      val: "Immix"
     gencopy:
       type: EnvVar
       var: "MMTK_PLAN"
@@ -75,19 +71,6 @@ modifiers:
       type: EnvVar
       var: "MMTK_PLAN"
       val: "NoGC"
-    ## MMTk Stress test
-    perf_stress:
-      type: EnvVar
-      var: "MMTK_PRECISE_STRESS"
-      val: "false"
-    precise_stress:
-      type: EnvVar
-      var: "MMTK_PRECISE_STRESS"
-      val: "true"
-    stress_factor:
-      type: EnvVar
-      var: "MMTK_STRESS_FACTOR"
-      val: "{0}"
     ## OpenJDK HotSpot
     hotspot_gc:
       type: JVMArg

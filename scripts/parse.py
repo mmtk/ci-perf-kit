@@ -32,7 +32,7 @@ def parse_log(log_file, n_invocations = None):
                 data[key] = [x]
 
         for i in range(0, len(lines)):
-            line = lines[i].decode('utf-8', errors='replace')
+            line = lines[i].decode('utf-8')
             if len(line) == 0:
                 continue
             
