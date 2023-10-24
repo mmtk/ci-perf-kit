@@ -7,7 +7,7 @@ kit_script=$kit_root/scripts
 # where we put all the configs
 config_dir=$kit_root/configs
 # where result logs are stored
-log_dir=$kit_root/running/results/log
+log_dir=$kit_root/logs-ng
 # where we put results
 result_repo_dir=$kit_root/result_repo
 
@@ -125,13 +125,25 @@ build_openjdk_with_features() {
     cp -r $openjdk_path/build/linux-x86_64-normal-server-$DEBUG_LEVEL $build_path
 }
 
-# run_benchmarks 'config'
+# run_benchmarks 'log_dir' 'config' 'invocations' 'heap_modifier'
+# heap_modifier=0 means we won't set heap size based on min heap. This is used for NoGC which we set heap size to the maximum instead of a multiple of min heap.
 run_benchmarks() {
-    config=$1
+    outdir=$1
+    config=$2
+    invocations=$3
+    heap_modifier=$4
 
-    cp $config $kit_root/running/bin/RunConfig.pm
-    output=$($kit_root/running/bin/runbms 16 16)
-    run_id=$(echo $output | cut -d ' ' -f 3) # output is something like: 'Run id: fox-2020-05-13-Wed-124656'
+    cd $kit_root
+
+    # Check if heap_modifier is 0
+    if [ "$heap_modifier" -eq 0 ]; then
+        output=$(running runbms $1 $2 -i $3)
+    else
+        output=$(running runbms $1 $2 -s $heap_modifier -i $3)
+    fi
+
+    # output is something like: 'Run id: fox-2020-05-13-Wed-124656'. Extract the run id.
+    run_id=$(echo $output | cut -d ' ' -f 3)
 
     echo $run_id
 }

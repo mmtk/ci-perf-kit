@@ -1,0 +1,40 @@
+includes:
+  - "./running-base.yml"
+
+benchmarks:
+  dacapobach-mr1-java6:
+    - avrora
+    - fop
+    - jython
+    - luindex
+    - pmd
+    - sunflow
+    - xalan
+  dacapo2006:
+    - antlr
+    # Need to vfb
+    # - chart
+    - eclipse
+    - hsqldb
+
+modifiers:
+  ig:
+    type: JVMArg
+    val: "-X:gc:ignoreSystemGC=true"
+
+overrides:
+  "suites.dacapo2006.minheap_values.stock":
+    antlr: 24
+    chart: 49
+    eclipse: 84
+    hsqldb: 127
+  "suites.dacapobach-mr1-java6.minheap_values.stock":
+    avrora: 50
+    fop: 40
+    jython: 40
+    luindex: 22
+    pmd: 49
+    sunflow: 54
+    xalan: 54
+  "suites.dacapo2006.minheap": "stock"
+  "suites.dacapobach-mr1-java6.minheap": "stock"
