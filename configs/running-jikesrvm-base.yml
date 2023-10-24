@@ -25,6 +25,7 @@ modifiers:
 overrides:
   "suites.dacapo2006.minheap_values.stock":
     antlr: 24
+    bloat: 33
     chart: 49
     eclipse: 84
     hsqldb: 127
