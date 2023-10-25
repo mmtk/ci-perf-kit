@@ -36,6 +36,10 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
     }
     
     n_benchmarks = len(benchmarks)
+    if (n_benchmarks == 0):
+        print("Unable to plot history for %s: no benchmark result found." % plan)
+        exit(1)
+
     row = 1
     
     traces = []
@@ -597,7 +601,17 @@ def log_timeline(n):
 
 def average_time(run, plan, benchmark, data_key):
     for bm_run in run:
-        if bm_run['benchmark'] == benchmark and (bm_run['build'].lower() == plan.lower() or bm_run['build'].lower().endswith(plan.lower())):
+        # log name is something like this. We break it down into each flag.
+        # cassandra.0.0.jdk-mmtk.ms.s.c2.tph.probes_cp.probes_rustmmtk.immix.dacapochopin-69a704e.log.gz
+        # We will see if any flag matches the plan name.
+        log_flags = [x.lower() for x in bm_run['log_name'].split(".")]
+        # build string equals the plan
+        # or build string ends with the plan
+        # or plan in one of the log flags
+        if bm_run['benchmark'] == benchmark and \
+            (bm_run['build'].lower() == plan.lower() \
+                or bm_run['build'].lower().endswith(plan.lower()) \
+                or (plan.lower() in log_flags)):
             if data_key in bm_run and len(bm_run[data_key]) != 0:
                 return sum(bm_run[data_key]) / len(bm_run[data_key]), np.std(bm_run[data_key])
             else:

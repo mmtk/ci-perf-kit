@@ -1,7 +1,7 @@
 # root dir of this perf kit
 kit_root=$(realpath $(dirname "$0")/..)
 # where we put all the builds
-kit_build=$kit_root/running/build
+kit_build=$kit_root/build
 # where we put all the scripts
 kit_script=$kit_root/scripts
 # where we put all the configs
@@ -75,20 +75,18 @@ jikesrvm_binding_use_local_mmtk() {
     sed -i s/^#[[:space:]]mmtk/mmtk/g $binding_path/mmtk/Cargo.toml
 }
 
-# build_openjdk ’binding_path' 'plan' 'debug_level' 'build_path'
+# build_openjdk ’binding_path' 'debug_level' 'build_path'
 build_openjdk_with_mmtk() {
     binding_path=$1
-    plan=$2
-    debug_level=$3
-    build_path=$4
+    debug_level=$2
+    build_path=$3
 
     openjdk_path=$binding_path/repos/openjdk
 
     cd $openjdk_path
     export DEBUG_LEVEL=$debug_level
-    export MMTK_PLAN=$plan
     sh configure --disable-warnings-as-errors --with-debug-level=$DEBUG_LEVEL
-    make CONF=linux-x86_64-normal-server-$DEBUG_LEVEL THIRD_PARTY_HEAP=$PWD/../../openjdk
+    make images CONF=linux-x86_64-normal-server-$DEBUG_LEVEL THIRD_PARTY_HEAP=$PWD/../../openjdk
 
     # copy to build_path
     cp -r $openjdk_path/build/linux-x86_64-normal-server-$DEBUG_LEVEL $build_path
@@ -103,7 +101,7 @@ build_openjdk() {
     cd $openjdk_path
     export DEBUG_LEVEL=$debug_level
     sh configure --disable-warnings-as-errors --with-debug-level=$DEBUG_LEVEL --with-jvm-features=zgc
-    make CONF=linux-x86_64-normal-server-$DEBUG_LEVEL
+    make images CONF=linux-x86_64-normal-server-$DEBUG_LEVEL
 
     # copy to build_path
     cp -r $openjdk_path/build/linux-x86_64-normal-server-$DEBUG_LEVEL $build_path
@@ -119,27 +117,28 @@ build_openjdk_with_features() {
     cd $openjdk_path
     export DEBUG_LEVEL=$debug_level
     sh configure --disable-warnings-as-errors --with-debug-level=$DEBUG_LEVEL --with-jvm-features=$features
-    make CONF=linux-x86_64-normal-server-$DEBUG_LEVEL
+    make images CONF=linux-x86_64-normal-server-$DEBUG_LEVEL
 
     # copy to build_path
     cp -r $openjdk_path/build/linux-x86_64-normal-server-$DEBUG_LEVEL $build_path
 }
 
-# run_benchmarks 'log_dir' 'config' 'invocations' 'heap_modifier'
+# run_benchmarks 'log_dir' 'config' 'heap_modifier'
 # heap_modifier=0 means we won't set heap size based on min heap. This is used for NoGC which we set heap size to the maximum instead of a multiple of min heap.
 run_benchmarks() {
     outdir=$1
     config=$2
-    invocations=$3
-    heap_modifier=$4
+    heap_modifier=$3
+
+    invocations=1
 
     cd $kit_root
 
     # Check if heap_modifier is 0
     if [ "$heap_modifier" -eq 0 ]; then
-        output=$(running runbms $1 $2 -i $3)
+        output=$(running runbms $1 $2 -i $invocations)
     else
-        output=$(running runbms $1 $2 -s $heap_modifier -i $3)
+        output=$(running runbms $1 $2 -s $heap_modifier -i $invocations)
     fi
 
     # output is something like: 'Run id: fox-2020-05-13-Wed-124656'. Extract the run id.

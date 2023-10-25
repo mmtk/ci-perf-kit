@@ -49,11 +49,16 @@ baseline_run_id, baseline_results = parse.parse_baseline(result_repo_baseline_ro
 excluded_runs = plot.get_excluded_runs_from_env_var('HISTORY_EXCLUDE_RUNS')
 
 for plan in plans:
-    logs = [x for x in os.listdir(os.path.join(result_repo_vm_root, plan)) if os.path.isdir(os.path.join(result_repo_vm_root, plan, x))]
+    # The path for all logs for the plan, such as /home/yilin/Code/ci-perf-kit/result_repo/openjdk/immix
+    plan_path = os.path.join(result_repo_vm_root, plan)
+    # Get all the runs for the plan, such as ['rat-2021-08-24-Tue-163625']
+    logs = [x for x in os.listdir(plan_path) if os.path.isdir(os.path.join(plan_path, x))]
 
     if (len(logs)) == 0:
         continue
-    
+
+    # Sort logs and find the last log. Plot for the benchmarks used in the last log.
+    parse.sort_logs(logs)
     runs = {}
     last_run = None
     for l in logs:
@@ -61,13 +66,14 @@ for plan in plans:
         if run_id not in excluded_runs:
             runs[run_id] = results
             last_run = run_id
-    
+
     # figure out what benchmarks we should plot in the graph. We use the benchmarks that appeared in the last run
     benchmarks = [r['benchmark'] for r in runs[last_run]]
 
     print("Plan: %s" % plan)
     print("Last run: %s" % last_run)
     print("Benchmarks: %s" % benchmarks)
+    print(logs)
 
     # figure out the baseline and get the result for the baseline
     plan_config = parse.get_config_for_plan(config, plan)

@@ -1,0 +1,88 @@
+includes:
+  - "./running-base.yml"
+
+benchmarks:
+  dacapo2006:
+    - antlr
+    - bloat
+    - eclipse
+    - fop
+    - hsqldb
+    - xalan
+    - jython
+    - luindex
+    - lusearch
+    - pmd
+    - sunflow
+    - hsqldb
+
+modifiers:
+  # OpenJDK options
+  tph:
+    type: JVMArg
+    val: "-XX:+UseThirdPartyHeap"
+  c2:
+    type: JVMArg
+    val: "-XX:-TieredCompilation -Xcomp"
+    excludes:
+      # These two benchmarks exit with code 1
+      dacapochopin-69a704e:
+        - tradebeans
+        - tradesoap
+  ms:
+    type: JVMArg
+    val: "-XX:MetaspaceSize=500M -XX:+DisableExplicitGC"
+  s:
+    type: JVMArg
+    val: "-server"
+
+  ## OpenJDK HotSpot
+  hotspot_gc:
+    type: JVMArg
+    val: "-XX:-UseCompressedOops -XX:+UnlockExperimentalVMOptions -XX:+Use{0}GC"
+  sgc:
+    type: JVMArg
+    val: "-XX:+UseSerialGC"
+  g1:
+    type: JVMArg
+    val: "-XX:-UseCompressedOops -XX:+UseG1GC"
+  epsilon:
+    type: JVMArg
+    val: "-XX:-UseCompressedOops -XX:+UnlockExperimentalVMOptions -XX:+UseEpsilonGC"
+  cms:
+    type: JVMArg
+    val: "-XX:-UseCompressedOops -XX:+UseConcMarkSweepGC -XX:TLABSize=32K -XX:-ResizeTLAB"
+  zgc:
+    type: JVMArg
+    val: "-XX:-UseCompressedOops -XX:+UnlockExperimentalVMOptions -XX:+UseZGC"
+  pgc:
+    type: JVMArg
+    val: "-XX:-UseCompressedOops -XX:+UseParallelGC"
+
+  common:
+    type: ModifierSet
+    val: "ms|s|c2|probes_cp"
+  common_mmtk:
+    type: ModifierSet
+    val: "common|tph|probes_rustmmtk"
+
+overrides:
+  "suites.dacapo2006.minheap_values.from_old_running_scripts":
+    antlr: 24
+    bloat: 33
+    eclipse: 84
+    fop: 40
+    xalan: 54
+    jython: 40
+    luindex: 22
+    lusearch: 34
+    pmd: 49
+    sunflow: 54
+    hsqldb: 127
+  "suites.dacapo2006.minheap": "from_old_running_scripts"
+
+runtimes:
+  jdk-mmtk:
+    type: OpenJDK
+    release: 11
+    home: "./build/jdk-mmtk/images/jdk"

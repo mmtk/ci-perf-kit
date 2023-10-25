@@ -2,19 +2,17 @@ includes:
   - "./running-base.yml"
 
 benchmarks:
-  dacapobach-mr1-java6:
-    - avrora
-    - fop
-    - jython
-    - luindex
-    - pmd
-    - sunflow
-    - xalan
   dacapo2006:
     - antlr
-    # Need to vfb
-    # - chart
+    - bloat
     - eclipse
+    - fop
+    - xalan
+    - jython
+    - luindex
+    - lusearch
+    - pmd
+    - sunflow
     - hsqldb
 
 modifiers:
@@ -23,19 +21,16 @@ modifiers:
     val: "-X:gc:ignoreSystemGC=true"
 
 overrides:
-  "suites.dacapo2006.minheap_values.stock":
+  "suites.dacapo2006.minheap_values.from_old_running_scripts":
     antlr: 24
     bloat: 33
-    chart: 49
     eclipse: 84
-    hsqldb: 127
-  "suites.dacapobach-mr1-java6.minheap_values.stock":
-    avrora: 50
     fop: 40
+    xalan: 54
     jython: 40
     luindex: 22
+    lusearch: 34
     pmd: 49
     sunflow: 54
-    xalan: 54
-  "suites.dacapo2006.minheap": "stock"
-  "suites.dacapobach-mr1-java6.minheap": "stock"
+    hsqldb: 127
+  "suites.dacapo2006.minheap": "from_old_running_scripts"

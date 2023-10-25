@@ -1,0 +1,5 @@
+includes:
+  - "./running-openjdk-base.yml"
+
+configs:
+  - "jdk-mmtk|stickyimmix|common_mmtk"
