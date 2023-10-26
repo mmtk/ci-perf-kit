@@ -1,13 +1,9 @@
 includes:
   - "./running-jikesrvm-base.yml"
 
-# Specific to NoGC (only a few benchmarks can run with limited heap size 4G max, run fewer interations)
+# Specific to NoGC (run fewer iterations)
 overrides:
     "suites.dacapo2006.timing_iteration": 2
-    "benchmarks.dacapo2006":
-        - antlr
-        - fop
-        - luindex
 
 runtimes:
   NoGC:

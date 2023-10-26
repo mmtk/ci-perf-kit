@@ -3,10 +3,6 @@ includes:
 
 overrides:
     "suites.dacapo2006.timing_iteration": 2
-    "benchmarks.dacapo2006":
-        - antlr
-        - fop
-        - luindex
 
 configs:
   - "jdk-mmtk|nogc|heap120g|common_mmtk"
