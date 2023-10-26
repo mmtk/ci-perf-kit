@@ -7,7 +7,6 @@ benchmarks:
     - bloat
     - eclipse
     - fop
-    - hsqldb
     - xalan
     - jython
     - luindex
