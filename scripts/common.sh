@@ -53,7 +53,7 @@ build_jikesrvm() {
     cd $jikesrvm_path
 
     # build
-    bin/buildit localhost $plan -j $JAVA_HOME -quick --m32
+    bin/buildit localhost $plan -quick --answer-yes --m32
 
     # copy to build_path
     cp -r $jikesrvm_path'/dist/'$plan'_x86_64_m32-linux' $build_path/
@@ -193,4 +193,15 @@ commit_result_repo() {
     else
         echo "SKIP_UPLOAD_RESULT is set, skip uploading result"
     fi
+}
+
+# merge_runs 'run1' 'run2' 'dest'
+# Copy $log_dir/run1 to dest/, then copy the contents in $log_dir/run2 to dest/run1
+merge_runs() {
+    run1=$1
+    run2=$2
+    dest=$3
+
+    cp -r $log_dir/$run1 $dest
+    cp -r $log_dir/$run2/* $dest/$run1/
 }
