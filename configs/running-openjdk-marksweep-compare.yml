@@ -1,0 +1,6 @@
+includes:
+  - "./running-openjdk-base.yml"
+
+configs:
+  - "jdk-mmtk-trunk|marksweep|common_mmtk"
+  - "jdk-mmtk-branch|marksweep|common_mmtk"

@@ -30,16 +30,10 @@ ensure_empty_dir $kit_build
 # Trunk
 rm -r $jikesrvm_binding_trunk/repos/mmtk-core
 ln -sfn $mmtk_core_trunk $jikesrvm_binding_trunk/repos/
-# build_jikesrvm_with_mmtk $jikesrvm_binding_trunk RFastAdaptiveNoGC $kit_build/NoGC_Trunk_x86_64_m32-linux
-# build_jikesrvm_with_mmtk $jikesrvm_binding_trunk RFastAdaptiveSemiSpace $kit_build/SemiSpace_Trunk_x86_64_m32-linux
-# build_jikesrvm_with_mmtk $jikesrvm_binding_trunk RFastAdaptiveMarkSweep $kit_build/MarkSweep_Trunk_x86_64_m32-linux
 
 # Branch
 rm -r $jikesrvm_binding_branch/repos/mmtk-core
 ln -sfn $mmtk_core_branch $jikesrvm_binding_branch/repos/
-# build_jikesrvm_with_mmtk $jikesrvm_binding_branch RFastAdaptiveNoGC $kit_build/NoGC_Branch_x86_64_m32-linux
-# build_jikesrvm_with_mmtk $jikesrvm_binding_branch RFastAdaptiveSemiSpace $kit_build/SemiSpace_Branch_x86_64_m32-linux
-# build_jikesrvm_with_mmtk $jikesrvm_binding_branch RFastAdaptiveMarkSweep $kit_build/MarkSweep_Branch_x86_64_m32-linux
 
 # Run
 cd $kit_root
@@ -80,13 +74,3 @@ run_exp RFastAdaptiveNoGC NoGC $kit_root/configs/running-jikesrvm-nogc-compare.y
 run_exp RFastAdaptiveSemiSpace SemiSpace $kit_root/configs/running-jikesrvm-semispace-compare.yml 6
 # MarkSweep
 run_exp RFastAdaptiveMarkSweep MarkSweep $kit_root/configs/running-jikesrvm-marksweep-compare.yml 6
-
-# # Run for NoGC
-# nogc_run_id=$(run_benchmarks $log_dir $kit_root/configs/running-jikesrvm-nogc-compare.yml 0 $compare_invocations)
-# # Result for NoGC
-# python $kit_root/scripts/compare_report.py $log_dir/$nogc_run_id NoGC NoGC_Trunk NoGC_Branch $compare_invocations >> $output_file
-
-# # Run for SemiSpace
-# ss_run_id=$(run_benchmarks $log_dir $kit_root/configs/running-jikesrvm-semispace-compare.yml 6 $compare_invocations)
-# # Result for SemiSpace
-# python $kit_root/scripts/compare_report.py $log_dir/$ss_run_id SemiSpace SemiSpace_Trunk SemiSpace_Branch $compare_invocations >> $output_file

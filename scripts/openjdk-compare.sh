@@ -28,18 +28,14 @@ fi
 ensure_empty_dir $kit_build
 
 # Build for trunk
-ensure_empty_dir $openjdk_binding_trunk/repos/mmtk-core
-cp -r $mmtk_core_trunk/* $openjdk_binding_trunk/repos/mmtk-core/
-# SemiSpace
-build_openjdk_with_mmtk $openjdk_binding_trunk semispace release $kit_build/jdk-mmtk-trunk-semispace
-build_openjdk_with_mmtk $openjdk_binding_trunk gencopy release $kit_build/jdk-mmtk-trunk-gencopy
+rm -rf $openjdk_binding_trunk/repos/mmtk-core
+ln -sfn $mmtk_core_trunk $openjdk_binding_trunk/repos
+build_openjdk_with_mmtk $openjdk_binding_trunk release $kit_build/jdk-mmtk-trunk
 
 # Build for branch
-ensure_empty_dir $openjdk_binding_branch/repos/mmtk-core
-cp -r $mmtk_core_branch/* $openjdk_binding_branch/repos/mmtk-core/
-# SemiSpace
-build_openjdk_with_mmtk $openjdk_binding_branch semispace release $kit_build/jdk-mmtk-branch-semispace
-build_openjdk_with_mmtk $openjdk_binding_branch gencopy release $kit_build/jdk-mmtk-branch-gencopy
+rm -rf $openjdk_binding_branch/repos/mmtk-core
+ln -sfn $mmtk_core_branch $openjdk_binding_branch/repos
+build_openjdk_with_mmtk $openjdk_binding_branch release $kit_build/jdk-mmtk-branch
 
 # Run
 cd $kit_root
@@ -58,12 +54,32 @@ echo "" >> $output_file
 start_venv python-env
 pip3 install -r scripts/requirements.txt
 
-# Run For SemiSpace
-ss_run_id=$(run_benchmarks $kit_root/configs/RunConfig-OpenJDK-SemiSpace-FastCompare.pm $compare_invocations)
-# Result for SemiSpace
-python $kit_root/scripts/compare_report.py $kit_root/running/results/log/$ss_run_id SemiSpace jdk-mmtk-trunk-semispace jdk-mmtk-branch-semispace 40 >> $output_file
+run_exp() {
+    plan=$1
+    run_config=$2
+    heap_modifier=$3
 
-# Run For GenCopy
-gencopy_run_id=$(run_benchmarks $kit_root/configs/RunConfig-OpenJDK-GenCopy-FastCompare.pm $compare_invocations)
-# Result for GenCopy
-python $kit_root/scripts/compare_report.py $kit_root/running/results/log/$gencopy_run_id GenCopy jdk-mmtk-trunk-gencopy jdk-mmtk-branch-gencopy 40 >> $output_file
+    run_id=$(run_benchmarks $log_dir $kit_root/configs/$run_config $heap_modifier $compare_invocations)
+    python $kit_root/scripts/compare_report.py $log_dir/$run_id $plan jdk-mmtk-trunk jdk-mmtk-branch $compare_invocations >> $output_file
+}
+
+# NoGC
+run_exp NoGC running-openjdk-nogc-compare.yml 0
+
+# SemiSpace
+run_exp SemiSpace running-openjdk-semispace-compare.yml 6
+
+# GenCopy
+run_exp GenCopy running-openjdk-semispace-compare.yml 6
+
+# Immix
+run_exp Immix running-openjdk-immix-compare.yml 6
+
+# GenImmix
+run_exp GenImmix running-openjdk-genimmix-compare.yml 6
+
+# StickyImmix
+run_exp StickyImmix running-openjdk-stickyimmix-compare.yml 6
+
+# MarkSweep
+run_exp MarkSweep running-openjdk-marksweep-compare.yml 6
