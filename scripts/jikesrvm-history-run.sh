@@ -25,7 +25,7 @@ run_exp() {
     cd $jikesrvm
     build_jikesrvm_with_mmtk $jikesrvm_binding $build_config $kit_build/$plan"_x86_64_m32-linux"
     # Run
-    run_id=$(run_benchmarks $log_dir $run_config $heap_modifier)
+    run_id=$(run_benchmarks $log_dir $run_config $heap_modifier $history_invocations)
     # Save result
     mkdir -p $result_repo_dir/jikesrvm/$lower_case_plan_name
     cp -r $log_dir/$run_id $result_repo_dir/jikesrvm/$lower_case_plan_name

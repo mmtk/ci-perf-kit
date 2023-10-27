@@ -11,6 +11,10 @@ log_dir=$kit_root/logs-ng
 # where we put results
 result_repo_dir=$kit_root/result_repo
 
+stock_invocations=1
+compare_invocations=1
+history_invocations=1
+
 # ensure_env 'var_name'
 ensure_env() {
     env_var=$1
@@ -27,7 +31,7 @@ build_jikesrvm_with_mmtk() {
     ensure_env JAVA_HOME
 
     binding_path=$1
-    plan=$2
+    build_config=$2
     build_path=$3 # put the build here
 
     jikesrvm_path=$binding_path/repos/jikesrvm
@@ -35,10 +39,10 @@ build_jikesrvm_with_mmtk() {
     cd $jikesrvm_path
 
     # build
-    ./bin/buildit localhost $plan -quick --answer-yes --use-third-party-heap=../.. --use-third-party-build-configs=../../jikesrvm/build/configs --use-external-source=../../jikesrvm/rvm/src --m32
+    ./bin/buildit localhost $build_config -quick --answer-yes --use-third-party-heap=../.. --use-third-party-build-configs=../../jikesrvm/build/configs --use-external-source=../../jikesrvm/rvm/src --m32
 
     # copy to build_path
-    cp -r $jikesrvm_path'/dist/'$plan'_x86_64_m32-linux' $build_path/
+    cp -r $jikesrvm_path'/dist/'$build_config'_x86_64_m32-linux' $build_path/
 }
 
 # build_jikesrvm 'jikesrvm_path' 'plan' 'build_path'
@@ -47,16 +51,16 @@ build_jikesrvm() {
     ensure_env JAVA_HOME
 
     jikesrvm_path=$1
-    plan=$2
+    build_config=$2
     build_path=$3
 
     cd $jikesrvm_path
 
     # build
-    bin/buildit localhost $plan -quick --answer-yes --m32
+    bin/buildit localhost $build_config -quick --answer-yes --m32
 
     # copy to build_path
-    cp -r $jikesrvm_path'/dist/'$plan'_x86_64_m32-linux' $build_path/
+    cp -r $jikesrvm_path'/dist/'$build_config'_x86_64_m32-linux' $build_path/
 }
 
 # openjdk_binding_use_local_mmtk 'binding_path'
@@ -123,14 +127,13 @@ build_openjdk_with_features() {
     cp -r $openjdk_path/build/linux-x86_64-normal-server-$DEBUG_LEVEL $build_path
 }
 
-# run_benchmarks 'log_dir' 'config' 'heap_modifier'
+# run_benchmarks 'log_dir' 'config' 'heap_modifier' 'invocations'
 # heap_modifier=0 means we won't set heap size based on min heap. This is used for NoGC which we set heap size to the maximum instead of a multiple of min heap.
 run_benchmarks() {
     outdir=$1
     config=$2
     heap_modifier=$3
-
-    invocations=1
+    invocations=$4
 
     cd $kit_root
 

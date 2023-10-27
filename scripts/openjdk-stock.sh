@@ -19,8 +19,8 @@ ln -s $kit_build/jdk-stock $kit_build/jdk-serialgc
 ln -s $kit_build/jdk-stock $kit_build/jdk-cms
 
 # Run
-run1_id=$(run_benchmarks $log_dir $kit_root/configs/running-openjdk-stock-nogc.yml 0)
-run2_id=$(run_benchmarks $log_dir $kit_root/configs/running-openjdk-stock-other.yml 6)
+run1_id=$(run_benchmarks $log_dir $kit_root/configs/running-openjdk-stock-nogc.yml 0 $stock_invocations)
+run2_id=$(run_benchmarks $log_dir $kit_root/configs/running-openjdk-stock-other.yml 6 $stock_invocations)
 
 # Save result
 mkdir -p $result_repo_dir/openjdk_stock

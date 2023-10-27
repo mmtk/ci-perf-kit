@@ -16,8 +16,8 @@ build_jikesrvm $jikesrvm_path FastAdaptiveSemiSpace $kit_build/JavaMMTk_SemiSpac
 build_jikesrvm $jikesrvm_path FastAdaptiveMarkSweep $kit_build/JavaMMTk_MarkSweep_x86_64_m32-linux
 
 # Run
-run1_id=$(run_benchmarks $log_dir $kit_root/configs/running-jikesrvm-stock-nogc.yml 0)
-run2_id=$(run_benchmarks $log_dir $kit_root/configs/running-jikesrvm-stock-other.yml 6)
+run1_id=$(run_benchmarks $log_dir $kit_root/configs/running-jikesrvm-stock-nogc.yml 0 $stock_invocations)
+run2_id=$(run_benchmarks $log_dir $kit_root/configs/running-jikesrvm-stock-other.yml 6 $stock_invocations)
 
 # Save result
 mkdir -p $result_repo_dir/jikesrvm_stock

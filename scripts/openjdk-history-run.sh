@@ -22,7 +22,7 @@ run_exp() {
     heap_modifier=$3
 
     # Run
-    run_id=$(run_benchmarks $log_dir $kit_root/configs/$config $heap_modifier)
+    run_id=$(run_benchmarks $log_dir $kit_root/configs/$config $heap_modifier $history_invocations)
     # Save result
     mkdir -p $result_repo_dir/openjdk/$plan
     cp -r $log_dir/$run_id $result_repo_dir/openjdk/$plan

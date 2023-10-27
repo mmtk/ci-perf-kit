@@ -59,11 +59,11 @@ start_venv python-env
 pip3 install -r scripts/requirements.txt
 
 # Run For SemiSpace
-ss_run_id=$(run_benchmarks $kit_root/configs/RunConfig-OpenJDK-SemiSpace-FastCompare.pm)
+ss_run_id=$(run_benchmarks $kit_root/configs/RunConfig-OpenJDK-SemiSpace-FastCompare.pm $compare_invocations)
 # Result for SemiSpace
 python $kit_root/scripts/compare_report.py $kit_root/running/results/log/$ss_run_id SemiSpace jdk-mmtk-trunk-semispace jdk-mmtk-branch-semispace 40 >> $output_file
 
 # Run For GenCopy
-gencopy_run_id=$(run_benchmarks $kit_root/configs/RunConfig-OpenJDK-GenCopy-FastCompare.pm)
+gencopy_run_id=$(run_benchmarks $kit_root/configs/RunConfig-OpenJDK-GenCopy-FastCompare.pm $compare_invocations)
 # Result for GenCopy
 python $kit_root/scripts/compare_report.py $kit_root/running/results/log/$gencopy_run_id GenCopy jdk-mmtk-trunk-gencopy jdk-mmtk-branch-gencopy 40 >> $output_file

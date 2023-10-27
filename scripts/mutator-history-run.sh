@@ -37,7 +37,7 @@ ln -s $kit_build/jdk-stock $kit_build/jdk-epsilon
 ln -s $kit_build/jdk-stock $kit_build/jdk-g1
 
 # Run
-mu_run_id=$(run_benchmarks $kit_root/configs/RunConfig-OpenJDK-Mutator-History.pm)
+mu_run_id=$(run_benchmarks $kit_root/configs/RunConfig-OpenJDK-Mutator-History.pm $history_invocations)
 # Save result
 mkdir -p $result_repo_dir/mutator
 cp -r $kit_root/running/results/log/$mu_run_id $result_repo_dir/mutator
