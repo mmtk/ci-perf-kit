@@ -1,0 +1,9 @@
+includes:
+  - "./running-openjdk-base.yml"
+
+configs:
+  - "jdk-stock|common|sgc"
+  - "jdk-stock|common|pgc"
+  - "jdk-stock|common|g1"
+  - "jdk-stock|common|zgc"
+  - "jdk-stock|common|cms"

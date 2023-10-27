@@ -1,0 +1,8 @@
+includes:
+  - "./running-openjdk-base.yml"
+
+overrides:
+    "suites.dacapo2006.timing_iteration": 2
+
+configs:
+  - "jdk-stock|common|epsilon|heap120g"

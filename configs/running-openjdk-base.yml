@@ -85,3 +85,7 @@ runtimes:
     type: OpenJDK
     release: 11
     home: "./build/jdk-mmtk/images/jdk"
+  jdk-stock:
+    type: OpenJDK
+    release: 11
+    home: "./build/jdk-stock/images/jdk"

@@ -19,10 +19,12 @@ ln -s $kit_build/jdk-stock $kit_build/jdk-serialgc
 ln -s $kit_build/jdk-stock $kit_build/jdk-cms
 
 # Run
-stock_run_id=$(run_benchmarks $kit_root/configs/RunConfig-OpenJDK-Stock.pm)
+run1_id=$(run_benchmarks $log_dir $kit_root/configs/running-openjdk-stock-nogc.yml 0)
+run2_id=$(run_benchmarks $log_dir $kit_root/configs/running-openjdk-stock-other.yml 6)
+
 # Save result
 mkdir -p $result_repo_dir/openjdk_stock
-cp -r $kit_root/running/results/log/$stock_run_id $result_repo_dir/openjdk_stock
+merge_runs $run1_id $run2_id $result_repo_dir/openjdk_stock
 
 # Make sure this is commented out during testing
 commit_result_repo 'OpenJDK Stock GC'
