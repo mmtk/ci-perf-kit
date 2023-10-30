@@ -14,6 +14,7 @@ ensure_empty_dir $kit_build
 checkout_result_repo
 
 # Build probes
+ensure_env JAVA_HOME
 cd $kit_root/probes/openjdk
 make
 cd $kit_root/probes/rust_mmtk
@@ -22,25 +23,21 @@ make
 # Build
 cd $openjdk
 
-# NoGC
-build_openjdk_with_mmtk $openjdk_binding nogc release $kit_build/jdk-mmtk-nogc
-# Lock free NoGC
-build_openjdk_with_mmtk $openjdk_binding nogc_lock_free release $kit_build/jdk-mmtk-lock-free-nogc
-# No zeroing NoGC
-build_openjdk_with_mmtk $openjdk_binding nogc_no_zeroing release $kit_build/jdk-mmtk-no-zeroing-nogc
-# SemiSpace
-build_openjdk_with_mmtk $openjdk_binding semispace release $kit_build/jdk-mmtk-semispace
-# Stock OpenJDK
-build_openjdk $openjdk_binding/repos/openjdk release $kit_build/jdk-stock
-# Symlink
-ln -s $kit_build/jdk-stock $kit_build/jdk-epsilon
-ln -s $kit_build/jdk-stock $kit_build/jdk-g1
+# Normal MMTk build
+build_openjdk_with_mmtk $openjdk_binding release $kit_build/jdk-mmtk
+
+# Special MMTk builds
+build_openjdk_with_mmtk_plan $openjdk_binding nogc_lock_free release $kit_build/jdk-mmtk-lock-free-nogc
+build_openjdk_with_mmtk_plan $openjdk_binding nogc_no_zeroing release $kit_build/jdk-mmtk-no-zeroing-nogc
+
+# Stock build
+build_openjdk $openjdk release $kit_build/jdk-stock
 
 # Run
-mu_run_id=$(run_benchmarks $kit_root/configs/RunConfig-OpenJDK-Mutator-History.pm $history_invocations)
+mu_run_id=$(run_benchmarks $log_dir $kit_root/configs/running-openjdk-mutator.yml 0 $history_invocations)
 # Save result
 mkdir -p $result_repo_dir/mutator
-cp -r $kit_root/running/results/log/$mu_run_id $result_repo_dir/mutator
+cp -r $log_dir/$mu_run_id $result_repo_dir/mutator
 
 # Commit result - comment out the following for testing if you dont want to commit the result
 commit_result_repo 'Mutator(OpenJDK) Binding: '$openjdk_rev

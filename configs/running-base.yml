@@ -3,12 +3,16 @@ includes:
 
 overrides:
   "remote_host": null
+  "suites.dacapo2006.callback": "probe.Dacapo2006Callback"
 
 modifiers:
     # Fixed large heap sizes - for NoGC
     heap120g:
       type: JVMArg
       val: "-Xms120G -Xmx120G"
+    heap8g:
+      type: JVMArg
+      val: "-Xms8000M -Xmx8000M"
     heap4g:
       type: JVMArg
       val: "-Xms4000M -Xmx4000M"
@@ -16,10 +20,10 @@ modifiers:
     # Probes
     probes_cp:
       type: JVMClasspath
-      val: "$PWD/probes/rust_mmtk/java $PWD/probes/probes.jar"
+      val: "$PWD/probes/rust_mmtk/java $PWD/probes/openjdk/java $PWD/probes/probes.jar"
     probes_rustmmtk:
       type: JVMArg
-      val: "-Dprobes=RustMMTk -Djava.library.path=$PWD/probes/native/rust_mmtk"
+      val: "-Dprobes=RustMMTk -Djava.library.path=$PWD/probes/rust_mmtk"
     probes_openjdk:
       type: JVMArg
       val: "-Dprobes=OpenJDK"

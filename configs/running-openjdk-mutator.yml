@@ -1,0 +1,47 @@
+includes:
+  - "./running-openjdk-base.yml"
+
+# Specific to NoGC (run fewer iterations)
+overrides:
+    "suites.dacapo2006.timing_iteration": 2
+
+# Though we can choose plans at runtime, we put them to different builds
+# so our script can easily figure out the build.
+runtimes:
+  jdk-mmtk-nogc:
+      type: OpenJDK
+      release: 11
+      home: "./build/jdk-mmtk/images/jdk"
+  jdk-mmtk-semispace:
+      type: OpenJDK
+      release: 11
+      home: "./build/jdk-mmtk/images/jdk"
+  jdk-mmtk-immix:
+      type: OpenJDK
+      release: 11
+      home: "./build/jdk-mmtk/images/jdk"
+  jdk-g1:
+      type: OpenJDK
+      release: 11
+      home: "./build/jdk-stock/images/jdk"
+  jdk-epsilon:
+      type: OpenJDK
+      release: 11
+      home: "./build/jdk-stock/images/jdk"
+  jdk-mmtk-lock-free-nogc:
+      type: OpenJDK
+      release: 11
+      home: "./build/jdk-mmtk-lock-free-nogc/images/jdk"
+  jdk-mmtk-no-zeroing-nogc:
+      type: OpenJDK
+      release: 11
+      home: "./build/jdk-mmtk-no-zeroing-nogc/images/jdk"
+
+configs:
+  - "jdk-mmtk-nogc|nogc|common_mmtk|heap8g"
+  - "jdk-mmtk-semispace|semispace|common_mmtk|heap8g"
+  - "jdk-mmtk-immix|immix|common_mmtk|heap8g"
+  - "jdk-mmtk-lock-free-nogc|nogc|common_mmtk|heap8g"
+  - "jdk-mmtk-no-zeroing-nogc|nogc|common_mmtk|heap8g"
+  - "jdk-g1|g1|common|probes_openjdk|heap8g"
+  - "jdk-epsilon|epsilon|common|probes_openjdk|heap8g"

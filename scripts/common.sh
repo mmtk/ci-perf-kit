@@ -96,6 +96,25 @@ build_openjdk_with_mmtk() {
     cp -r $openjdk_path/build/linux-x86_64-normal-server-$DEBUG_LEVEL $build_path
 }
 
+# build_openjdk ’binding_path' 'plan' 'debug_level' 'build_path'
+build_openjdk_with_mmtk_plan() {
+    binding_path=$1
+    plan=$2
+    debug_level=$3
+    build_path=$4
+
+    openjdk_path=$binding_path/repos/openjdk
+
+    cd $openjdk_path
+    export DEBUG_LEVEL=$debug_level
+    export MMTK_PLAN=$plan
+    sh configure --disable-warnings-as-errors --with-debug-level=$DEBUG_LEVEL
+    make images CONF=linux-x86_64-normal-server-$DEBUG_LEVEL THIRD_PARTY_HEAP=$PWD/../../openjdk
+
+    # copy to build_path
+    cp -r $openjdk_path/build/linux-x86_64-normal-server-$DEBUG_LEVEL $build_path
+}
+
 # build_openjdk 'openjdk_path' 'debug_level' 'build_path'
 build_openjdk() {
     openjdk_path=$1
