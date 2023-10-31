@@ -1,8 +1,5 @@
 includes:
   - "./running-openjdk-base.yml"
 
-overrides:
-    "suites.dacapo2006.timing_iteration": 2
-
 configs:
-  - "jdk-mmtk|nogc|heap120g|common_mmtk"
+  - "jdk-mmtk|nogc|heap30g|common_mmtk"

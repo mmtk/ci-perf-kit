@@ -1,10 +1,6 @@
 includes:
   - "./running-jikesrvm-base.yml"
 
-# Specific to NoGC (run fewer iterations)
-overrides:
-    "suites.dacapo2006.timing_iteration": 2
-
 runtimes:
   NoGC_Trunk:
     type: JikesRVM

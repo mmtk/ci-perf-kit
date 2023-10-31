@@ -3,13 +3,11 @@ includes:
 
 overrides:
   "remote_host": null
+  "suites.dacapo2006.timing_iteration": 2
 
 modifiers:
     # Fixed large heap sizes - for NoGC
-    heap120g:
-      type: JVMArg
-      val: "-Xms120G -Xmx120G"
-    heap8g:
+    heap30g:
       type: JVMArg
       val: "-Xms8000M -Xmx8000M"
     heap4g:
