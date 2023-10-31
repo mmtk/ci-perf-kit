@@ -28,12 +28,12 @@ fi
 ensure_empty_dir $kit_build
 
 # Trunk
-rm -r $jikesrvm_binding_trunk/repos/mmtk-core
-ln -sfn $mmtk_core_trunk $jikesrvm_binding_trunk/repos/
+rm -rf $jikesrvm_binding_trunk/repos/mmtk-core
+ln -sfn $mmtk_core_trunk $jikesrvm_binding_trunk/repos/mmtk-core
 
 # Branch
-rm -r $jikesrvm_binding_branch/repos/mmtk-core
-ln -sfn $mmtk_core_branch $jikesrvm_binding_branch/repos/
+rm -rf $jikesrvm_binding_branch/repos/mmtk-core
+ln -sfn $mmtk_core_branch $jikesrvm_binding_branch/repos/mmtk-core
 
 # Run
 cd $kit_root
