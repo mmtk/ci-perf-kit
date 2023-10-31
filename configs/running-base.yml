@@ -3,7 +3,6 @@ includes:
 
 overrides:
   "remote_host": null
-  "suites.dacapo2006.callback": "probe.Dacapo2006Callback"
 
 modifiers:
     # Fixed large heap sizes - for NoGC

@@ -1,10 +1,11 @@
 includes:
   - "./running-openjdk-base.yml"
 
-# Specific to NoGC (run fewer iterations)
 overrides:
+    # Specific to NoGC (run fewer iterations)
     "suites.dacapo2006.timing_iteration": 2
-
+    # Use probe to get mutator time
+    "suites.dacapo2006.callback": "probe.Dacapo2006Callback"
 # Though we can choose plans at runtime, we put them to different builds
 # so our script can easily figure out the build.
 runtimes:
