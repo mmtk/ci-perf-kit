@@ -14,3 +14,8 @@ plans:
     baseline: ['jdk-g1', 'jdk-zgc']
   - plan: marksweep
     baseline: ['jdk-g1', 'jdk-zgc']
+notes:
+  - date: "20230815"
+    note: Kernel Return Mitigation
+  - date: "20230201"
+    note: Move to Ubuntu 22.04

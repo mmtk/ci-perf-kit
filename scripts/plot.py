@@ -27,7 +27,8 @@ SAME_Y_RANGE_IN_ALL_TRACES = True
 # start_date, end_date: plot data between the given date range
 # data_key: the data to render
 # baseline: the baseline to plot as a dict {baseline: {benchmark: avg}}. None means no baseline, or no data for a certain benchmark.
-def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baseline):
+# notes: a list of [date, note]. date is YYYYMMDD
+def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baseline, notes=[]):
     layout = {
         "title": plan,
         # "margin": {"t": 80},
@@ -50,6 +51,9 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
     y_range_upper = - float("inf")
     y_range_lower = float("inf")
 
+    benchmarks.sort()
+
+    aligned_notes = []
     for bm in benchmarks:
         # extract results
         print("Plotting %s %s..." % (plan, bm))
@@ -61,6 +65,25 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
         x_labels = list(runs.keys())
         # We have to sort by date, run_id includes the machine name, we cannot sort by alphabet
         x_labels.sort(key = lambda x: parse.parse_run_date(x))
+
+        # Only add notes for the first plot
+        if row == 1:
+            import datetime
+
+            # Sort notes
+            notes.sort(key = lambda x: parse.parse_note_date(x['date']))
+
+            # Align notes to logs/run_ids. Each note has a date, find the next log on or after the date.
+            def peek_next_note_date():
+                return parse.parse_note_date(notes[0]['date']) if len(notes) > 0 else datetime.datetime(9999, 1, 1) # end of the world. We will never find a log after this date.
+            next_note_date = peek_next_note_date()
+
+            for idx, run_id in enumerate(x_labels):
+                log_date = parse.parse_run_date(run_id)
+                if log_date >= next_note_date:
+                    note = notes.pop(0)
+                    aligned_notes.append({ 'run_id': run_id, 'x': x[idx], 'note': f"{note['date']}: {note['note']}" })
+                    next_note_date = peek_next_note_date()
 
         y_cur_aboslute = y[-1]
 
@@ -364,6 +387,8 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
         fig.add_annotation(anno)
     for line in baseline_hlines:
         fig.add_shape(line)
+    for note in aligned_notes:
+        fig.add_vline(x = int(note['x']), line_color = 'blue', annotation = { "text": "📓", "hovertext": note['note'] })
 
     fig.update_layout(hovermode='x')
 
