@@ -11,9 +11,9 @@ log_dir=$kit_root/logs-ng
 # where we put results
 result_repo_dir=$kit_root/result_repo
 
-stock_invocations=1
-compare_invocations=1
-history_invocations=1
+stock_invocations=40
+compare_invocations=40
+history_invocations=40
 
 # ensure_env 'var_name'
 ensure_env() {
