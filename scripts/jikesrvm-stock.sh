@@ -7,6 +7,7 @@ jikesrvm_path=$(realpath $1)
 
 # Build
 ensure_empty_dir $kit_build
+ensure_empty_dir $log_dir
 checkout_result_repo
 
 cd $jikesrvm_path

@@ -26,6 +26,7 @@ fi
 
 # Build - JikesRVM buildit script requires current dir to be JikesRVM root dir
 ensure_empty_dir $kit_build
+ensure_empty_dir $log_dir
 
 # Trunk
 rm -rf $jikesrvm_binding_trunk/repos/mmtk-core

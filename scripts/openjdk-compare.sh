@@ -26,6 +26,7 @@ fi
 
 # Build
 ensure_empty_dir $kit_build
+ensure_empty_dir $log_dir
 
 # Build for trunk
 rm -rf $openjdk_binding_trunk/repos/mmtk-core

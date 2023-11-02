@@ -11,6 +11,7 @@ jikesrvm_rev=$(git -C $jikesrvm_binding rev-parse HEAD)
 jikesrvm=$jikesrvm_binding/repos/jikesrvm
 
 ensure_empty_dir $kit_build
+ensure_empty_dir $log_dir
 checkout_result_repo
 
 run_exp() {

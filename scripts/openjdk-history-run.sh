@@ -11,6 +11,7 @@ openjdk_rev=$(git -C $openjdk_binding rev-parse HEAD)
 openjdk=$openjdk_binding/repos/openjdk
 
 ensure_empty_dir $kit_build
+ensure_empty_dir $log_dir
 checkout_result_repo
 
 # Build
