@@ -110,7 +110,6 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
             if baseline_perf == 0:
                 baseline_perf = 1
             nonzero_y = [baseline_perf]
-            print(nonzero_y)
 
         y_baseline = min(nonzero_y)
         y_max = max(nonzero_y) / y_baseline
@@ -374,6 +373,23 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
                     #     "text": "%s: %.2f" % (build, hline),
                     # }})
 
+        # Notes
+        # Somehow this line does not show. But it adds a hover text for all the plots.
+        for note in aligned_notes:
+            note_trace = {
+                "hoverinfo": "text",
+                "mode": "lines",
+                "line": {"width": 10, "color": "blue"},
+                "x": [note['x']],
+                "y": [0, 999],
+                "xaxis": x_axis,
+                "yaxis": y_axis,
+                "showlegend": False,
+                "opacity": 0,
+                "text": note['note']
+            }
+            traces.append(note_trace)
+
         row += 1
 
     # fix range for all the traces
@@ -387,6 +403,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
         fig.add_annotation(anno)
     for line in baseline_hlines:
         fig.add_shape(line)
+    # This plots a vertical line for each note in the first subgraph.
     for note in aligned_notes:
         fig.add_vline(x = int(note['x']), line_color = 'blue', annotation = { "text": "📓", "hovertext": note['note'] })
 
