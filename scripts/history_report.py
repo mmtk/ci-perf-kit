@@ -73,6 +73,7 @@ for plan in plans:
     print("Plan: %s" % plan)
     print("Last run: %s" % last_run)
     print("Benchmarks: %s" % benchmarks)
+    print(logs)
 
     # figure out the baseline and get the result for the baseline
     plan_config = parse.get_config_for_plan(config, plan)
