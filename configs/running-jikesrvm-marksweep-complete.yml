@@ -1,0 +1,10 @@
+includes:
+  - "./running-jikesrvm-base.yml"
+
+runtimes:
+  MarkSweep:
+    type: JikesRVM
+    home: "./build/MarkSweep_x86_64_m32-linux"
+
+configs:
+  - "MarkSweep"

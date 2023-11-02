@@ -1,0 +1,14 @@
+includes:
+  - "./running-jikesrvm-base.yml"
+
+runtimes:
+  NoGC_Trunk:
+    type: JikesRVM
+    home: "./build/NoGC_Trunk_x86_64_m32-linux"
+  NoGC_Branch:
+    type: JikesRVM
+    home: "./build/NoGC_Branch_x86_64_m32-linux"
+
+configs:
+  - "NoGC_Trunk|heap4g"
+  - "NoGC_Branch|heap4g"

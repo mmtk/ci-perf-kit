@@ -1,0 +1,6 @@
+includes:
+  - "./running-openjdk-base.yml"
+
+configs:
+  - "jdk-mmtk-trunk|gencopy|common_mmtk"
+  - "jdk-mmtk-branch|gencopy|common_mmtk"

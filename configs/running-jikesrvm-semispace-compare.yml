@@ -1,0 +1,14 @@
+includes:
+  - "./running-jikesrvm-base.yml"
+
+runtimes:
+  SemiSpace_Trunk:
+    type: JikesRVM
+    home: "./build/SemiSpace_Trunk_x86_64_m32-linux"
+  SemiSpace_Branch:
+    type: JikesRVM
+    home: "./build/SemiSpace_Branch_x86_64_m32-linux"
+
+configs:
+  - "SemiSpace_Trunk"
+  - "SemiSpace_Branch"

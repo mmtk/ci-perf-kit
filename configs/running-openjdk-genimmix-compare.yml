@@ -1,0 +1,6 @@
+includes:
+  - "./running-openjdk-base.yml"
+
+configs:
+  - "jdk-mmtk-trunk|genimmix|common_mmtk"
+  - "jdk-mmtk-branch|genimmix|common_mmtk"

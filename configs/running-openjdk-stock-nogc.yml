@@ -1,0 +1,5 @@
+includes:
+  - "./running-openjdk-base.yml"
+
+configs:
+  - "jdk-stock|common|epsilon|heap30g"

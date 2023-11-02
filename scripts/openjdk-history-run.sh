@@ -13,39 +13,44 @@ openjdk=$openjdk_binding/repos/openjdk
 ensure_empty_dir $kit_build
 checkout_result_repo
 
+# Build
+build_openjdk_with_mmtk $openjdk_binding release $kit_build/jdk-mmtk
+
 run_exp() {
     plan=$1
     config=$2
+    heap_modifier=$3
 
-    # Build
-    build_openjdk_with_mmtk $openjdk_binding $plan release $kit_build/jdk-mmtk-$plan
     # Run
-    run_id=$(run_benchmarks $kit_root/configs/$config)
+    run_id=$(run_benchmarks $log_dir $kit_root/configs/$config $heap_modifier $history_invocations)
     # Save result
     mkdir -p $result_repo_dir/openjdk/$plan
-    cp -r $kit_root/running/results/log/$run_id $result_repo_dir/openjdk/$plan
+    cp -r $log_dir/$run_id $result_repo_dir/openjdk/$plan
 }
 
 # Build
 cd $openjdk
 
 # NoGC
-run_exp nogc RunConfig-OpenJDK-NoGC-Complete.pm
+run_exp nogc running-openjdk-nogc-complete.yml 0
 
 # SemiSpace
-run_exp semispace RunConfig-OpenJDK-SemiSpace-Complete.pm
+run_exp semispace running-openjdk-semispace-complete.yml 6
 
 # GenCopy
-run_exp gencopy RunConfig-OpenJDK-GenCopy-Complete.pm
+run_exp gencopy running-openjdk-gencopy-complete.yml 6
 
 # Immix
-run_exp immix RunConfig-OpenJDK-Immix-Complete.pm
+run_exp immix running-openjdk-immix-complete.yml 6
 
 # GenImmix
-run_exp genimmix RunConfig-OpenJDK-GenImmix-Complete.pm
+run_exp genimmix running-openjdk-genimmix-complete.yml 6
 
 # StickyImmix
-run_exp stickyimmix RunConfig-OpenJDK-StickyImmix-Complete.pm
+run_exp stickyimmix running-openjdk-stickyimmix-complete.yml 6
+
+# MarkSweep
+run_exp marksweep running-openjdk-marksweep-complete.yml 6
 
 # Commit result
 commit_result_repo 'OpenJDK Binding: '$openjdk_rev

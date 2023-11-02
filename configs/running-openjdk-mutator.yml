@@ -1,0 +1,49 @@
+includes:
+  - "./running-openjdk-base.yml"
+
+overrides:
+    # Specific to NoGC (run fewer iterations)
+    "suites.dacapo2006.timing_iteration": 2
+    # Use probe to get mutator time
+    "suites.dacapo2006.callback": "probe.Dacapo2006Callback"
+
+# Though we can choose plans at runtime, we put them to different builds
+# so our script can easily figure out the build.
+runtimes:
+  jdk-mmtk-nogc:
+      type: OpenJDK
+      release: 11
+      home: "./build/jdk-mmtk/images/jdk"
+  jdk-mmtk-semispace:
+      type: OpenJDK
+      release: 11
+      home: "./build/jdk-mmtk/images/jdk"
+  jdk-mmtk-immix:
+      type: OpenJDK
+      release: 11
+      home: "./build/jdk-mmtk/images/jdk"
+  jdk-g1:
+      type: OpenJDK
+      release: 11
+      home: "./build/jdk-stock/images/jdk"
+  jdk-epsilon:
+      type: OpenJDK
+      release: 11
+      home: "./build/jdk-stock/images/jdk"
+  jdk-mmtk-lock-free-nogc:
+      type: OpenJDK
+      release: 11
+      home: "./build/jdk-mmtk-lock-free-nogc/images/jdk"
+  jdk-mmtk-no-zeroing-nogc:
+      type: OpenJDK
+      release: 11
+      home: "./build/jdk-mmtk-no-zeroing-nogc/images/jdk"
+
+configs:
+  - "jdk-mmtk-nogc|nogc|common_mmtk|heap30g"
+  - "jdk-mmtk-semispace|semispace|common_mmtk|heap30g"
+  - "jdk-mmtk-immix|immix|common_mmtk|heap30g"
+  - "jdk-mmtk-lock-free-nogc|nogc|common_mmtk|heap30g"
+  - "jdk-mmtk-no-zeroing-nogc|nogc|common_mmtk|heap30g"
+  - "jdk-g1|g1|common|probes_openjdk|heap30g"
+  - "jdk-epsilon|epsilon|common|probes_openjdk|heap30g"

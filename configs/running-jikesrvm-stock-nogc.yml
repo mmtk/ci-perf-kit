@@ -1,0 +1,10 @@
+includes:
+  - "./running-jikesrvm-base.yml"
+
+runtimes:
+  JavaMMTk_NoGC:
+    type: JikesRVM
+    home: "./build/JavaMMTk_NoGC_x86_64_m32-linux"
+
+configs:
+  - "JavaMMTk_NoGC|ig|heap4g"

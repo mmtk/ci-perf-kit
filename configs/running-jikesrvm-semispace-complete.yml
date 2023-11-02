@@ -1,0 +1,10 @@
+includes:
+  - "./running-jikesrvm-base.yml"
+
+runtimes:
+  SemiSpace:
+    type: JikesRVM
+    home: "./build/SemiSpace_x86_64_m32-linux"
+
+configs:
+  - "SemiSpace"
