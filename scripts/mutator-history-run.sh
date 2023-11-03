@@ -11,6 +11,7 @@ openjdk_rev=$(git -C $openjdk_binding rev-parse HEAD)
 openjdk=$openjdk_binding/repos/openjdk
 
 ensure_empty_dir $kit_build
+ensure_empty_dir $kit_upload
 ensure_empty_dir $log_dir
 checkout_result_repo
 
@@ -25,14 +26,14 @@ make
 cd $openjdk
 
 # Normal MMTk build
-build_openjdk_with_mmtk $openjdk_binding release $kit_build/jdk-mmtk
+build_openjdk_with_mmtk $openjdk_binding release jdk-mmtk
 
 # Special MMTk builds
-build_openjdk_with_mmtk_plan $openjdk_binding nogc_lock_free release $kit_build/jdk-mmtk-lock-free-nogc
-build_openjdk_with_mmtk_plan $openjdk_binding nogc_no_zeroing release $kit_build/jdk-mmtk-no-zeroing-nogc
+build_openjdk_with_mmtk_plan $openjdk_binding nogc_lock_free release jdk-mmtk-lock-free-nogc
+build_openjdk_with_mmtk_plan $openjdk_binding nogc_no_zeroing release jdk-mmtk-no-zeroing-nogc
 
 # Stock build
-build_openjdk $openjdk release $kit_build/jdk-stock
+build_openjdk $openjdk release jdk-stock
 
 # Run
 mu_run_id=$(run_benchmarks $log_dir $kit_root/configs/running-openjdk-mutator.yml 0 $history_invocations)

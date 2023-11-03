@@ -26,6 +26,7 @@ fi
 
 # Build - JikesRVM buildit script requires current dir to be JikesRVM root dir
 ensure_empty_dir $kit_build
+ensure_empty_dir $kit_upload
 ensure_empty_dir $log_dir
 
 # Trunk
@@ -60,10 +61,10 @@ run_exp() {
     heap_modifier=$4
 
     cd $jikesrvm_trunk
-    build_jikesrvm_with_mmtk $jikesrvm_binding_trunk $build_config $kit_build/$plan"_Trunk_x86_64_m32-linux"
+    build_jikesrvm_with_mmtk $jikesrvm_binding_trunk $build_config $plan"_Trunk_x86_64_m32-linux"
 
     cd $jikesrvm_branch
-    build_jikesrvm_with_mmtk $jikesrvm_binding_branch $build_config $kit_build/$plan"_Branch_x86_64_m32-linux"
+    build_jikesrvm_with_mmtk $jikesrvm_binding_branch $build_config $plan"_Branch_x86_64_m32-linux"
 
     run_id=$(run_benchmarks $log_dir $run_config $heap_modifier $compare_invocations)
     python $kit_root/scripts/compare_report.py $log_dir/$run_id $plan $plan"_Trunk" $plan"_Branch" $compare_invocations >> $output_file

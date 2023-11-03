@@ -26,17 +26,18 @@ fi
 
 # Build
 ensure_empty_dir $kit_build
+ensure_empty_dir $kit_upload
 ensure_empty_dir $log_dir
 
 # Build for trunk
 rm -rf $openjdk_binding_trunk/repos/mmtk-core
 ln -sfn $mmtk_core_trunk $openjdk_binding_trunk/repos/mmtk-core
-build_openjdk_with_mmtk $openjdk_binding_trunk release $kit_build/jdk-mmtk-trunk
+build_openjdk_with_mmtk $openjdk_binding_trunk release jdk-mmtk-trunk
 
 # Build for branch
 rm -rf $openjdk_binding_branch/repos/mmtk-core
 ln -sfn $mmtk_core_branch $openjdk_binding_branch/repos/mmtk-core
-build_openjdk_with_mmtk $openjdk_binding_branch release $kit_build/jdk-mmtk-branch
+build_openjdk_with_mmtk $openjdk_binding_branch release jdk-mmtk-branch
 
 # Run
 cd $kit_root

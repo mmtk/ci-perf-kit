@@ -1,7 +1,9 @@
 # root dir of this perf kit
 kit_root=$(realpath $(dirname "$0")/..)
-# where we put all the builds
+# where we put all the builds. We run benchmarks from the build.
 kit_build=$kit_root/build
+# where we put all the builds for uploading. The builds here need to be small enough so we can upload them
+kit_upload=$kit_root/upload/
 # where we put all the scripts
 kit_script=$kit_root/scripts
 # where we put all the configs
@@ -41,8 +43,10 @@ build_jikesrvm_with_mmtk() {
     # build
     ./bin/buildit localhost $build_config -quick --answer-yes --use-third-party-heap=../.. --use-third-party-build-configs=../../jikesrvm/build/configs --use-external-source=../../jikesrvm/rvm/src --m32
 
-    # copy to build_path
-    cp -r $jikesrvm_path'/dist/'$build_config'_x86_64_m32-linux' $build_path/
+    # Copy to build_path
+    cp -r $jikesrvm_path'/dist/'$build_config'_x86_64_m32-linux' $kit_build/$build_path
+    # Directly copy to upload. JikesRVM builds are small enough that we can directly upload.
+    cp -r $jikesrvm_path'/dist/'$build_config'_x86_64_m32-linux' $kit_upload/$build_path
 }
 
 # build_jikesrvm 'jikesrvm_path' 'plan' 'build_path'
@@ -60,7 +64,9 @@ build_jikesrvm() {
     bin/buildit localhost $build_config -quick --answer-yes --m32
 
     # copy to build_path
-    cp -r $jikesrvm_path'/dist/'$build_config'_x86_64_m32-linux' $build_path/
+    cp -r $jikesrvm_path'/dist/'$build_config'_x86_64_m32-linux' $kit_build/$build_path
+    # Directly copy to upload. JikesRVM builds are small enough that we can directly upload.
+    cp -r $jikesrvm_path'/dist/'$build_config'_x86_64_m32-linux' $kit_upload/$build_path
 }
 
 # openjdk_binding_use_local_mmtk 'binding_path'
@@ -90,10 +96,13 @@ build_openjdk_with_mmtk() {
     cd $openjdk_path
     export DEBUG_LEVEL=$debug_level
     sh configure --disable-warnings-as-errors --with-debug-level=$DEBUG_LEVEL
-    make images CONF=linux-x86_64-normal-server-$DEBUG_LEVEL THIRD_PARTY_HEAP=$PWD/../../openjdk
+    make product-bundles CONF=linux-x86_64-normal-server-$DEBUG_LEVEL THIRD_PARTY_HEAP=$PWD/../../openjdk
 
     # copy to build_path
-    cp -r $openjdk_path/build/linux-x86_64-normal-server-$DEBUG_LEVEL $build_path
+    cp -r $openjdk_path/build/linux-x86_64-normal-server-$DEBUG_LEVEL $kit_build/$build_path
+    # Copy bundles to upload
+    mkdir -p $kit_upload/$build_path
+    cp -r $openjdk_path/build/linux-x86_64-normal-server-$DEBUG_LEVEL/bundles/*_bin.tar.gz $kit_upload/$build_path
 }
 
 # build_openjdk ’binding_path' 'plan' 'debug_level' 'build_path'
@@ -109,10 +118,13 @@ build_openjdk_with_mmtk_plan() {
     export DEBUG_LEVEL=$debug_level
     export MMTK_PLAN=$plan
     sh configure --disable-warnings-as-errors --with-debug-level=$DEBUG_LEVEL
-    make images CONF=linux-x86_64-normal-server-$DEBUG_LEVEL THIRD_PARTY_HEAP=$PWD/../../openjdk
+    make product-bundles CONF=linux-x86_64-normal-server-$DEBUG_LEVEL THIRD_PARTY_HEAP=$PWD/../../openjdk
 
     # copy to build_path
-    cp -r $openjdk_path/build/linux-x86_64-normal-server-$DEBUG_LEVEL $build_path
+    cp -r $openjdk_path/build/linux-x86_64-normal-server-$DEBUG_LEVEL $kit_build/$build_path
+    # Copy bundles to upload
+    mkdir -p $kit_upload/$build_path
+    cp -r $openjdk_path/build/linux-x86_64-normal-server-$DEBUG_LEVEL/bundles/*_bin.tar.gz $kit_upload/$build_path
 }
 
 # build_openjdk 'openjdk_path' 'debug_level' 'build_path'
@@ -124,10 +136,13 @@ build_openjdk() {
     cd $openjdk_path
     export DEBUG_LEVEL=$debug_level
     sh configure --disable-warnings-as-errors --with-debug-level=$DEBUG_LEVEL --with-jvm-features=zgc
-    make images CONF=linux-x86_64-normal-server-$DEBUG_LEVEL
+    make product-bundles CONF=linux-x86_64-normal-server-$DEBUG_LEVEL
 
     # copy to build_path
-    cp -r $openjdk_path/build/linux-x86_64-normal-server-$DEBUG_LEVEL $build_path
+    cp -r $openjdk_path/build/linux-x86_64-normal-server-$DEBUG_LEVEL $kit_build/$build_path
+    # Copy bundles to upload
+    mkdir -p $kit_upload/$build_path
+    cp -r $openjdk_path/build/linux-x86_64-normal-server-$DEBUG_LEVEL/bundles/*_bin.tar.gz $kit_upload/$build_path
 }
 
 # build_openjdk_with_features 'openjdk_path' 'debug_level' 'build_path' 'features'
@@ -140,10 +155,13 @@ build_openjdk_with_features() {
     cd $openjdk_path
     export DEBUG_LEVEL=$debug_level
     sh configure --disable-warnings-as-errors --with-debug-level=$DEBUG_LEVEL --with-jvm-features=$features
-    make images CONF=linux-x86_64-normal-server-$DEBUG_LEVEL
+    make product-bundles CONF=linux-x86_64-normal-server-$DEBUG_LEVEL
 
     # copy to build_path
-    cp -r $openjdk_path/build/linux-x86_64-normal-server-$DEBUG_LEVEL $build_path
+    cp -r $openjdk_path/build/linux-x86_64-normal-server-$DEBUG_LEVEL $kit_build/$build_path
+    # Copy bundles to upload
+    mkdir -p $kit_upload/$build_path
+    cp -r $openjdk_path/build/linux-x86_64-normal-server-$DEBUG_LEVEL/bundles/*_bin.tar.gz $kit_upload/$build_path
 }
 
 # run_benchmarks 'log_dir' 'config' 'heap_modifier' 'invocations'
