@@ -14,3 +14,10 @@ plans:
     baseline: ['jdk-g1', 'jdk-zgc']
   - plan: marksweep
     baseline: ['jdk-g1', 'jdk-zgc']
+notes:
+  - date: "20230116"
+    note: "Move to Ubuntu 22.04"
+  - date: "20231015"
+    note: "Speculative RAS Overflow mitigation on Zen1/Zen2"
+  - date: "20231102"
+    note: "Move to running-ng. Use -Xcomp. Use image build."

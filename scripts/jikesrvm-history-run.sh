@@ -11,6 +11,8 @@ jikesrvm_rev=$(git -C $jikesrvm_binding rev-parse HEAD)
 jikesrvm=$jikesrvm_binding/repos/jikesrvm
 
 ensure_empty_dir $kit_build
+ensure_empty_dir $kit_upload
+ensure_empty_dir $log_dir
 checkout_result_repo
 
 run_exp() {
@@ -23,7 +25,7 @@ run_exp() {
 
     # Build - JikesRVM buildit script requires current dir to be JikesRVM root dir
     cd $jikesrvm
-    build_jikesrvm_with_mmtk $jikesrvm_binding $build_config $kit_build/$plan"_x86_64_m32-linux"
+    build_jikesrvm_with_mmtk $jikesrvm_binding $build_config $plan"_x86_64_m32-linux"
     # Run
     run_id=$(run_benchmarks $log_dir $run_config $heap_modifier $history_invocations)
     # Save result

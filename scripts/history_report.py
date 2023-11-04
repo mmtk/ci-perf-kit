@@ -85,6 +85,6 @@ for plan in plans:
     pp.pprint(baseline)
     
     # plot
-    fig = plot.plot_history(runs, plan, benchmarks, from_date, to_date, "execution_times", baseline)
+    fig = plot.plot_history(runs, plan, benchmarks, from_date, to_date, "execution_times", baseline, config['notes'])
     path = os.path.join(output_dir, "%s_%s_history.html" % (prefix, plan))
     fig.write_html(path)

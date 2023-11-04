@@ -89,6 +89,13 @@ def parse_run_date(run_id):
     if matcher:
         return datetime(int(matcher['year']), int(matcher['month']), int(matcher['day']), int(matcher['hour']), int(matcher['minute']), int(matcher['second']))
 
+# Given a note date, return the date object
+def parse_note_date(note_date):
+    from datetime import datetime
+    matcher = re.match("(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})", note_date)
+    if matcher:
+        return datetime(int(matcher['year']), int(matcher['month']), int(matcher['day']))
+
 # Given a yaml file path, return the file
 def parse_yaml(path):
     import yaml
