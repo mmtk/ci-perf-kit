@@ -7,7 +7,7 @@ overrides:
 
 modifiers:
     # Fixed large heap sizes - for NoGC
-    heap30g:
+    heap8g:
       type: JVMArg
       val: "-Xms8000M -Xmx8000M"
     heap4g:

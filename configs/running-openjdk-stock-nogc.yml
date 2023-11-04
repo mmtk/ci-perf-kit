@@ -2,4 +2,4 @@ includes:
   - "./running-openjdk-base.yml"
 
 configs:
-  - "jdk-stock|common|epsilon|heap30g"
+  - "jdk-stock|common|epsilon|heap8g"
