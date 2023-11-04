@@ -2,4 +2,4 @@ includes:
   - "./running-openjdk-base.yml"
 
 configs:
-  - "jdk-mmtk|gencopy|common_mmtk"
+  - "jdk-mmtk|genimmix|common_mmtk"
