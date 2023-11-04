@@ -81,9 +81,17 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
             for idx, run_id in enumerate(x_labels):
                 log_date = parse.parse_run_date(run_id)
                 if log_date >= next_note_date:
-                    note = notes.pop(0)
-                    aligned_notes.append({ 'run_id': run_id, 'x': x[idx], 'note': f"{note['date']}: {note['note']}" })
-                    next_note_date = peek_next_note_date()
+                    # We may have multiple notes on this date. We have to combine them.
+                    combined_note = None
+
+                    while log_date >= next_note_date:
+                        note = notes.pop(0)
+                        if combined_note is None:
+                            combined_note = { 'run_id': run_id, 'x': x[idx], 'note': f"{note['date']}: {note['note']}" }
+                        else:
+                            combined_note['note'] += f",{note['date']}: {note['note']}"
+                        next_note_date = peek_next_note_date()
+                    aligned_notes.append(combined_note)
 
         y_cur_aboslute = y[-1]
 
