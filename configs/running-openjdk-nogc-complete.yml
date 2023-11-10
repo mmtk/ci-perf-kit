@@ -2,4 +2,4 @@ includes:
   - "./running-openjdk-base.yml"
 
 configs:
-  - "jdk-mmtk|nogc|heap8|common_mmtk"
+  - "jdk-mmtk|nogc|heap8g|common_mmtk"
