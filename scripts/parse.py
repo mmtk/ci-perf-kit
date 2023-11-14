@@ -45,9 +45,13 @@ def parse_log(log_file, n_invocations = None):
             if "MMTk Statistics Totals" in line:
                 mmtk_keys = lines[i + 1].decode('utf-8').split()
                 mmtk_values = lines[i + 2].decode('utf-8').split()
-                assert len(mmtk_keys) == len(mmtk_values), "Error when reading MMTk statistics: num of keys does not match num of values"
-                for j in range(0, len(mmtk_keys)):
-                    insert_data(mmtk_keys[j], float(mmtk_values[j]))
+                if len(mmtk_keys) == len(mmtk_values):
+                    for j in range(0, len(mmtk_keys)):
+                        insert_data(mmtk_keys[j], float(mmtk_values[j]))
+                else:
+                    print(f"Unable to correctly parse values from {log_file}.")
+                    print(f"* We have {len(mmtk_keys)} keys but {len(mmtk_values)} values.")
+                    print(f"* This run will be ignored.")
 
         # initialie execution_times to empty in case all runs failed
         ret['execution_times'] = []
