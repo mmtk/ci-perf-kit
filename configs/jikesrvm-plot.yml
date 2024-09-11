@@ -15,3 +15,5 @@ notes:
     note: "Move to running-ng"
   - date: "20240403"
     note: "Move to Rust 1.77.0"
+  - date: "20240903"
+    note: "Move to Linux Kernel 6.8.0"
