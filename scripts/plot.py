@@ -66,37 +66,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
         # We have to sort by date, run_id includes the machine name, we cannot sort by alphabet
         x_labels.sort(key = lambda x: parse.parse_run_date(x))
 
-        # Only add notes for the first plot
-        # if row == 1:
-        #     notes_copy = notes.copy()
-        #     import datetime
-
-        #     # Sort notes
-        #     notes.sort(key = lambda x: parse.parse_note_date(x['date']))
-
-        #     # Align notes to logs/run_ids. Each note has a date, find the next log on or after the date.
-        #     def peek_next_note_date():
-        #         return parse.parse_note_date(notes[0]['date']) if len(notes) > 0 else datetime.datetime(9999, 1, 1) # end of the world. We will never find a log after this date.
-        #     next_note_date = peek_next_note_date()
-
-        #     for idx, run_id in enumerate(x_labels):
-        #         log_date = parse.parse_run_date(run_id)
-        #         if log_date >= next_note_date:
-        #             # We may have multiple notes on this date. We have to combine them.
-        #             combined_note = None
-
-        #             while log_date >= next_note_date:
-        #                 note = notes.pop(0)
-        #                 if combined_note is None:
-        #                     combined_note = { 'run_id': run_id, 'x': x[idx], 'note': f"{note['date']}: {note['note']}" }
-        #                 else:
-        #                     combined_note['note'] += f",{note['date']}: {note['note']}"
-        #                 next_note_date = peek_next_note_date()
-        #             aligned_notes.append(combined_note)
-            
-        #     notes = notes_copy
-
-        attributes = split_epochs(x, x_labels, y, notes.copy())
+        attributes = split_epochs(x, x_labels, y, std, notes.copy())
         # print(attributes)
 
         y_cur_aboslute = y[-1]
@@ -240,14 +210,19 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
 
             # Normalized y
             epoch_normalized_start_y = v['start_y'] / y_baseline
+            epoch_normalized_start_y_std = v['start_y_std'] / y_baseline
             epoch_normalized_end_y = v['end_y'] / y_baseline
+            epoch_normalized_end_y_std = v['end_y_std'] / y_baseline
 
             # Epoch min/max
             epoch_normalized_min_y = v['min'] / y_baseline
             epoch_normalized_max_y = v['max'] / y_baseline
 
-            regress = epoch_normalized_end_y > epoch_normalized_start_y
-            color = "red" if regress else "green"
+            regress = check_regression(epoch_normalized_start_y, epoch_normalized_start_y_std, epoch_normalized_end_y, epoch_normalized_end_y_std)
+            if regress == "regression":
+                epoch_color = "red"
+            else:
+                epoch_color = "green"
 
             traces.append({**history_trace, **{
                 "hoverinfo": 'text',
@@ -255,10 +230,10 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
                 "textposition": "top center",
                 "x": epoch_start_x,
                 "y": epoch_start_y,
-                "text": "Epoch: %s, start: %.2f, end: %.2f, min: %.2f, max: %.2f" % (v['note'], epoch_normalized_start_y, epoch_normalized_end_y, epoch_normalized_min_y, epoch_normalized_max_y),
-                "textfont_color": color,
+                "text": "Epoch: %s, start: %.2f +- %.2f, end: %.2f +- %.2f, min: %.2f, max: %.2f" % (v['note'], epoch_normalized_start_y, epoch_normalized_start_y_std, epoch_normalized_end_y, epoch_normalized_end_y_std, epoch_normalized_min_y, epoch_normalized_max_y),
+                "textfont_color": epoch_color,
                 "cliponaxis": False,
-                "marker": { "size": 10, "color": color, "symbol": "star-diamond"},
+                "marker": { "size": 10, "color": epoch_color, "symbol": "star-diamond"},
                 "showlegend": False,
             }})
 
@@ -309,18 +284,19 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
             # No data. Show neutral
             current_color = "black"
             current_symbol = "~"
-        elif current + current_std < y_best:
-            # improvement
-            current_color = "green"
-            current_symbol = "▽"
-        elif current - current_std > y_best:
-            # degradation
-            current_color = "red"
-            current_symbol = "△"
         else:
-            # neutral
-            current_color = "black"
-            current_symbol = "~"
+            trend = check_regression(y_best, 0, current, current_std)
+            if trend == "improvment":
+                current_color = "green"
+                current_symbol = "▽"
+            elif trend == "regression":
+                # degradation
+                current_color = "red"
+                current_symbol = "△"
+            else:
+                # neutral
+                current_color = "black"
+                current_symbol = "~"
 
         y_last_array = keep_last(y, lambda x: x == current)
         traces.append({**history_trace, **{
@@ -355,7 +331,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
             "yshift": -50
         }})
 
-        PLOT_MORE_STATISTICS = False
+        PLOT_MORE_STATISTICS = True
         if PLOT_MORE_STATISTICS:
             # moving average
             y_moving_average = moving_average(y, 10)
@@ -488,7 +464,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
     return fig
 
 
-def split_epochs(x, x_labels, y, notes):
+def split_epochs(x, x_labels, y, y_std, notes):
     import datetime
 
     FIRST_EPOCH = "19700101"
@@ -505,26 +481,30 @@ def split_epochs(x, x_labels, y, notes):
                 prev_epoch_end = idx - 1
             else:
                 prev_epoch_end = 0
+            attrs[epoch]['end_idx'] = prev_epoch_end
             attrs[epoch]['end_x'] = x[prev_epoch_end]
             attrs[epoch]['end_y'] = y[prev_epoch_end]
+            attrs[epoch]['end_y_std'] = y_std[prev_epoch_end]
 
         epoch = epoch_name
 
         attrs[epoch_name] = {}
         attrs[epoch_name]['epoch'] = epoch_name
+        attrs[epoch_name]['start_idx'] = idx
         attrs[epoch_name]['start_x'] = x[idx]
         attrs[epoch_name]['start_y'] = y[idx]
+        attrs[epoch_name]['start_y_std'] = y_std[idx]
         if note is not None:
             attrs[epoch_name]['note'] = note
         else:
             attrs[epoch_name]['note'] = epoch_name
 
     # Sort notes
-    notes.sort(key = lambda x: parse.parse_note_date(x['date']))
+    notes.sort(key = lambda x: parse.parse_note_date(x['date'], x['time']))
 
     # Align notes to logs/run_ids. Each note has a date, find the next log on or after the date.
     def peek_next_note_date():
-        return parse.parse_note_date(notes[0]['date']) if len(notes) > 0 else datetime.datetime(9999, 1, 1) # end of the world. We will never find a log after this date.
+        return parse.parse_note_date(notes[0]['date'], notes[0]['time']) if len(notes) > 0 else datetime.datetime(9999, 1, 1) # end of the world. We will never find a log after this date.
     next_note_date = peek_next_note_date()
 
 
@@ -547,22 +527,83 @@ def split_epochs(x, x_labels, y, notes):
             new_epoch(idx, FIRST_EPOCH)
 
     # End the last epoch
+    attrs[epoch]['end_idx'] = len(x) - 1
     attrs[epoch]['end_x'] = x[-1]
     attrs[epoch]['end_y'] = y[-1]
+    attrs[epoch]['end_y_std'] = y_std[-1]
+    
+    print(attrs)
 
     # For each epoch, find min/max
     for name, epoch in attrs.items():
-        epoch_y = y[epoch['start_x']:(epoch['end_x'] + 1)]
-        epoch_non_zero_y = [y for y in epoch_y if y > 0]
-        if len(epoch_non_zero_y) != 0:
-            epoch['min'] = min(epoch_non_zero_y)
-            epoch['max'] = max(epoch_y)
+        def find_min_with_index(lst, start, end):
+            if not lst:
+                raise ValueError("The list is empty")
+
+            if start < 0 or end >= len(lst) or start > end:
+                print("start %d, end %d, len %d", start, end, len(lst))
+                raise IndexError("Invalid start or end index")
+
+            min_value = lst[start]
+            min_index = start
+
+            for i in range(start + 1, end + 1):
+                if lst[i] < min_value:
+                    min_value = lst[i]
+                    min_index = i
+
+            return min_value, min_index
+        def find_max_with_index(lst, start, end):
+            if not lst:
+                raise ValueError("The list is empty")
+
+            if start < 0 or end >= len(lst) or start > end:
+                print("start %d, end %d, len %d", start, end, len(lst))
+                raise IndexError("Invalid start or end index")
+
+            max_value = lst[start]
+            max_index = start
+
+            for i in range(start + 1, end + 1):
+                if lst[i] > max_value:
+                    max_value = lst[i]
+                    max_index = i
+
+            return max_value, max_index
+
+        min, min_idx = find_min_with_index(y, epoch['start_idx'], epoch['end_idx'])
+        if min != 0:
+            epoch['min'] = min
+            epoch['min_std'] = y_std[min_idx]
         else:
             epoch['min'] = epoch['start_y']
+            epoch['min_std'] = 0
+
+        max, max_idx = find_max_with_index(y, epoch['start_idx'], epoch['end_idx'])
+        if max != 0:
+            epoch['max'] = max
+            epoch['max_std'] = y_std[max_idx]
+        else:
             epoch['max'] = epoch['start_y']
+            epoch['max_std'] = 0
 
     return attrs
 
+# Return improvement, or regression, or neutral
+def check_regression(r1, std1, r2, std2):
+    # Determine the lower and upper bounds for r1 and r2
+    lower_bound_r1 = r1 - std1
+    upper_bound_r1 = r1 + std1
+    lower_bound_r2 = r2 - std2
+    upper_bound_r2 = r2 + std2
+
+    if upper_bound_r2 < lower_bound_r1:
+        return "improvement"
+    elif lower_bound_r2 > upper_bound_r1:
+        return "regression"
+    # Otherwise, it's neutral
+    else:
+        return "neutral"
 
 def plot_multi_plans_history(runs, plans, benchmarks, start_date, end_date, data_key):
     # whether we should show legend - only show legend for a plan when it is the first time we add a trace for this plan
