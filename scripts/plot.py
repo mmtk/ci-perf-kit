@@ -97,7 +97,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
         #     notes = notes_copy
 
         attributes = split_epochs(x, x_labels, y, notes.copy())
-        print(attributes)
+        # print(attributes)
 
         y_cur_aboslute = y[-1]
 
@@ -131,11 +131,15 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
         # No min value. There is no value in the plot at all. We just need a reasonable baseline.
         if y_baseline == 0:
             y_baseline = min(nonzero_y)
-        y_max = max(nonzero_y) / y_baseline
-        y_min = min(nonzero_y) / y_baseline
+        # y_max = max(nonzero_y) / y_baseline
+        # y_min = min(nonzero_y) / y_baseline
 
         this_y_upper = attributes[current_epoch]['max'] / y_baseline
         this_y_lower = attributes[current_epoch]['min'] / y_baseline
+        if this_y_lower == 0:
+            this_y_lower = 1
+
+        y_best = this_y_lower
 
         # update range
         if this_y_upper > y_range_upper:
@@ -228,35 +232,8 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
                     ret.append(None)
             return ret
 
-        # Overall min/max -- this is replaced by min/max in each epoch
-        # y_max_array = keep_first(y, lambda x: x == y_max) # keep max, leave others as None
-        # traces.append({**history_trace, **{
-        #     "hoverinfo": "none",
-        #     "mode": "markers+text",
-        #     "textposition": "top center",
-        #     "y": y_max_array,
-        #     "text": ["%s: %.2f" % (x, y) if y != 0 else "" for (x, y) in zip(x_labels, y)],
-        #     "textfont_color": "red",
-        #     "cliponaxis": False,
-        #     "marker": { "size": 20, "color": "red", "symbol": "triangle-up" },
-        #     "showlegend": False,
-        # }})
-        # y_min_array = keep_first(y, lambda x: x == y_min) # keep min, leave others as None
-        # traces.append({**history_trace, **{
-        #     "hoverinfo": "none",
-        #     "mode": "markers+text",
-        #     "textposition": "bottom center",
-        #     "y": y_min_array,
-        #     "text": ["%s: %.2f" % (x, y) if y != 0 else "" for (x, y) in zip(x_labels, y)],
-        #     "textfont_color": "green",
-        #     "cliponaxis": False,
-        #     "marker": { "size": 20, "color": "green", "symbol": "triangle-down" },
-        #     "showlegend": False,
-        # }})
-
         # Mark epoch
         for epoch_name, v in attributes.items():
-            print(v)
             # Epoch start
             epoch_start_x = keep_first(x, lambda x: x == v['start_x'])
             epoch_start_y = keep_first(y, lambda y: y == v['start_y'] / y_baseline)
@@ -285,31 +262,31 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
                 "showlegend": False,
             }})
 
-            if epoch_name == current_epoch:
-                # Epoch min
-                traces.append({**history_trace, **{
-                    "hoverinfo": "text",
-                    "mode": "markers",
-                    "textposition": "top center",
-                    "y": keep_first_in_index_range(y, lambda y: y == epoch_normalized_min_y, v['start_x'], v['end_x'] + 1),
-                    "text": ["%s: %.2f" % (x, y) if y != 0 else "" for (x, y) in zip(x_labels, y)],
-                    "textfont_color": "green",
-                    "cliponaxis": False,
-                    "marker": { "size": 10, "color": "green", "symbol": "triangle-down" },
-                    "showlegend": False,
-                }})
-                # Epoch max
-                traces.append({**history_trace, **{
-                    "hoverinfo": "text",
-                    "mode": "markers",
-                    "textposition": "top center",
-                    "y": keep_first_in_index_range(y, lambda y: y == epoch_normalized_max_y, v['start_x'], v['end_x'] + 1),
-                    "text": ["%s: %.2f" % (x, y) if y != 0 else "" for (x, y) in zip(x_labels, y)],
-                    "textfont_color": "red",
-                    "cliponaxis": False,
-                    "marker": { "size": 10, "color": "red", "symbol": "triangle-up" },
-                    "showlegend": False,
-                }})
+            # if epoch_name == current_epoch:
+            #     # Epoch min
+            #     traces.append({**history_trace, **{
+            #         "hoverinfo": "text",
+            #         "mode": "markers",
+            #         "textposition": "top center",
+            #         "y": keep_first_in_index_range(y, lambda y: y == epoch_normalized_min_y, v['start_x'], v['end_x'] + 1),
+            #         "text": ["%s: %.2f" % (x, y) if y != 0 else "" for (x, y) in zip(x_labels, y)],
+            #         "textfont_color": "green",
+            #         "cliponaxis": False,
+            #         "marker": { "size": 10, "color": "green", "symbol": "triangle-down" },
+            #         "showlegend": False,
+            #     }})
+            #     # Epoch max
+            #     traces.append({**history_trace, **{
+            #         "hoverinfo": "text",
+            #         "mode": "markers",
+            #         "textposition": "top center",
+            #         "y": keep_first_in_index_range(y, lambda y: y == epoch_normalized_max_y, v['start_x'], v['end_x'] + 1),
+            #         "text": ["%s: %.2f" % (x, y) if y != 0 else "" for (x, y) in zip(x_labels, y)],
+            #         "textfont_color": "red",
+            #         "cliponaxis": False,
+            #         "marker": { "size": 10, "color": "red", "symbol": "triangle-up" },
+            #         "showlegend": False,
+            #     }})
 
         # labeling
         annotation = {
@@ -327,16 +304,21 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
         current = y[-1]
         current_std = std[-1]
         # determine if current is improvement or degradation
-        if current + current_std < y_min:
+        # print("cur: %.2f, std: %.2f, best: %.2f" % (current, current_std, y_best))
+        if current == 0:
+            # No data. Show neutral
+            current_color = "black"
+            current_symbol = "~"
+        elif current + current_std < y_best:
             # improvement
             current_color = "green"
             current_symbol = "▽"
-        elif current - current_std > y_min:
+        elif current - current_std > y_best:
             # degradation
             current_color = "red"
             current_symbol = "△"
         else:
-            # none of the above
+            # neutral
             current_color = "black"
             current_symbol = "~"
 
@@ -486,7 +468,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
 
     # fix range for all the traces
     if SAME_Y_RANGE_IN_ALL_TRACES:
-        RANGE_EXTRA = 0.20
+        RANGE_EXTRA = 0.2
         y_range = [y_range_lower - RANGE_EXTRA, y_range_upper + RANGE_EXTRA]
         for i in range(1, row):
             layout["yaxis%d" % i]["range"] = y_range
@@ -501,6 +483,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
     #     fig.add_vline(x = int(note['x']), line_color = 'blue', annotation = { "text": "📓", "hovertext": note['note'] })
 
     fig.update_layout(hovermode='x')
+    fig.update_layout(margin=dict(l=5, r=5, t=50, b=5))
 
     return fig
 
