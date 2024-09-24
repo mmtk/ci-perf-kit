@@ -40,9 +40,9 @@ SAME_Y_RANGE_IN_ALL_TRACES = True
 # data_key: the data to render
 # baseline: the baseline to plot as a dict {baseline: {benchmark: avg}}. None means no baseline, or no data for a certain benchmark.
 # notes: a list of [date, note]. date is YYYYMMDD
-def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baseline, notes=[]):
+def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_key, baseline, notes=[]):
     layout = {
-        "title": plan,
+        "title": "%s - %s" % (build_info, plan),
         # "margin": {"t": 80},
         "width": GRAPH_WIDTH,
         "height": GRAPH_HEIGHT_PER_BENCHMARK * len(benchmarks),
@@ -221,8 +221,13 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
 
         # Mark epoch
         for epoch_name, v in attributes.items():
+            print(v)
+
             # Epoch start
-            epoch_start_y = keep_first(y, lambda y: y == v['start_y'] / y_baseline)
+            epoch_start_y = keep_first_in_index_range(y, lambda y: y == v['start_y'] / y_baseline, v['start'], v['end'])
+
+            assert v['start'] <= n_points
+            assert v['end'] <= n_points
 
             # Normalized y
             epoch_normalized_start_y = v['start_y'] / y_baseline
@@ -245,7 +250,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
                 "mode": "markers",
                 "textposition": "top center",
                 "y": epoch_start_y,
-                "text": "Epoch: %s, start: %.2f +- %.2f, end: %.2f +- %.2f, min: %.2f, max: %.2f" % (v['note'], epoch_normalized_start_y, epoch_normalized_start_y_std, epoch_normalized_end_y, epoch_normalized_end_y_std, epoch_normalized_min_y, epoch_normalized_max_y),
+                "text": "Epoch: %s<br />  start: %.2f +- %.2f, end: %.2f +- %.2f<br />  min: %.2f, max: %.2f" % (v['note'], epoch_normalized_start_y, epoch_normalized_start_y_std, epoch_normalized_end_y, epoch_normalized_end_y_std, epoch_normalized_min_y, epoch_normalized_max_y),
                 "textfont_color": epoch_color,
                 "cliponaxis": False,
                 "marker": { "size": 10, "color": epoch_color, "symbol": "star-diamond"},
@@ -352,7 +357,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
             y_moving_average = moving_average(y, 10)
             traces.append({
                 "name": bm,
-                "hoverinfo": "text",
+                "hoverinfo": "none",
                 # "fill": "tozeroy",
                 "mode": TRACE_MODE,
                 "line": {"width": 1, "color": "gray"},
@@ -370,7 +375,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
             std_dev_moving_average = moving_average(std, 10)
             variance_trace = {
                 "name": bm,
-                "hoverinfo": "text",
+                "hoverinfo": "none",
                 "mode": "lines",
                 "line_color": "#cacccf",
                 "line": {"width": 0},
@@ -497,8 +502,7 @@ def split_epochs(x, x_labels, y, y_std, notes):
                 prev_epoch_end = idx - 1
             else:
                 prev_epoch_end = 0
-            attrs[epoch]['end_idx'] = prev_epoch_end
-            attrs[epoch]['end_x'] = x[prev_epoch_end]
+            attrs[epoch]['end'] = prev_epoch_end
             attrs[epoch]['end_y'] = y[prev_epoch_end]
             attrs[epoch]['end_y_std'] = y_std[prev_epoch_end]
 
@@ -506,8 +510,7 @@ def split_epochs(x, x_labels, y, y_std, notes):
 
         attrs[epoch_name] = {}
         attrs[epoch_name]['epoch'] = epoch_name
-        attrs[epoch_name]['start_idx'] = idx
-        attrs[epoch_name]['start_x'] = x[idx]
+        attrs[epoch_name]['start'] = idx
         attrs[epoch_name]['start_y'] = y[idx]
         attrs[epoch_name]['start_y_std'] = y_std[idx]
         if note is not None:
@@ -533,7 +536,7 @@ def split_epochs(x, x_labels, y, y_std, notes):
             while log_date >= next_note_date:
                 note = notes.pop(0)
                 if combined_note is None:
-                    combined_note = { 'run_id': run_id, 'x': x[idx], 'note': f"{note['date']}: {note['note']}" }
+                    combined_note = { 'run_id': run_id, 'note': f"{note['date']}: {note['note']}" }
                 else:
                     combined_note['note'] += f",{note['date']}: {note['note']}"
                 next_note_date = peek_next_note_date()
@@ -543,8 +546,7 @@ def split_epochs(x, x_labels, y, y_std, notes):
             new_epoch(idx, FIRST_EPOCH)
 
     # End the last epoch
-    attrs[epoch]['end_idx'] = len(x) - 1
-    attrs[epoch]['end_x'] = x[-1]
+    attrs[epoch]['end'] = len(x) - 1
     attrs[epoch]['end_y'] = y[-1]
     attrs[epoch]['end_y_std'] = y_std[-1]
 
@@ -585,7 +587,7 @@ def split_epochs(x, x_labels, y, y_std, notes):
 
             return max_value, max_index
 
-        min, min_idx = find_min_with_index(y, epoch['start_idx'], epoch['end_idx'])
+        min, min_idx = find_min_with_index(y, epoch['start'], epoch['end'])
         if min != 0:
             epoch['min'] = min
             epoch['min_std'] = y_std[min_idx]
@@ -593,7 +595,7 @@ def split_epochs(x, x_labels, y, y_std, notes):
             epoch['min'] = epoch['start_y']
             epoch['min_std'] = 0
 
-        max, max_idx = find_max_with_index(y, epoch['start_idx'], epoch['end_idx'])
+        max, max_idx = find_max_with_index(y, epoch['start'], epoch['end'])
         if max != 0:
             epoch['max'] = max
             epoch['max_std'] = y_std[max_idx]
