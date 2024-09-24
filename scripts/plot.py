@@ -6,8 +6,8 @@ import numpy as np
 import math
 
 
-GRAPH_WIDTH = 1000
-GRAPH_HEIGHT_PER_BENCHMARK = 200
+GRAPH_WIDTH = 500
+GRAPH_HEIGHT_PER_BENCHMARK = 100
 
 SHOW_DATA_POINT = False
 TRACE_MODE = "lines+markers" if SHOW_DATA_POINT else "lines"
@@ -16,9 +16,21 @@ TRACE_MODE = "lines+markers" if SHOW_DATA_POINT else "lines"
 X_INTERVAL_1 = 1
 X_INTERVAL_2 = 3
 X_INTERVAL_3 = 5
-# We place the labels (big number/benchmark name/absolute number) on the position of (last point + this offset)
-LABEL_OFFSET = X_INTERVAL_3 * 3
 
+# We place the labels (big number/benchmark name/absolute number) on the position of (last point + this offset)
+LABEL_OFFSET = X_INTERVAL_3 * 15
+BIG_NUMBER_FONT_SIZE = 30
+BM_NAME_FONT_SIZE = 15
+BM_NAME_Y_SHIFT = 15
+SHOW_ABS_NUMBER = False
+ABS_NUMBER_FONT_SIZE = 10
+ABS_NUMBER_FONT_Y_SHIFT = -30
+
+# Plot statistics
+PLOT_MOVING_AVERAGE = True
+PLOT_STD_DEV = True
+
+# Use the same Y range for all the traces
 SAME_Y_RANGE_IN_ALL_TRACES = True
 
 # runs: all the runs for a certain build (as a dictionary from run_id -> run results)
@@ -65,6 +77,11 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
         x_labels = list(runs.keys())
         # We have to sort by date, run_id includes the machine name, we cannot sort by alphabet
         x_labels.sort(key = lambda x: parse.parse_run_date(x))
+
+        n_points = len(x)
+        assert len(y) == n_points
+        assert len(std) == n_points
+        assert len(x_labels) == n_points
 
         attributes = split_epochs(x, x_labels, y, std, notes.copy())
         # print(attributes)
@@ -205,7 +222,6 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
         # Mark epoch
         for epoch_name, v in attributes.items():
             # Epoch start
-            epoch_start_x = keep_first(x, lambda x: x == v['start_x'])
             epoch_start_y = keep_first(y, lambda y: y == v['start_y'] / y_baseline)
 
             # Normalized y
@@ -228,7 +244,6 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
                 "hoverinfo": 'text',
                 "mode": "markers",
                 "textposition": "top center",
-                "x": epoch_start_x,
                 "y": epoch_start_y,
                 "text": "Epoch: %s, start: %.2f +- %.2f, end: %.2f +- %.2f, min: %.2f, max: %.2f" % (v['note'], epoch_normalized_start_y, epoch_normalized_start_y_std, epoch_normalized_end_y, epoch_normalized_end_y_std, epoch_normalized_min_y, epoch_normalized_max_y),
                 "textfont_color": epoch_color,
@@ -310,29 +325,29 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
         # big number
         annotations.append({**annotation, **{
             "text": "%.2f" % current,
-            "font": {"color": current_color, "size": 60},
+            "font": {"color": current_color, "size": BIG_NUMBER_FONT_SIZE},
             "xanchor": "center",
             "yanchor": "middle",
         }})
         # benchmark name
         annotations.append({**annotation, **{
             "text": "<b>%s" % bm,
-            "font": {"color": "black", "size": 20},
+            "font": {"color": "black", "size": BM_NAME_FONT_SIZE},
             "xanchor": "center",
             "yanchor": "bottom",
-            "yshift": 40
+            "yshift": BM_NAME_Y_SHIFT
         }})
         # aboslute number
-        annotations.append({**annotation, **{
-            "text": "%.2f ms %s" % (y_cur_aboslute, current_symbol),
-            "font": {"color": "black"},
-            "xanchor": "center",
-            "yanchor": "bottom",
-            "yshift": -50
-        }})
+        if SHOW_ABS_NUMBER:
+            annotations.append({**annotation, **{
+                "text": "%.2f ms %s" % (y_cur_aboslute, current_symbol),
+                "font": {"color": "black", "size": ABS_NUMBER_FONT_SIZE},
+                "xanchor": "center",
+                "yanchor": "bottom",
+                "yshift": ABS_NUMBER_FONT_Y_SHIFT
+            }})
 
-        PLOT_MORE_STATISTICS = True
-        if PLOT_MORE_STATISTICS:
+        if PLOT_MOVING_AVERAGE:
             # moving average
             y_moving_average = moving_average(y, 10)
             traces.append({
@@ -350,6 +365,7 @@ def plot_history(runs, plan, benchmarks, start_date, end_date, data_key, baselin
                 "showlegend": False,
             })
 
+        if PLOT_STD_DEV:
             # variance (10p moving average of std dev)
             std_dev_moving_average = moving_average(std, 10)
             variance_trace = {
@@ -531,8 +547,6 @@ def split_epochs(x, x_labels, y, y_std, notes):
     attrs[epoch]['end_x'] = x[-1]
     attrs[epoch]['end_y'] = y[-1]
     attrs[epoch]['end_y_std'] = y_std[-1]
-    
-    print(attrs)
 
     # For each epoch, find min/max
     for name, epoch in attrs.items():
