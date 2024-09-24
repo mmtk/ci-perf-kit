@@ -123,10 +123,10 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
 
         this_y_upper = attributes[current_epoch]['max'] / y_baseline
         this_y_lower = attributes[current_epoch]['min'] / y_baseline
+        this_y_lower_std = attributes[current_epoch]['min_std'] / y_baseline
         if this_y_lower == 0:
             this_y_lower = 1
-
-        y_best = this_y_lower
+            this_y_lower_std = 0
 
         # update range
         if this_y_upper > y_range_upper:
@@ -250,7 +250,7 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
                 "mode": "markers",
                 "textposition": "top center",
                 "y": epoch_start_y,
-                "text": "Epoch: %s<br />  start: %.2f +- %.2f, end: %.2f +- %.2f<br />  min: %.2f, max: %.2f" % (v['note'], epoch_normalized_start_y, epoch_normalized_start_y_std, epoch_normalized_end_y, epoch_normalized_end_y_std, epoch_normalized_min_y, epoch_normalized_max_y),
+                "text": "Epoch: %s<br />  start: %.2f ± %.2f, end: %.2f ± %.2f<br />  min: %.2f, max: %.2f" % (v['note'], epoch_normalized_start_y, epoch_normalized_start_y_std, epoch_normalized_end_y, epoch_normalized_end_y_std, epoch_normalized_min_y, epoch_normalized_max_y),
                 "textfont_color": epoch_color,
                 "cliponaxis": False,
                 "marker": { "size": 10, "color": epoch_color, "symbol": "star-diamond"},
@@ -305,7 +305,7 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
             current_color = "black"
             current_symbol = "~"
         else:
-            trend = check_regression(y_best, 0, current, current_std)
+            trend = check_regression(this_y_lower, this_y_lower_std, current, current_std)
             if trend == "improvment":
                 current_color = "green"
                 current_symbol = "▽"
@@ -765,7 +765,7 @@ def history_per_day(runs, plan, benchmark, start_date, end_date, data_key):
             if result is None:
                 result = 0, 0
 
-        print("Run for %s: %s (%s +- %s)" % (single_date, last_run, result[0], result[1]))
+        print("Run for %s: %s (%s ± %s)" % (single_date, last_run, result[0], result[1]))
         avg.append(result[0])
         std.append(result[1])
     
