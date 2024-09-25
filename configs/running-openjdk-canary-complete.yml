@@ -1,0 +1,6 @@
+includes:
+  - "./running-openjdk-base.yml"
+
+configs:
+  # Run GenImmix using the canary version.
+  - "jdk-mmtk-canary|genimmix|common_mmtk"
