@@ -242,6 +242,8 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
             regress = check_regression(epoch_normalized_start_y, epoch_normalized_start_y_std, epoch_normalized_end_y, epoch_normalized_end_y_std)
             if regress == "regression":
                 epoch_color = "red"
+            elif regress == "neutral":
+                epoch_color = "black"
             else:
                 epoch_color = "green"
 
@@ -607,19 +609,37 @@ def split_epochs(x, x_labels, y, y_std, notes):
 
 # Return improvement, or regression, or neutral
 def check_regression(r1, std1, r2, std2):
-    # Determine the lower and upper bounds for r1 and r2
-    lower_bound_r1 = r1 - std1
-    upper_bound_r1 = r1 + std1
-    lower_bound_r2 = r2 - std2
-    upper_bound_r2 = r2 + std2
+    def z_score_regression(r1, std1, r2, std2):
+        import math
+        pooled_std = math.sqrt(std1**2 + std2**2)
+        z_score = (r2 - r1) / pooled_std
 
-    if upper_bound_r2 < lower_bound_r1:
-        return "improvement"
-    elif lower_bound_r2 > upper_bound_r1:
-        return "regression"
-    # Otherwise, it's neutral
-    else:
-        return "neutral"
+        # A z-score less than -1.96 indicates a statistically significant regression at 95% confidence
+        if z_score < -1.96:
+            return "regression"
+        # A z-score greater than 1.96 indicates a statistically significant improvement
+        elif z_score > 1.96:
+            return "improvement"
+        else:
+            return "neutral"
+
+    def boundary_regression(r1, std1, r2, std2):
+        # Determine the lower and upper bounds for r1 and r2
+        lower_bound_r1 = r1 - std1
+        upper_bound_r1 = r1 + std1
+        lower_bound_r2 = r2 - std2
+        upper_bound_r2 = r2 + std2
+
+        if upper_bound_r2 < lower_bound_r1:
+            return "improvement"
+        elif lower_bound_r2 > upper_bound_r1:
+            return "regression"
+        # Otherwise, it's neutral
+        else:
+            return "neutral"
+
+    # Use boundary regression. It is less statistically sound, but more intuitive for people to check the result.
+    return boundary_regression(r1, std1, r2, std2)
 
 def plot_multi_plans_history(runs, plans, benchmarks, start_date, end_date, data_key):
     # whether we should show legend - only show legend for a plan when it is the first time we add a trace for this plan
