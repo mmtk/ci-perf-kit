@@ -26,7 +26,7 @@ print(config)
 
 prefix = config['name']
 
-# all subfolders are plan names
+# all subfolders are plan names, or "canary" for the canary version
 plans = os.listdir(result_repo_vm_root)
 
 # check from date and to date
