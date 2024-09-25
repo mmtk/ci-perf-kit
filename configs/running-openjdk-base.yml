@@ -97,3 +97,7 @@ runtimes:
     type: OpenJDK
     release: 11
     home: "./build/jdk-mmtk-branch/images/jdk"
+  jdk-mmtk-canary:
+    type: OpenJDK
+    release: 11
+    home: "./build/jdk-mmtk-canary/images/jdk"
