@@ -73,7 +73,7 @@ for plan in plans:
     print("Plan: %s" % plan)
     print("Last run: %s" % last_run)
     print("Benchmarks: %s" % benchmarks)
-    print(logs)
+    # print(logs)
 
     # figure out the baseline and get the result for the baseline
     plan_config = parse.get_config_for_plan(config, plan)
@@ -83,8 +83,10 @@ for plan in plans:
 
     baseline = plot.calculate_baseline(baseline_results, baseline_builds, "execution_times")
     pp.pprint(baseline)
-    
+
+    build_info = prefix
+
     # plot
-    fig = plot.plot_history(runs, plan, benchmarks, from_date, to_date, "execution_times", baseline, config['notes'].copy())
+    fig = plot.plot_history(build_info, runs, plan, benchmarks, from_date, to_date, "execution_times", baseline, config['notes'].copy())
     path = os.path.join(output_dir, "%s_%s_history.html" % (prefix, plan))
     fig.write_html(path)
