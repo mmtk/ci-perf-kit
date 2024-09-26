@@ -33,6 +33,9 @@ PLOT_STD_DEV = True
 # Use the same Y range for all the traces
 SAME_Y_RANGE_IN_ALL_TRACES = True
 
+MIN_MAX_MARKER_SIZE = 5
+CURRENT_POINT_MARKER_SIZE = 10
+
 # runs: all the runs for a certain build (as a dictionary from run_id -> run results)
 # plan: the plan to plot
 # benchmarks: benchmarks to plot
@@ -65,7 +68,6 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
 
     benchmarks.sort()
 
-    aligned_notes = []
     for bm in benchmarks:
         # extract results
         print("Plotting %s %s..." % (plan, bm))
@@ -84,7 +86,6 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
         assert len(x_labels) == n_points
 
         attributes = split_epochs(x, x_labels, y, std, notes.copy())
-        # print(attributes)
 
         y_cur_aboslute = y[-1]
 
@@ -218,72 +219,15 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
                 else:
                     ret.append(None)
             return ret
-
-        # Mark epoch
-        for epoch_name, v in attributes.items():
-            print(v)
-
-            # Epoch start
-            epoch_start_y = keep_first_in_index_range(y, lambda y: y == v['start_y'] / y_baseline, v['start'], v['end'])
-
-            assert v['start'] <= n_points
-            assert v['end'] <= n_points
-
-            # Normalized y
-            epoch_normalized_start_y = v['start_y'] / y_baseline
-            epoch_normalized_start_y_std = v['start_y_std'] / y_baseline
-            epoch_normalized_end_y = v['end_y'] / y_baseline
-            epoch_normalized_end_y_std = v['end_y_std'] / y_baseline
-
-            # Epoch min/max
-            epoch_normalized_min_y = v['min'] / y_baseline
-            epoch_normalized_max_y = v['max'] / y_baseline
-
-            regress = check_regression(epoch_normalized_start_y, epoch_normalized_start_y_std, epoch_normalized_end_y, epoch_normalized_end_y_std)
-            if regress == "regression":
-                epoch_color = "red"
-            elif regress == "neutral":
-                epoch_color = "black"
-            else:
-                epoch_color = "green"
-
-            traces.append({**history_trace, **{
-                "hoverinfo": 'text',
-                "mode": "markers",
-                "textposition": "top center",
-                "y": epoch_start_y,
-                "text": "Epoch: %s<br />  start: %.2f ± %.2f, end: %.2f ± %.2f<br />  min: %.2f, max: %.2f" % (v['note'], epoch_normalized_start_y, epoch_normalized_start_y_std, epoch_normalized_end_y, epoch_normalized_end_y_std, epoch_normalized_min_y, epoch_normalized_max_y),
-                "textfont_color": epoch_color,
-                "cliponaxis": False,
-                "marker": { "size": 10, "color": epoch_color, "symbol": "star-diamond"},
-                "showlegend": False,
-            }})
-
-            # if epoch_name == current_epoch:
-            #     # Epoch min
-            #     traces.append({**history_trace, **{
-            #         "hoverinfo": "text",
-            #         "mode": "markers",
-            #         "textposition": "top center",
-            #         "y": keep_first_in_index_range(y, lambda y: y == epoch_normalized_min_y, v['start_x'], v['end_x'] + 1),
-            #         "text": ["%s: %.2f" % (x, y) if y != 0 else "" for (x, y) in zip(x_labels, y)],
-            #         "textfont_color": "green",
-            #         "cliponaxis": False,
-            #         "marker": { "size": 10, "color": "green", "symbol": "triangle-down" },
-            #         "showlegend": False,
-            #     }})
-            #     # Epoch max
-            #     traces.append({**history_trace, **{
-            #         "hoverinfo": "text",
-            #         "mode": "markers",
-            #         "textposition": "top center",
-            #         "y": keep_first_in_index_range(y, lambda y: y == epoch_normalized_max_y, v['start_x'], v['end_x'] + 1),
-            #         "text": ["%s: %.2f" % (x, y) if y != 0 else "" for (x, y) in zip(x_labels, y)],
-            #         "textfont_color": "red",
-            #         "cliponaxis": False,
-            #         "marker": { "size": 10, "color": "red", "symbol": "triangle-up" },
-            #         "showlegend": False,
-            #     }})
+        def find_first_in_index_range(arr, v, start, end):
+            for idx, x in enumerate(arr):
+                if idx < start:
+                    continue
+                if idx >= end:
+                    return None
+                if x == v:
+                    return idx
+            return None
 
         # labeling
         annotation = {
@@ -308,17 +252,8 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
             current_symbol = "~"
         else:
             trend = check_regression(this_y_lower, this_y_lower_std, current, current_std)
-            if trend == "improvment":
-                current_color = "green"
-                current_symbol = "▽"
-            elif trend == "regression":
-                # degradation
-                current_color = "red"
-                current_symbol = "△"
-            else:
-                # neutral
-                current_color = "black"
-                current_symbol = "~"
+            current_color = get_regression_color(trend)
+            current_symbol = get_regression_symbol(trend)
 
         y_last_array = keep_last(y, lambda x: x == current)
         traces.append({**history_trace, **{
@@ -326,7 +261,7 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
             "mode": "markers",
             "y": y_last_array,
             "text": ["history current: %s: %.2f" % (x, y) for (x, y) in zip(x_labels, y)],
-            "marker": {"size": 15, "color": "black"},
+            "marker": {"size": CURRENT_POINT_MARKER_SIZE, "color": "black"},
             "showlegend": False,
         }})
         # big number
@@ -401,6 +336,67 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
                 "y": variance_up,
                 "text": ["moving avg + std dev: %s: %s" % (x, "{:.2f}".format(y) if y is not None else "na") for (x, y) in zip(x_labels, variance_up)],
             }})
+
+        # Mark epoch - draw this after stddev. So it will be rendered on top of stddev
+        for epoch_name, v in attributes.items():
+            print(v)
+
+            # Epoch start
+            epoch_start_y = keep_first_in_index_range(y, lambda y: y == v['start_y'] / y_baseline, v['start'], v['end'])
+
+            assert v['start'] <= n_points
+            assert v['end'] <= n_points
+
+            # Normalized y
+            epoch_normalized_start_y = v['start_y'] / y_baseline
+            epoch_normalized_start_y_std = v['start_y_std'] / y_baseline
+            epoch_normalized_end_y = v['end_y'] / y_baseline
+            epoch_normalized_end_y_std = v['end_y_std'] / y_baseline
+
+            # Epoch min/max
+            epoch_normalized_min_y = v['min'] / y_baseline
+            epoch_normalized_max_y = v['max'] / y_baseline
+
+            regress = check_regression(epoch_normalized_start_y, epoch_normalized_start_y_std, epoch_normalized_end_y, epoch_normalized_end_y_std)
+            epoch_color = get_regression_color(regress)
+
+            text = "Epoch: %s<br />  start: %.2f ± %.2f, end: %.2f ± %.2f<br />  min: %.2f, max: %.2f" % (v['note'], epoch_normalized_start_y, epoch_normalized_start_y_std, epoch_normalized_end_y, epoch_normalized_end_y_std, epoch_normalized_min_y, epoch_normalized_max_y)
+
+            traces.append({**history_trace, **{
+                "hoverinfo": "text",
+                "mode": "lines",
+                "line": { "width": 1, "color": epoch_color },
+                "opacity": 0.2 if epoch_color == "black" else 1,
+                "x": [v['start_x'], v['start_x']],
+                "y": [-999, 999],
+                "text": text
+            }})
+
+            if epoch_name == current_epoch:
+                # Epoch min
+                traces.append({**history_trace, **{
+                    "hoverinfo": "text",
+                    "mode": "markers",
+                    "textposition": "top center",
+                    "y": keep_first_in_index_range(y, lambda y: y == epoch_normalized_min_y, v['start'], v['end'] + 1),
+                    "text": ["best: %s: %.2f" % (x, y) if y != 0 else "" for (x, y) in zip(x_labels, y)],
+                    "textfont_color": "green",
+                    "cliponaxis": False,
+                    "marker": { "size": MIN_MAX_MARKER_SIZE, "color": "green", "symbol": "triangle-down" },
+                    "showlegend": False,
+                }})
+                # Epoch max
+                traces.append({**history_trace, **{
+                    "hoverinfo": "text",
+                    "mode": "markers",
+                    "textposition": "top center",
+                    "y": keep_first_in_index_range(y, lambda y: y == epoch_normalized_max_y, v['start'], v['end'] + 1),
+                    "text": ["worst: %s: %.2f" % (x, y) if y != 0 else "" for (x, y) in zip(x_labels, y)],
+                    "textfont_color": "red",
+                    "cliponaxis": False,
+                    "marker": { "size": MIN_MAX_MARKER_SIZE, "color": "red", "symbol": "triangle-up" },
+                    "showlegend": False,
+                }})
 
         # baseline - we will draw one horizontal line per each baseline
         baseline_opacity = 0.6
@@ -480,8 +476,17 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
     # This plots a vertical line for each note in the first subgraph.
     # for note in aligned_notes:
     #     fig.add_vline(x = int(note['x']), line_color = 'blue', annotation = { "text": "📓", "hovertext": note['note'] })
+    # for i in range(1, row):
+    #     for e in epochs:
+    #         print("Add Epoch %s for row %d" % (e['epoch'], i))
+    #         fig.add_vline(x = int(e['start_x']), line_color = "gray", annotation = { "text": "x", "hovertext": e['note'] }, yref = "y%d" % i)
+    # for idx, notes in enumerate(epochs_for_rows):
+    #     for n in notes:
+    #         color = get_regression_color(n['regression'])
+    #         fig.add_vline(x = n['x'], line_color = "gray", opacity = 0.2, annotation = { "text": get_regression_symbol(n['regression']) }, yref = "y%d" % (idx + 1), hovertext = n['text'])
 
     fig.update_layout(hovermode='x')
+    fig.update_layout(hoverdistance=1)
     fig.update_layout(margin=dict(l=5, r=5, t=50, b=5))
 
     return fig
@@ -513,6 +518,7 @@ def split_epochs(x, x_labels, y, y_std, notes):
         attrs[epoch_name] = {}
         attrs[epoch_name]['epoch'] = epoch_name
         attrs[epoch_name]['start'] = idx
+        attrs[epoch_name]['start_x'] = x[idx]
         attrs[epoch_name]['start_y'] = y[idx]
         attrs[epoch_name]['start_y_std'] = y_std[idx]
         if note is not None:
@@ -640,6 +646,22 @@ def check_regression(r1, std1, r2, std2):
 
     # Use boundary regression. It is less statistically sound, but more intuitive for people to check the result.
     return boundary_regression(r1, std1, r2, std2)
+
+
+def get_regression_color(regression):
+    match regression:
+        case "regression": return "red"
+        case "improvement": return "green"
+        case "neutral": return "black"
+        case _: raise Exception('Unexpected regression string:' + regression)
+
+
+def get_regression_symbol(regression):
+    match regression:
+        case "regression": return "△"
+        case "improvement": return "▽"
+        case "neutral": return "~"
+        case _: raise Exception('Unexpected regression string:' + regression)
 
 def plot_multi_plans_history(runs, plans, benchmarks, start_date, end_date, data_key):
     # whether we should show legend - only show legend for a plan when it is the first time we add a trace for this plan

@@ -49,6 +49,9 @@ baseline_run_id, baseline_results = parse.parse_baseline(result_repo_baseline_ro
 excluded_runs = plot.get_excluded_runs_from_env_var('HISTORY_EXCLUDE_RUNS')
 
 for plan in plans:
+    if plan != "semispace":
+        continue
+
     # The path for all logs for the plan, such as /home/yilin/Code/ci-perf-kit/result_repo/openjdk/immix
     plan_path = os.path.join(result_repo_vm_root, plan)
     # Get all the runs for the plan, such as ['rat-2021-08-24-Tue-163625']
