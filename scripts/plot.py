@@ -32,6 +32,7 @@ PLOT_STD_DEV = True
 
 # Use the same Y range for all the traces
 SAME_Y_RANGE_IN_ALL_TRACES = True
+Y_RANGE_EXTRA = 0.2
 
 MIN_MAX_MARKER_SIZE = 5
 CURRENT_POINT_MARKER_SIZE = 10
@@ -67,6 +68,8 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
     y_range_lower = float("inf")
 
     benchmarks.sort()
+
+    epoch_vlines = []
 
     for bm in benchmarks:
         # extract results
@@ -119,8 +122,8 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
         # No min value. There is no value in the plot at all. We just need a reasonable baseline.
         if y_baseline == 0:
             y_baseline = min(nonzero_y)
-        # y_max = max(nonzero_y) / y_baseline
-        # y_min = min(nonzero_y) / y_baseline
+        y_max = max(nonzero_y) / y_baseline
+        y_min = min(nonzero_y) / y_baseline
 
         this_y_upper = attributes[current_epoch]['max'] / y_baseline
         this_y_lower = attributes[current_epoch]['min'] / y_baseline
@@ -155,11 +158,43 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
         }
 
         # history
+        history_x = x
+        history_y = make_zero_as_none(y)
+        history_colors = []
+        line_colors_info = []
+        for epoch_name in sorted(attributes.keys()):
+            history_colors.extend(attributes[epoch_name]['line_colors'])
+            line_colors_info.extend(attributes[epoch_name]['line_colors_info'])
+
+        assert len(history_colors) == len(history_x)
+        assert len(history_colors) == len(history_y)
+        assert len(history_colors) == len(line_colors_info)
+
+        # render each segment with color
+        for i in range(0, len(history_x) - 2):
+            traces.append({**history_trace, **{
+                "x": history_x[i:i+2],
+                "y": history_y[i:i+2],
+                "line": { "width": 3, "color": history_colors[i+1] },
+            }})
+
+        # render the hovertext with an invisible trace (we have to do this otherwise the hovertext is fucked up -- the segments are too crowded and we would see multiple hover texts showing up)
+        history_hovertext = []
+        for (label, val, color, color_info) in zip(x_labels, y, history_colors, line_colors_info):
+            if color_info is None:
+                t = get_hover_text("history", label, val)
+            else:
+                l1 = get_hover_text("history", label, val)
+                l2 = "(%s, compared to %s %.2f)" % (color_info['regression'], color_info['label'], color_info['value'] / y_baseline)
+                t = "%s<br \>%s" % (l1, l2)
+            history_hovertext.append(t)
         traces.append({**history_trace, **{
-            "line": {"width": 3, "color": "black"},
+            "line": { "color": "black" },
             "y": make_zero_as_none(y),
-            "text": ["history: %s: %.2f" % (x, y) for (x, y) in zip(x_labels, y)],
+            "opacity": 0,
+            "text": history_hovertext,
         }})
+
         layout["xaxis%d" % row] = {
             # attempt to show xticks. Couldn't get this work. Xticks are shown under the first subgraph. 
             # I can't switch it to the last (or it does not show on the last because out of boundary)
@@ -187,7 +222,7 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
             "showline": True,
             "zeroline": False,
             "showticklabels": False,
-            "range": [this_y_lower - 0.02, this_y_upper + 0.02]
+            "range": [this_y_lower - Y_RANGE_EXTRA, this_y_upper + Y_RANGE_EXTRA]
         }
 
         # highlight max/min
@@ -362,13 +397,13 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
 
             text = "Epoch: %s<br />  start: %.2f ± %.2f, end: %.2f ± %.2f<br />  min: %.2f, max: %.2f" % (v['note'], epoch_normalized_start_y, epoch_normalized_start_y_std, epoch_normalized_end_y, epoch_normalized_end_y_std, epoch_normalized_min_y, epoch_normalized_max_y)
 
-            traces.append({**history_trace, **{
+            epoch_vlines.append({**history_trace, **{
                 "hoverinfo": "text",
                 "mode": "lines",
                 "line": { "width": 1, "color": epoch_color },
                 "opacity": 0.2 if epoch_color == "black" else 1,
                 "x": [v['start_x'], v['start_x']],
-                "y": [-999, 999],
+                "y": [y_min, y_max],
                 "text": text
             }})
 
@@ -442,48 +477,23 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
                     #     "text": "%s: %.2f" % (build, hline),
                     # }})
 
-        # Notes
-        # Somehow this line does not show. But it adds a hover text for all the plots.
-        # for note in aligned_notes:
-        #     note_trace = {
-        #         "hoverinfo": "text",
-        #         "mode": "lines",
-        #         "line": {"width": 10, "color": "blue"},
-        #         "x": [note['x']],
-        #         "y": [0, 999],
-        #         "xaxis": x_axis,
-        #         "yaxis": y_axis,
-        #         "showlegend": False,
-        #         "opacity": 0,
-        #         "text": note['note']
-        #     }
-        #     traces.append(note_trace)
-
         row += 1
 
     # fix range for all the traces
     if SAME_Y_RANGE_IN_ALL_TRACES:
-        RANGE_EXTRA = 0.2
-        y_range = [y_range_lower - RANGE_EXTRA, y_range_upper + RANGE_EXTRA]
+        y_range = [y_range_lower - Y_RANGE_EXTRA, y_range_upper + Y_RANGE_EXTRA]
         for i in range(1, row):
             layout["yaxis%d" % i]["range"] = y_range
+        for line in epoch_vlines:
+            line["y"] = y_range
 
     fig = Figure(data = Data(traces), layout = layout)
     for anno in annotations:
         fig.add_annotation(anno)
     for line in baseline_hlines:
         fig.add_shape(line)
-    # This plots a vertical line for each note in the first subgraph.
-    # for note in aligned_notes:
-    #     fig.add_vline(x = int(note['x']), line_color = 'blue', annotation = { "text": "📓", "hovertext": note['note'] })
-    # for i in range(1, row):
-    #     for e in epochs:
-    #         print("Add Epoch %s for row %d" % (e['epoch'], i))
-    #         fig.add_vline(x = int(e['start_x']), line_color = "gray", annotation = { "text": "x", "hovertext": e['note'] }, yref = "y%d" % i)
-    # for idx, notes in enumerate(epochs_for_rows):
-    #     for n in notes:
-    #         color = get_regression_color(n['regression'])
-    #         fig.add_vline(x = n['x'], line_color = "gray", opacity = 0.2, annotation = { "text": get_regression_symbol(n['regression']) }, yref = "y%d" % (idx + 1), hovertext = n['text'])
+    for vline in epoch_vlines:
+        fig.add_trace(vline)
 
     fig.update_layout(hovermode='x')
     fig.update_layout(hoverdistance=1)
@@ -611,6 +621,35 @@ def split_epochs(x, x_labels, y, y_std, notes):
             epoch['max'] = epoch['start_y']
             epoch['max_std'] = 0
 
+    # Decide the color for each segment, based on the best value up to that point in the epoch
+    for name, epoch in attrs.items():
+        start = epoch['start']
+        end = epoch['end']
+
+        # The best result in this epoch so far
+        best = -1
+
+        line_colors = []
+        line_colors_info = []
+
+        for i in range(start, end + 1):
+            if y[i] == 0:
+                # No data
+                line_colors.append("black")
+                line_colors_info.append(None)
+                continue
+
+            if best == -1:
+                best = i
+
+            trend = check_regression(y[best], y_std[best], y[i], y_std[i])
+            if trend == "improvement":
+                best = i
+            line_colors.append(get_regression_color(trend))
+            line_colors_info.append({ "label": x_labels[best], "value": y[best], "regression": trend })
+        epoch['line_colors'] = line_colors
+        epoch['line_colors_info'] = line_colors_info
+
     return attrs
 
 # Return improvement, or regression, or neutral
@@ -662,6 +701,14 @@ def get_regression_symbol(regression):
         case "improvement": return "▽"
         case "neutral": return "~"
         case _: raise Exception('Unexpected regression string:' + regression)
+
+
+def get_hover_text(prefix, text, value):
+    if value is None:
+        return "%s: %s: none" % (prefix, text)
+    else:
+        return "%s: %s: %.2f" % (prefix, text, value)
+
 
 def plot_multi_plans_history(runs, plans, benchmarks, start_date, end_date, data_key):
     # whether we should show legend - only show legend for a plan when it is the first time we add a trace for this plan
