@@ -25,9 +25,15 @@ run_exp() {
     dir_name=$1
     config=$2
     heap_modifier=$3
+    invocations=$history_invocations
+
+    # Use this when testing the scripts so that tests run faster, albeit producing less accurate results.
+    if [ "$OPENJDK_HISTORY_RUN_TEST_FAST" = "1" ]; then
+        invocations=1
+    fi
 
     # Run
-    run_id=$(run_benchmarks $log_dir $kit_root/configs/$config $heap_modifier $history_invocations)
+    run_id=$(run_benchmarks $log_dir $kit_root/configs/$config $heap_modifier $invocations)
     # Save result
     RESULT_DIR=$result_repo_dir/openjdk/$dir_name
     mkdir -p $RESULT_DIR
