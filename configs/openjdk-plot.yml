@@ -14,6 +14,11 @@ plans:
     baseline: ['jdk-g1', 'jdk-zgc']
   - plan: marksweep
     baseline: ['jdk-g1', 'jdk-zgc']
+  # "canary" is not a real plan.  It is for the canary build.
+  # We add it here to make history_report.py recognize its result
+  # and plot it in a separate block in parallel to other real plans in OpenJDK.
+  - plan: canary
+    baseline: ['jdk-g1', 'jdk-zgc']
 notes:
   - date: "20230116"
     time: "0000"
