@@ -38,3 +38,6 @@ notes:
   - date: "20240903"
     time: "0000"
     note: "Move to Linux Kernel 6.8.0"
+  - date: "20250103"
+    time: "0000"
+    note: "Move to Rust 1.83.0"
