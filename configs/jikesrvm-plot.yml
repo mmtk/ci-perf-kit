@@ -28,3 +28,6 @@ notes:
   - date: "20250103"
     time: "0000"
     note: "Move to Rust 1.83.0"
+  - date: "20250803"
+    time: "0000"
+    note: "Enable reference processing"
