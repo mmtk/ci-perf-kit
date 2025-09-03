@@ -45,26 +45,26 @@ run_exp() {
 # Build
 cd $openjdk
 
-# # NoGC
-# run_exp nogc running-openjdk-nogc-complete.yml 0
+# NoGC
+run_exp nogc running-openjdk-nogc-complete.yml 0
 
-# # SemiSpace
-# run_exp semispace running-openjdk-semispace-complete.yml 6
+# SemiSpace
+run_exp semispace running-openjdk-semispace-complete.yml 6
 
-# # GenCopy
-# run_exp gencopy running-openjdk-gencopy-complete.yml 6
+# GenCopy
+run_exp gencopy running-openjdk-gencopy-complete.yml 6
 
-# # Immix
-# run_exp immix running-openjdk-immix-complete.yml 6
+# Immix
+run_exp immix running-openjdk-immix-complete.yml 6
 
-# # GenImmix
-# run_exp genimmix running-openjdk-genimmix-complete.yml 6
+# GenImmix
+run_exp genimmix running-openjdk-genimmix-complete.yml 6
 
-# # StickyImmix
-# run_exp stickyimmix running-openjdk-stickyimmix-complete.yml 6
+# StickyImmix
+run_exp stickyimmix running-openjdk-stickyimmix-complete.yml 6
 
-# # MarkSweep
-# run_exp marksweep running-openjdk-marksweep-complete.yml 6
+# MarkSweep
+run_exp marksweep running-openjdk-marksweep-complete.yml 6
 
 # GenImmix using the canary version.
 # If the performance of the canary version changed,
