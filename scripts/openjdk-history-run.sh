@@ -4,7 +4,7 @@ set -ex
 . $(dirname "$0")/common.sh
 
 openjdk_binding_latest=$(realpath $1)
-openjdk_binding_canary=$(realpath $2)
+openjdk_binding_canary_build=$(realpath $2)
 output_dir=$(realpath -m $3)
 # openjdk_rev is used for the commit message.  We use the revision ID of the latest version.
 openjdk_rev=$(git -C $openjdk_binding_latest rev-parse HEAD)
@@ -19,7 +19,9 @@ checkout_result_repo
 
 # Build
 build_openjdk_with_mmtk $openjdk_binding_latest release jdk-mmtk
-build_openjdk_with_mmtk $openjdk_binding_canary release jdk-mmtk-canary
+
+# Copy the canary build to the kit build directory.
+cp -r $openjdk_binding_canary_build $kit_build/jdk-mmtk-canary
 
 run_exp() {
     dir_name=$1
