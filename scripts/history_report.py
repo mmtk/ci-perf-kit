@@ -89,4 +89,4 @@ for plan in plans:
     # plot
     fig = plot.plot_history(build_info, runs, plan, benchmarks, from_date, to_date, "execution_times", baseline, config['notes'].copy())
     path = os.path.join(output_dir, "%s_%s_history.html" % (prefix, plan))
-    fig.write_html(path)
+    fig.write_html(path, include_plotlyjs='cdn')
