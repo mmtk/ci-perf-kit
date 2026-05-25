@@ -37,3 +37,6 @@ notes:
   - date: "20260108"
     time: "0000"
     note: "Move to Rust 1.92.0"
+  - date: "20260504"
+    time: "0000"
+    note: "CopyFail mitigation and image update"
