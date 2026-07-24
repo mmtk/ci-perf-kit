@@ -17,6 +17,15 @@ stock_invocations=20
 compare_invocations=20
 history_invocations=20
 
+# Kept in sync with the "suites.dacapochopin.path" override in
+# configs/running-openjdk-base.yml.
+dacapochopin_jar=/usr/share/benchmarks/dacapo/dacapo-23.11-MR2-chopin.jar
+
+# Cargo's libgit2 git fetcher only tries ssh-agent, not a default ~/.ssh key,
+# so it can fail to fetch git dependencies (e.g. mmtk-core) even when the
+# system git CLI authenticates fine. Delegate to the system git CLI instead.
+export CARGO_NET_GIT_FETCH_WITH_CLI=true
+
 # ensure_env 'var_name'
 ensure_env() {
     env_var=$1
@@ -85,6 +94,63 @@ jikesrvm_binding_use_local_mmtk() {
     sed -i s/^#[[:space:]]mmtk/mmtk/g $binding_path/mmtk/Cargo.toml
 }
 
+# pgo_build_openjdk_with_mmtk 'binding_path' 'openjdk_path' 'debug_level'
+# Build OpenJDK+MMTk using the binding repo's .github/scripts/pgo-build.sh,
+# which builds MMTk twice: once instrumented to collect a profile (running
+# fop from DaCapo), then again using that profile (PGO). Only supports
+# release builds, since pgo-build.sh hardcodes CONF=...-release.
+# Env: (optionally) MMTK_PLAN - forwarded as a compile-time cargo feature
+pgo_build_openjdk_with_mmtk() {
+    binding_path=$1
+    openjdk_path=$2
+    debug_level=$3
+
+    if [ "$debug_level" != "release" ]; then
+        echo "pgo_build_openjdk_with_mmtk only supports release builds (got: $debug_level)"
+        exit 1
+    fi
+
+    # pgo-build.sh uses paths relative to its cwd (the OpenJDK checkout),
+    # assuming the binding repo lives alongside it in a sibling directory
+    # named "mmtk-openjdk". Our layout nests openjdk under binding_path/repos,
+    # so set up that expected sibling with a symlink instead.
+    ln -sfn $(realpath $binding_path) $openjdk_path/../mmtk-openjdk
+
+    # pgo-build.sh hardcodes the llvm-profdata path to a specific pinned Rust
+    # toolchain version, which goes stale whenever the binding bumps its
+    # rust-toolchain (confirmed: upstream mmtk-openjdk master currently pins
+    # 1.83.0 in mmtk/rust-toolchain, but pgo-build.sh still points at 1.71.1).
+    # Patch the checked-out copy to match whatever toolchain this checkout
+    # actually pins, so the merge step resolves to an installed toolchain.
+    rust_toolchain=$(cat $binding_path/mmtk/rust-toolchain)
+    sed -i "s#/opt/rust/toolchains/[^/]*/#/opt/rust/toolchains/${rust_toolchain}-x86_64-unknown-linux-gnu/#" $binding_path/.github/scripts/pgo-build.sh
+
+    # pgo-build.sh also hardcodes the DaCapo jar it profiles with (an old
+    # Chopin release candidate that no longer exists on disk). Point it at
+    # the jar we actually have.
+    sed -i "s#/usr/share/benchmarks/dacapo/dacapo-[^ ]*\.jar#$dacapochopin_jar#" $binding_path/.github/scripts/pgo-build.sh
+
+    # CompileThirdPartyHeap.gmk's $(LIB_MMTK) rule is marked FORCE and is
+    # invoked from more than one recursive make (main libjvm + the gtest
+    # variant); at the default auto-detected parallelism on many-core
+    # machines this races (two concurrent `cargo build` + `cp` sequences)
+    # and produces "undefined reference" link failures. Confirmed
+    # reproducible at -j24 and reliably fixed at JOBS=4 - cap it in
+    # pgo-build.sh's "make ... images" invocations.
+    sed -i "s#make CONF=#make JOBS=4 CONF=#" $binding_path/.github/scripts/pgo-build.sh
+
+    cd $openjdk_path
+    export DEBUG_LEVEL=$debug_level
+    sh configure --disable-warnings-as-errors --with-debug-level=$DEBUG_LEVEL
+    bash $binding_path/.github/scripts/pgo-build.sh
+
+    # pgo-build.sh only builds the "images" target. Package product-bundles
+    # from it, keeping the same profile-use RUSTFLAGS so make doesn't trigger
+    # a rebuild of the mmtk library without the PGO profile.
+    RUSTFLAGS="-Cprofile-use=/tmp/$USER/pgo-data/merged.profdata -Cllvm-args=-pgo-warn-missing-function" \
+        make JOBS=4 product-bundles CONF=linux-x86_64-normal-server-$DEBUG_LEVEL THIRD_PARTY_HEAP=$PWD/../../openjdk
+}
+
 # build_openjdk ’binding_path' 'debug_level' 'build_path'
 build_openjdk_with_mmtk() {
     binding_path=$1
@@ -93,16 +159,13 @@ build_openjdk_with_mmtk() {
 
     openjdk_path=$binding_path/repos/openjdk
 
-    cd $openjdk_path
-    export DEBUG_LEVEL=$debug_level
-    sh configure --disable-warnings-as-errors --with-debug-level=$DEBUG_LEVEL
-    make product-bundles CONF=linux-x86_64-normal-server-$DEBUG_LEVEL THIRD_PARTY_HEAP=$PWD/../../openjdk
+    pgo_build_openjdk_with_mmtk $binding_path $openjdk_path $debug_level
 
     # copy to build_path
-    cp -r $openjdk_path/build/linux-x86_64-normal-server-$DEBUG_LEVEL $kit_build/$build_path
+    cp -r $openjdk_path/build/linux-x86_64-normal-server-$debug_level $kit_build/$build_path
     # Copy bundles to upload
     mkdir -p $kit_upload/$build_path
-    cp -r $openjdk_path/build/linux-x86_64-normal-server-$DEBUG_LEVEL/bundles/*_bin.tar.gz $kit_upload/$build_path
+    cp -r $openjdk_path/build/linux-x86_64-normal-server-$debug_level/bundles/*_bin.tar.gz $kit_upload/$build_path
 }
 
 # build_openjdk ’binding_path' 'plan' 'debug_level' 'build_path'
@@ -114,17 +177,14 @@ build_openjdk_with_mmtk_plan() {
 
     openjdk_path=$binding_path/repos/openjdk
 
-    cd $openjdk_path
-    export DEBUG_LEVEL=$debug_level
     export MMTK_PLAN=$plan
-    sh configure --disable-warnings-as-errors --with-debug-level=$DEBUG_LEVEL
-    make product-bundles CONF=linux-x86_64-normal-server-$DEBUG_LEVEL THIRD_PARTY_HEAP=$PWD/../../openjdk
+    pgo_build_openjdk_with_mmtk $binding_path $openjdk_path $debug_level
 
     # copy to build_path
-    cp -r $openjdk_path/build/linux-x86_64-normal-server-$DEBUG_LEVEL $kit_build/$build_path
+    cp -r $openjdk_path/build/linux-x86_64-normal-server-$debug_level $kit_build/$build_path
     # Copy bundles to upload
     mkdir -p $kit_upload/$build_path
-    cp -r $openjdk_path/build/linux-x86_64-normal-server-$DEBUG_LEVEL/bundles/*_bin.tar.gz $kit_upload/$build_path
+    cp -r $openjdk_path/build/linux-x86_64-normal-server-$debug_level/bundles/*_bin.tar.gz $kit_upload/$build_path
 }
 
 # build_openjdk 'openjdk_path' 'debug_level' 'build_path'
@@ -162,6 +222,22 @@ build_openjdk_with_features() {
     # Copy bundles to upload
     mkdir -p $kit_upload/$build_path
     cp -r $openjdk_path/build/linux-x86_64-normal-server-$DEBUG_LEVEL/bundles/*_bin.tar.gz $kit_upload/$build_path
+}
+
+# build_probes
+# Build the anupli/probes submodule (probes.jar, native RustMMTk/USDT probe
+# libraries), and OpenJDKProbe (kept in ci-perf-kit itself, next to the
+# submodule, since it isn't part of anupli/probes).
+# Env: JAVA_HOME
+build_probes() {
+    ensure_env JAVA_HOME
+
+    cd $kit_root/probes
+    # The submodule defaults DACAPOCHOPINJAR to the base 23.11 release; we use MR2.
+    make DACAPOCHOPINJAR=$dacapochopin_jar
+
+    cd $kit_root/openjdk-probe
+    make
 }
 
 # run_benchmarks 'log_dir' 'config' 'heap_modifier' 'invocations'

@@ -16,11 +16,7 @@ ensure_empty_dir $log_dir
 checkout_result_repo
 
 # Build probes
-ensure_env JAVA_HOME
-cd $kit_root/probes/openjdk
-make
-cd $kit_root/probes/rust_mmtk
-make
+build_probes
 
 # Build
 cd $openjdk

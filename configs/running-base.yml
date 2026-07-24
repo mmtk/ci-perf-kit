@@ -15,12 +15,15 @@ modifiers:
       val: "-Xms4000M -Xmx4000M"
 
     # Probes
+    # probes.jar/librust_mmtk_probe.so come from the anupli/probes submodule
+    # (built by build_probes in scripts/common.sh); OpenJDKProbe isn't part of
+    # that submodule, so it's kept and built separately under openjdk-probe/.
     probes_cp:
       type: JVMClasspath
-      val: "$PWD/probes/rust_mmtk/java $PWD/probes/openjdk/java $PWD/probes/probes.jar"
+      val: "$PWD/probes/out/probes.jar $PWD/openjdk-probe/java"
     probes_rustmmtk:
       type: JVMArg
-      val: "-Dprobes=RustMMTk -Djava.library.path=$PWD/probes/rust_mmtk"
+      val: "-Dprobes=RustMMTk -Djava.library.path=$PWD/probes/out"
     probes_openjdk:
       type: JVMArg
       val: "-Dprobes=OpenJDK"
