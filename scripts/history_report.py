@@ -81,12 +81,15 @@ for plan in plans:
     baseline_builds = plan_config['baseline']
     print("Baseline: %s" % baseline_builds)
 
-    baseline = plot.calculate_baseline(baseline_results, baseline_builds, "execution_times")
+    # time.total prioritizes the MMTk-instrumented "Total time" (time.other +
+    # time.stw) when a probe-driving callback is configured, falling back to
+    # the benchmark's own reported execution_times otherwise (see parse.py).
+    baseline = plot.calculate_baseline(baseline_results, baseline_builds, "time.total")
     pp.pprint(baseline)
 
     build_info = prefix
 
     # plot
-    fig = plot.plot_history(build_info, runs, plan, benchmarks, from_date, to_date, "execution_times", baseline, config['notes'].copy())
+    fig = plot.plot_history(build_info, runs, plan, benchmarks, from_date, to_date, "time.total", baseline, config['notes'].copy())
     path = os.path.join(output_dir, "%s_%s_history.html" % (prefix, plan))
     fig.write_html(path, include_plotlyjs='cdn')

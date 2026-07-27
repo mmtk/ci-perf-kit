@@ -36,27 +36,48 @@ def parse_log(log_file, n_invocations = None):
             if len(line) == 0:
                 continue
             
-            # bm time
+            # bm time, as reported by the benchmark harness itself
             matcher = re.match(".*PASSED in (\d+) msec.*", line)
             if matcher:
                 insert_data('execution_times', float(matcher.group(1)))
-            
-            # mmtk statistics
+
+            # mmtk statistics - only present when a probe-driving DaCapo
+            # callback is configured (e.g. probe.DacapoChopinCallback).
+            # Absent for JikesRVM, stock (non-MMTk) OpenJDK runs, or if no
+            # callback is set at all - handled by the time.total fallback below.
             if "MMTk Statistics Totals" in line:
                 mmtk_keys = lines[i + 1].decode('utf-8').split()
                 mmtk_values = lines[i + 2].decode('utf-8').split()
                 if len(mmtk_keys) == len(mmtk_values):
                     for j in range(0, len(mmtk_keys)):
                         insert_data(mmtk_keys[j], float(mmtk_values[j]))
+                    # "Total time: X ms" - the MMTk-instrumented total
+                    # (time.other + time.stw), measured from
+                    # harness_begin/harness_end. More precise than
+                    # execution_times since it excludes DaCapo harness
+                    # overhead outside the timed region.
+                    total_time_matcher = re.match(r"Total time: ([\d.]+) ms", lines[i + 3].decode('utf-8'))
+                    if total_time_matcher:
+                        insert_data('time.total', float(total_time_matcher.group(1)))
                 else:
                     print(f"Unable to correctly parse values from {log_file}.")
                     print(f"* We have {len(mmtk_keys)} keys but {len(mmtk_values)} values.")
                     print(f"* This run will be ignored.")
 
-        # initialie execution_times to empty in case all runs failed
+        # initialie execution_times and time.total to empty in case all runs failed
+        # (other code indexes ret['time.total'] directly, so the key must always exist)
         ret['execution_times'] = []
+        ret['time.total'] = []
         for key in data:
             ret[key] = data[key]
+
+        # time.total: prioritize the MMTk-instrumented "Total time" over the
+        # benchmark's own reported time, but only if we got one properly
+        # parsed per successful invocation - otherwise (no callback, so no
+        # MMTk Statistics section at all; or a parse failure above) fall
+        # back to execution_times entirely, rather than mixing sources.
+        if len(ret['time.total']) != len(ret['execution_times']):
+            ret['time.total'] = ret['execution_times']
 
     # if no n_invocations is passed in, we do not check how many results we have
     if n_invocations == None:

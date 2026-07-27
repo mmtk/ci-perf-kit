@@ -84,6 +84,13 @@ overrides:
   # a fixed set of known DaCapo release strings, so it stays "23.11" - MR2 is
   # a bugfix release with the same benchmark set, not a new release line.)
   "suites.dacapochopin.path": "/usr/share/benchmarks/dacapo/dacapo-23.11-MR2-chopin.jar"
+  # Without a callback, running-ng invokes `-jar dacapo.jar` directly, which
+  # never drives ProbeMux (only a Callback subclass does) - so RustMMTkProbe's
+  # begin/end (and therefore MMTk's own harness_begin/harness_end stats
+  # printing) never fire, even though probes_rustmmtk sets -Dprobes=RustMMTk.
+  # This applies to stock (non-MMTk) runs too, but is harmless there: with no
+  # -Dprobes set, ProbeMux.init() just warns and no-ops.
+  "suites.dacapochopin.callback": "probe.DacapoChopinCallback"
 
 runtimes:
   jdk-mmtk:
