@@ -97,6 +97,24 @@ def parse_log(log_file, n_invocations = None):
 
     return ret
 
+# Given a log folder (one run), return its commit info (e.g.
+# {'mmtk-openjdk': '<sha>', 'mmtk-core': '<sha>'}), or None if there isn't
+# one - e.g. older runs from before this was tracked, or plans like canary
+# that run a fixed downloaded release rather than something built from a commit.
+def parse_commit_info(log_folder):
+    path = os.path.join(log_folder, 'commit-info.yml')
+    if not os.path.isfile(path):
+        return None
+    return parse_yaml(path)
+
+# Given a run id and its commit info (as returned by parse_commit_info, may
+# be None), return a display label for that datapoint.
+def format_run_label(run_id, commit_info):
+    if not commit_info:
+        return run_id
+    parts = ", ".join("%s: %s" % (k, v[:10]) for k, v in commit_info.items())
+    return "%s (%s)" % (run_id, parts)
+
 # Given a log folder, return the result
 def parse_run(log_folder, n_invocations = None):
     run_id = os.path.basename(os.path.normpath(log_folder))
@@ -105,7 +123,10 @@ def parse_run(log_folder, n_invocations = None):
     logs = list_logs(log_folder)
     for l in logs:
         results.append(parse_log(os.path.join(log_folder, l), n_invocations))
-    return run_id, results
+
+    commit_info = parse_commit_info(log_folder)
+
+    return run_id, results, commit_info
 
 # Given a run id, return the date
 def parse_run_date(run_id):
@@ -141,13 +162,13 @@ def get_config_for_plan(config, plan):
 # Get the last log from baseline_root
 def parse_baseline(result_repo_baseline_root):
     if not os.path.isdir(result_repo_baseline_root):
-        return None, []
+        return None, [], None
 
     # get baseline logs
     baseline_logs = list_logs(result_repo_baseline_root)
     if len(baseline_logs) == 0:
-        return None, []
-        
+        return None, [], None
+
     sort_logs(baseline_logs)
     latest_baseline_log = baseline_logs[-1]
     print("Latest baseline log: %s" % latest_baseline_log)

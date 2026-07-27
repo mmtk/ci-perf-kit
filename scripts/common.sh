@@ -240,6 +240,21 @@ build_probes() {
     make
 }
 
+# write_commit_info 'output_file' 'binding_path' ['mmtk_core_path']
+# Records which binding (e.g. mmtk-openjdk) and, if given, mmtk-core commit a
+# build was built from, as YAML, so a script saving a run's results can copy
+# it alongside that run's logs (see openjdk-run-plan.sh).
+write_commit_info() {
+    output_file=$1
+    binding_path=$2
+    mmtk_core_path=$3
+
+    echo "mmtk-openjdk: $(git -C $binding_path rev-parse HEAD)" > $output_file
+    if [ -n "$mmtk_core_path" ]; then
+        echo "mmtk-core: $(git -C $mmtk_core_path rev-parse HEAD)" >> $output_file
+    fi
+}
+
 # run_benchmarks 'log_dir' 'config' 'heap_modifier' 'invocations'
 # heap_modifier=0 means we won't set heap size based on min heap. This is used for NoGC which we set heap size to the maximum instead of a multiple of min heap.
 run_benchmarks() {

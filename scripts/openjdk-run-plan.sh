@@ -28,6 +28,17 @@ checkout_result_repo
 
 # Run
 run_id=$(run_benchmarks $log_dir $kit_root/configs/$config $heap_modifier $invocations)
+
+# Carry the build's commit info (if any) into this run's log folder, so
+# history_report.py can show which mmtk-core/mmtk-openjdk commits produced
+# this datapoint. Skipped for canary: it runs a fixed, downloaded release
+# binary rather than something built from these commits, so attaching them
+# would be misleading.
+commit_info=$kit_build/jdk-mmtk/commit-info.yml
+if [ "$plan_name" != "canary" ] && [ -f "$commit_info" ]; then
+    cp $commit_info $log_dir/$run_id/commit-info.yml
+fi
+
 # Save result
 RESULT_DIR=$result_repo_dir/openjdk/$plan_name
 mkdir -p $RESULT_DIR

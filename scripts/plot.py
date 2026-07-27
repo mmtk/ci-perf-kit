@@ -44,7 +44,7 @@ CURRENT_POINT_MARKER_SIZE = 10
 # data_key: the data to render
 # baseline: the baseline to plot as a dict {baseline: {benchmark: avg}}. None means no baseline, or no data for a certain benchmark.
 # notes: a list of [date, note]. date is YYYYMMDD
-def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_key, baseline, notes=[]):
+def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_key, baseline, notes=[], run_commit_info=None):
     layout = {
         "title": "%s - %s" % (build_info, plan),
         # "margin": {"t": 80},
@@ -87,6 +87,15 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
         assert len(y) == n_points
         assert len(std) == n_points
         assert len(x_labels) == n_points
+
+        # Richer labels for the datapoint hover text only (deliberately kept
+        # separate from x_labels, which is used for date-sorting/matching -
+        # splicing a commit hash into that could spuriously match the
+        # run-id-date regex).
+        hover_labels = [
+            parse.format_run_label(rid, (run_commit_info or {}).get(rid))
+            for rid in x_labels
+        ]
 
         attributes = split_epochs(x, x_labels, y, std, notes.copy())
 
@@ -180,7 +189,7 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
 
         # render the hovertext with an invisible trace (we have to do this otherwise the hovertext is fucked up -- the segments are too crowded and we would see multiple hover texts showing up)
         history_hovertext = []
-        for (label, val, color, color_info) in zip(x_labels, y, history_colors, line_colors_info):
+        for (label, val, color, color_info) in zip(hover_labels, y, history_colors, line_colors_info):
             if color_info is None:
                 t = get_hover_text("history", label, val)
             else:

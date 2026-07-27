@@ -43,7 +43,7 @@ if to_date_env is not None:
 else:
     to_date = date.today() + datetime.timedelta(days=1) # one day after today (so the last day is today)
 
-baseline_run_id, baseline_results = parse.parse_baseline(result_repo_baseline_root)
+baseline_run_id, baseline_results, _ = parse.parse_baseline(result_repo_baseline_root)
 # pp.pprint(baseline_results)
 
 excluded_runs = plot.get_excluded_runs_from_env_var('HISTORY_EXCLUDE_RUNS')
@@ -60,11 +60,13 @@ for plan in plans:
     # Sort logs and find the last log. Plot for the benchmarks used in the last log.
     parse.sort_logs(logs)
     runs = {}
+    run_commit_info = {}
     last_run = None
     for l in logs:
-        run_id, results = parse.parse_run(os.path.join(result_repo_vm_root, plan, l))
+        run_id, results, commit_info = parse.parse_run(os.path.join(result_repo_vm_root, plan, l))
         if run_id not in excluded_runs:
             runs[run_id] = results
+            run_commit_info[run_id] = commit_info
             last_run = run_id
 
     # figure out what benchmarks we should plot in the graph. We use the benchmarks that appeared in the last run
@@ -90,6 +92,6 @@ for plan in plans:
     build_info = prefix
 
     # plot
-    fig = plot.plot_history(build_info, runs, plan, benchmarks, from_date, to_date, "time.total", baseline, config['notes'].copy())
+    fig = plot.plot_history(build_info, runs, plan, benchmarks, from_date, to_date, "time.total", baseline, config['notes'].copy(), run_commit_info)
     path = os.path.join(output_dir, "%s_%s_history.html" % (prefix, plan))
     fig.write_html(path, include_plotlyjs='cdn')
