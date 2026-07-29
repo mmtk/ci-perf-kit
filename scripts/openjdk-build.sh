@@ -28,4 +28,4 @@ build_openjdk_with_mmtk $openjdk_binding release jdk-mmtk
 
 # Record which commits went into this build, so openjdk-run-plan.sh can
 # carry it into each run's log folder.
-write_commit_info $kit_build/jdk-mmtk/commit-info.yml $openjdk_binding $mmtk_core
+write_commit_info $kit_build/jdk-mmtk/commit-info.yml mmtk-openjdk $openjdk_binding $mmtk_core

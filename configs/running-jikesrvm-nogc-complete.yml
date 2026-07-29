@@ -7,4 +7,4 @@ runtimes:
     home: "./build/NoGC_x86_64_m32-linux"
 
 configs:
-  - "NoGC|heap4g"
+  - "NoGC|heap4g|common_mmtk"

@@ -240,16 +240,18 @@ build_probes() {
     make
 }
 
-# write_commit_info 'output_file' 'binding_path' ['mmtk_core_path']
-# Records which binding (e.g. mmtk-openjdk) and, if given, mmtk-core commit a
-# build was built from, as YAML, so a script saving a run's results can copy
-# it alongside that run's logs (see openjdk-run-plan.sh).
+# write_commit_info 'output_file' 'binding_name' 'binding_path' ['mmtk_core_path']
+# Records which binding (e.g. mmtk-openjdk, mmtk-jikesrvm) and, if given,
+# mmtk-core commit a build was built from, as YAML, so a script saving a
+# run's results can copy it alongside that run's logs (see
+# openjdk-run-plan.sh, jikesrvm-history-run.sh).
 write_commit_info() {
     output_file=$1
-    binding_path=$2
-    mmtk_core_path=$3
+    binding_name=$2
+    binding_path=$3
+    mmtk_core_path=$4
 
-    echo "mmtk-openjdk: $(git -C $binding_path rev-parse HEAD)" > $output_file
+    echo "$binding_name: $(git -C $binding_path rev-parse HEAD)" > $output_file
     if [ -n "$mmtk_core_path" ]; then
         echo "mmtk-core: $(git -C $mmtk_core_path rev-parse HEAD)" >> $output_file
     fi

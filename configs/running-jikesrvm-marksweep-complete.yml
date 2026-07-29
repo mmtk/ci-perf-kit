@@ -7,4 +7,4 @@ runtimes:
     home: "./build/MarkSweep_x86_64_m32-linux"
 
 configs:
-  - "MarkSweep"
+  - "MarkSweep|common_mmtk"
