@@ -73,10 +73,14 @@ modifiers:
     type: ModifierSet
     # dacapochopin_jdk11 adds the --add-exports/--add-opens flags Chopin's
     # cassandra/h2o/tradebeans/tradesoap/etc. benchmarks need under JDK 11.
-    val: "ms|s|c2|probes_cp|dacapochopin_jdk11"
+    val: "ms|probes_cp|probes_openjdk|dacapochopin_jdk11"
   common_mmtk:
     type: ModifierSet
-    val: "common|tph|probes_rustmmtk"
+    # Intentionally does not build on "common": drops s/c2 (-server, forced
+    # C2-only compilation) for MMTk plans, but keeps ms (metaspace size).
+    # Still needs its own probes_cp + dacapochopin_jdk11 (see "common" above
+    # for why).
+    val: "tph|ms|probes_cp|probes_rustmmtk|dacapochopin_jdk11"
 
 overrides:
   # running-ng ships dacapochopin pointing at the base 23.11 release jar;
