@@ -62,3 +62,15 @@ modifiers:
       type: EnvVar
       var: "MMTK_PLAN"
       val: "StickyImmix"
+    markcompact:
+      type: EnvVar
+      var: "MMTK_PLAN"
+      val: "MarkCompact"
+    compressor:
+      type: EnvVar
+      var: "MMTK_PLAN"
+      val: "Compressor"
+    concurrentimmix:
+      type: EnvVar
+      var: "MMTK_PLAN"
+      val: "ConcurrentImmix"
