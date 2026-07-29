@@ -225,16 +225,28 @@ build_openjdk_with_features() {
 }
 
 # build_probes
-# Build the anupli/probes submodule (probes.jar, native RustMMTk/USDT probe
-# libraries), and OpenJDKProbe (kept in ci-perf-kit itself, next to the
-# submodule, since it isn't part of anupli/probes).
-# Env: JAVA_HOME
+# Build the anupli/probes submodule: probes.jar/probes-java6.jar (built by
+# the submodule's own Makefile using its own hardcoded JAVA8_HOME/JAVA6_HOME,
+# so this works regardless of ambient JAVA_HOME - e.g. JikesRVM's Java 6),
+# and the native RustMMTk/RustMMTk32/USDT probe libraries.
 build_probes() {
-    ensure_env JAVA_HOME
-
     cd $kit_root/probes
     # The submodule defaults DACAPOCHOPINJAR to the base 23.11 release; we use MR2.
     make DACAPOCHOPINJAR=$dacapochopin_jar
+}
+
+# build_openjdk_probe
+# Build OpenJDKProbe (kept in ci-perf-kit itself, next to the anupli/probes
+# submodule, since it isn't part of that submodule) - a JMX-based probe for
+# stock (non-MMTk) OpenJDK runs, so only relevant for OpenJDK, not JikesRVM.
+# Needs a JAVA_HOME whose javac can read probes.jar's class files (built
+# under Java 8 by build_probes above) - i.e. Java 8 or newer. JikesRVM's
+# JAVA_HOME is Java 6, which can't, so jikesrvm-history-run.sh must not call
+# this (confirmed: it fails with "class file has wrong version 52.0, should
+# be 50.0" if it does).
+# Env: JAVA_HOME
+build_openjdk_probe() {
+    ensure_env JAVA_HOME
 
     cd $kit_root/openjdk-probe
     make

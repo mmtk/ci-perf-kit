@@ -21,6 +21,7 @@ ensure_empty_dir $kit_upload
 
 # Build probes (needed on the classpath when running benchmarks below)
 build_probes
+build_openjdk_probe
 
 # Build OpenJDK+MMTk. The result is left at $kit_build/jdk-mmtk (and
 # bundled at $kit_upload/jdk-mmtk) for openjdk-run-plan.sh to run against.
