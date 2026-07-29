@@ -88,12 +88,12 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
         assert len(std) == n_points
         assert len(x_labels) == n_points
 
-        # Richer labels for the datapoint hover text only (deliberately kept
-        # separate from x_labels, which is used for date-sorting/matching -
-        # splicing a commit hash into that could spuriously match the
-        # run-id-date regex).
-        hover_labels = [
-            parse.format_run_label(rid, (run_commit_info or {}).get(rid))
+        # Commit info (if any) for the datapoint hover text only, rendered on
+        # its own line (deliberately kept separate from x_labels, which is
+        # used for date-sorting/matching - splicing a commit hash into that
+        # could spuriously match the run-id-date regex).
+        commit_info_lines = [
+            parse.format_commit_info_line((run_commit_info or {}).get(rid))
             for rid in x_labels
         ]
 
@@ -188,15 +188,19 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
             }})
 
         # render the hovertext with an invisible trace (we have to do this otherwise the hovertext is fucked up -- the segments are too crowded and we would see multiple hover texts showing up)
+        # Three lines: run id, commit info (if any - skipped otherwise), then
+        # the value and (if any) how it compares to the baseline. Keeping
+        # commit info on its own line avoids a single overly long line 1.
         history_hovertext = []
-        for (label, val, color, color_info) in zip(hover_labels, y, history_colors, line_colors_info):
+        for (rid, commit_info_line, val, color, color_info) in zip(x_labels, commit_info_lines, y, history_colors, line_colors_info):
+            lines = ["%s" % rid]
+            if commit_info_line:
+                lines.append(commit_info_line)
             if color_info is None:
-                t = get_hover_text("history", label, val)
+                lines.append(get_value_text(val))
             else:
-                l1 = get_hover_text("history", label, val)
-                l2 = "(%s, compared to %s %.2f)" % (color_info['regression'], color_info['label'], color_info['value'] / y_baseline)
-                t = "%s<br \>%s" % (l1, l2)
-            history_hovertext.append(t)
+                lines.append("%s (%s, compared to %s %.2f)" % (get_value_text(val), color_info['regression'], color_info['label'], color_info['value'] / y_baseline))
+            history_hovertext.append("<br \>".join(lines))
         traces.append({**history_trace, **{
             "line": { "color": "black" },
             "y": make_zero_as_none(y),
@@ -712,11 +716,11 @@ def get_regression_symbol(regression):
         case _: raise Exception('Unexpected regression string:' + regression)
 
 
-def get_hover_text(prefix, text, value):
+def get_value_text(value):
     if value is None:
-        return "%s: %s: none" % (prefix, text)
+        return "none"
     else:
-        return "%s: %s: %.2f" % (prefix, text, value)
+        return "%.2f" % value
 
 
 def plot_multi_plans_history(runs, plans, benchmarks, start_date, end_date, data_key):

@@ -107,13 +107,13 @@ def parse_commit_info(log_folder):
         return None
     return parse_yaml(path)
 
-# Given a run id and its commit info (as returned by parse_commit_info, may
-# be None), return a display label for that datapoint.
-def format_run_label(run_id, commit_info):
+# Given a run's commit info (as returned by parse_commit_info, may be None),
+# return a single display line for it (e.g. "mmtk-openjdk: abcdef0123,
+# mmtk-core: 0123abcdef"), or None if there isn't one.
+def format_commit_info_line(commit_info):
     if not commit_info:
-        return run_id
-    parts = ", ".join("%s: %s" % (k, v[:10]) for k, v in commit_info.items())
-    return "%s (%s)" % (run_id, parts)
+        return None
+    return ", ".join("%s: %s" % (k, v[:10]) for k, v in commit_info.items())
 
 # Given a log folder, return the result
 def parse_run(log_folder, n_invocations = None):
