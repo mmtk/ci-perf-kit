@@ -27,14 +27,6 @@ modifiers:
     probes_openjdk:
       type: JVMArg
       val: "-Dprobes=OpenJDK"
-    # 32-bit variants (probes-java6.jar/librust_mmtk_probe_32.so, also from
-    # the anupli/probes submodule) for JikesRVM, which is a 32-bit VM.
-    probes_cp_32:
-      type: JVMClasspath
-      val: "$PWD/probes/out/probes-java6.jar"
-    probes_rustmmtk32:
-      type: JVMArg
-      val: "-Dprobes=RustMMTk32 -Djava.library.path=$PWD/probes/out"
 
     # Select GC algorithm
     ## Rust MMTk

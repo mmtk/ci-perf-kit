@@ -7,4 +7,4 @@ runtimes:
     home: "./build/SemiSpace_x86_64_m32-linux"
 
 configs:
-  - "SemiSpace|common_mmtk"
+  - "SemiSpace"

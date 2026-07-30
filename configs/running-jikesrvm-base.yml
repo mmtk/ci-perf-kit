@@ -19,17 +19,8 @@ modifiers:
   ig:
     type: JVMArg
     val: "-X:gc:ignoreSystemGC=true"
-  common_mmtk:
-    type: ModifierSet
-    val: "probes_cp_32|probes_rustmmtk32"
 
 overrides:
-  # Without a callback, running-ng invokes `-jar dacapo.jar` directly, which
-  # never drives ProbeMux (only a Callback subclass does) - so RustMMTk32Probe's
-  # begin/end (and therefore MMTk's own harness_begin/harness_end stats
-  # printing) never fire, even though probes_rustmmtk32 sets -Dprobes=RustMMTk32.
-  # See configs/running-openjdk-base.yml for the equivalent on the OpenJDK side.
-  "suites.dacapo2006.callback": "probe.Dacapo2006Callback"
   "suites.dacapo2006.minheap_values.from_old_running_scripts":
     antlr: 24
     bloat: 33

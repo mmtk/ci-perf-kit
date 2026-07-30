@@ -24,11 +24,6 @@ ensure_empty_dir $kit_upload
 ensure_empty_dir $log_dir
 checkout_result_repo
 
-# Build probes (needed on the classpath when running benchmarks below - the
-# 32-bit RustMMTk32 probe + Dacapo2006Callback, used by JikesRVM's DaCapo
-# 2006 harness. See configs/running-jikesrvm-base.yml.)
-build_probes
-
 # Record which commits this run is testing, so history_report.py can show
 # them in each datapoint's label (see openjdk-run-plan.sh for the OpenJDK
 # equivalent). Every plan built below comes from the same jikesrvm_binding/
