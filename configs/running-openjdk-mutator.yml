@@ -12,31 +12,31 @@ overrides:
 runtimes:
   jdk-mmtk-nogc:
       type: OpenJDK
-      release: 11
+      release: 21
       home: "./build/jdk-mmtk/images/jdk"
   jdk-mmtk-semispace:
       type: OpenJDK
-      release: 11
+      release: 21
       home: "./build/jdk-mmtk/images/jdk"
   jdk-mmtk-immix:
       type: OpenJDK
-      release: 11
+      release: 21
       home: "./build/jdk-mmtk/images/jdk"
   jdk-g1:
       type: OpenJDK
-      release: 11
+      release: 21
       home: "./build/jdk-stock/images/jdk"
   jdk-epsilon:
       type: OpenJDK
-      release: 11
+      release: 21
       home: "./build/jdk-stock/images/jdk"
   jdk-mmtk-lock-free-nogc:
       type: OpenJDK
-      release: 11
+      release: 21
       home: "./build/jdk-mmtk-lock-free-nogc/images/jdk"
   jdk-mmtk-no-zeroing-nogc:
       type: OpenJDK
-      release: 11
+      release: 21
       home: "./build/jdk-mmtk-no-zeroing-nogc/images/jdk"
 
 configs:

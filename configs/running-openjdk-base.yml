@@ -71,16 +71,18 @@ modifiers:
 
   common:
     type: ModifierSet
-    # dacapochopin_jdk11 adds the --add-exports/--add-opens flags Chopin's
-    # cassandra/h2o/tradebeans/tradesoap/etc. benchmarks need under JDK 11.
-    val: "ms|probes_cp|probes_openjdk|dacapochopin_jdk11"
+    # dacapochopin_jdk21 adds the --add-exports/--add-opens flags Chopin's
+    # cassandra/h2o/tradebeans/tradesoap/etc. benchmarks need under JDK 21
+    # (it chains through the jdk17/jdk11/jdk9 flags too, plus a JDK21-specific
+    # h2o workaround).
+    val: "ms|probes_cp|probes_openjdk|dacapochopin_jdk21"
   common_mmtk:
     type: ModifierSet
     # Intentionally does not build on "common": drops s/c2 (-server, forced
     # C2-only compilation) for MMTk plans, but keeps ms (metaspace size).
-    # Still needs its own probes_cp + dacapochopin_jdk11 (see "common" above
+    # Still needs its own probes_cp + dacapochopin_jdk21 (see "common" above
     # for why).
-    val: "tph|ms|probes_cp|probes_rustmmtk|dacapochopin_jdk11"
+    val: "tph|ms|probes_cp|probes_rustmmtk|dacapochopin_jdk21"
 
 overrides:
   # running-ng ships dacapochopin pointing at the base 23.11 release jar;
@@ -99,21 +101,21 @@ overrides:
 runtimes:
   jdk-mmtk:
     type: OpenJDK
-    release: 11
+    release: 21
     home: "./build/jdk-mmtk/images/jdk"
   jdk-stock:
     type: OpenJDK
-    release: 11
+    release: 21
     home: "./build/jdk-stock/images/jdk"
   jdk-mmtk-trunk:
     type: OpenJDK
-    release: 11
+    release: 21
     home: "./build/jdk-mmtk-trunk/images/jdk"
   jdk-mmtk-branch:
     type: OpenJDK
-    release: 11
+    release: 21
     home: "./build/jdk-mmtk-branch/images/jdk"
   jdk-mmtk-canary:
     type: OpenJDK
-    release: 11
+    release: 21
     home: "./build/jdk-mmtk-canary/images/jdk"
