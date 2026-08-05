@@ -21,6 +21,16 @@ history_invocations=20
 # configs/running-openjdk-base.yml.
 dacapochopin_jar=/usr/share/benchmarks/dacapo/dacapo-23.11-MR2-chopin.jar
 
+# OpenJDK's build system names each build's output directory
+# "$openjdk_build_conf-<debug-level>" (e.g. "linux-x86_64-server-release").
+# This is only the "make CONF=" prefix, not the debug level suffix - callers
+# append "-$debug_level" themselves. This changed between JDK versions (JDK
+# 11 used "linux-x86_64-normal-server", JDK 21 dropped "normal" - confirmed
+# against mmtk-openjdk's own .github/scripts/ci-build.sh on each branch), so
+# it's factored out here to make a future JDK bump a one-line change instead
+# of finding every "make CONF=..."/"build/linux-x86_64-..." call site again.
+openjdk_build_conf=linux-x86_64-server
+
 # Cargo's libgit2 git fetcher only tries ssh-agent, not a default ~/.ssh key,
 # so it can fail to fetch git dependencies (e.g. mmtk-core) even when the
 # system git CLI authenticates fine. Delegate to the system git CLI instead.
@@ -148,7 +158,7 @@ pgo_build_openjdk_with_mmtk() {
     # from it, keeping the same profile-use RUSTFLAGS so make doesn't trigger
     # a rebuild of the mmtk library without the PGO profile.
     RUSTFLAGS="-Cprofile-use=/tmp/$USER/pgo-data/merged.profdata -Cllvm-args=-pgo-warn-missing-function" \
-        make JOBS=4 product-bundles CONF=linux-x86_64-normal-server-$DEBUG_LEVEL THIRD_PARTY_HEAP=$PWD/../../openjdk
+        make JOBS=4 product-bundles CONF=$openjdk_build_conf-$DEBUG_LEVEL THIRD_PARTY_HEAP=$PWD/../../openjdk
 }
 
 # build_openjdk ’binding_path' 'debug_level' 'build_path'
@@ -162,10 +172,10 @@ build_openjdk_with_mmtk() {
     pgo_build_openjdk_with_mmtk $binding_path $openjdk_path $debug_level
 
     # copy to build_path
-    cp -r $openjdk_path/build/linux-x86_64-normal-server-$debug_level $kit_build/$build_path
+    cp -r $openjdk_path/build/$openjdk_build_conf-$debug_level $kit_build/$build_path
     # Copy bundles to upload
     mkdir -p $kit_upload/$build_path
-    cp -r $openjdk_path/build/linux-x86_64-normal-server-$debug_level/bundles/*_bin.tar.gz $kit_upload/$build_path
+    cp -r $openjdk_path/build/$openjdk_build_conf-$debug_level/bundles/*_bin.tar.gz $kit_upload/$build_path
 }
 
 # build_openjdk ’binding_path' 'plan' 'debug_level' 'build_path'
@@ -181,10 +191,10 @@ build_openjdk_with_mmtk_plan() {
     pgo_build_openjdk_with_mmtk $binding_path $openjdk_path $debug_level
 
     # copy to build_path
-    cp -r $openjdk_path/build/linux-x86_64-normal-server-$debug_level $kit_build/$build_path
+    cp -r $openjdk_path/build/$openjdk_build_conf-$debug_level $kit_build/$build_path
     # Copy bundles to upload
     mkdir -p $kit_upload/$build_path
-    cp -r $openjdk_path/build/linux-x86_64-normal-server-$debug_level/bundles/*_bin.tar.gz $kit_upload/$build_path
+    cp -r $openjdk_path/build/$openjdk_build_conf-$debug_level/bundles/*_bin.tar.gz $kit_upload/$build_path
 }
 
 # build_openjdk 'openjdk_path' 'debug_level' 'build_path'
@@ -196,13 +206,13 @@ build_openjdk() {
     cd $openjdk_path
     export DEBUG_LEVEL=$debug_level
     sh configure --disable-warnings-as-errors --with-debug-level=$DEBUG_LEVEL --with-jvm-features=zgc
-    make product-bundles CONF=linux-x86_64-normal-server-$DEBUG_LEVEL
+    make product-bundles CONF=$openjdk_build_conf-$DEBUG_LEVEL
 
     # copy to build_path
-    cp -r $openjdk_path/build/linux-x86_64-normal-server-$DEBUG_LEVEL $kit_build/$build_path
+    cp -r $openjdk_path/build/$openjdk_build_conf-$DEBUG_LEVEL $kit_build/$build_path
     # Copy bundles to upload
     mkdir -p $kit_upload/$build_path
-    cp -r $openjdk_path/build/linux-x86_64-normal-server-$DEBUG_LEVEL/bundles/*_bin.tar.gz $kit_upload/$build_path
+    cp -r $openjdk_path/build/$openjdk_build_conf-$DEBUG_LEVEL/bundles/*_bin.tar.gz $kit_upload/$build_path
 }
 
 # build_openjdk_with_features 'openjdk_path' 'debug_level' 'build_path' 'features'
@@ -215,13 +225,13 @@ build_openjdk_with_features() {
     cd $openjdk_path
     export DEBUG_LEVEL=$debug_level
     sh configure --disable-warnings-as-errors --with-debug-level=$DEBUG_LEVEL --with-jvm-features=$features
-    make product-bundles CONF=linux-x86_64-normal-server-$DEBUG_LEVEL
+    make product-bundles CONF=$openjdk_build_conf-$DEBUG_LEVEL
 
     # copy to build_path
-    cp -r $openjdk_path/build/linux-x86_64-normal-server-$DEBUG_LEVEL $kit_build/$build_path
+    cp -r $openjdk_path/build/$openjdk_build_conf-$DEBUG_LEVEL $kit_build/$build_path
     # Copy bundles to upload
     mkdir -p $kit_upload/$build_path
-    cp -r $openjdk_path/build/linux-x86_64-normal-server-$DEBUG_LEVEL/bundles/*_bin.tar.gz $kit_upload/$build_path
+    cp -r $openjdk_path/build/$openjdk_build_conf-$DEBUG_LEVEL/bundles/*_bin.tar.gz $kit_upload/$build_path
 }
 
 # build_probes
