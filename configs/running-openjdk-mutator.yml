@@ -40,10 +40,13 @@ runtimes:
       home: "./build/jdk-mmtk-no-zeroing-nogc/images/jdk"
 
 configs:
-  - "jdk-mmtk-nogc|nogc|common_mmtk|heap8g"
+  # heap16g for the nogc plan (and its epsilon baseline) to match
+  # running-openjdk-nogc-complete.yml. semispace/immix/g1 stay on heap8g -
+  # they're not NoGC and were out of scope for this change.
+  - "jdk-mmtk-nogc|nogc|common_mmtk|heap16g"
   - "jdk-mmtk-semispace|semispace|common_mmtk|heap8g"
   - "jdk-mmtk-immix|immix|common_mmtk|heap8g"
-  - "jdk-mmtk-lock-free-nogc|nogc|common_mmtk|heap8g"
-  - "jdk-mmtk-no-zeroing-nogc|nogc|common_mmtk|heap8g"
+  - "jdk-mmtk-lock-free-nogc|nogc|common_mmtk|heap16g"
+  - "jdk-mmtk-no-zeroing-nogc|nogc|common_mmtk|heap16g"
   - "jdk-g1|g1|common|probes_openjdk|heap8g"
-  - "jdk-epsilon|epsilon|common|probes_openjdk|heap8g"
+  - "jdk-epsilon|epsilon|common|probes_openjdk|heap16g"

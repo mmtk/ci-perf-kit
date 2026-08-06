@@ -2,4 +2,7 @@ includes:
   - "./running-openjdk-base.yml"
 
 configs:
-  - "jdk-stock|common|epsilon|heap8g"
+  # heap16g, matching running-openjdk-nogc-complete.yml's MMTk NoGC heap -
+  # openjdk-plot.yml plots this as NoGC's baseline, so a heap-size mismatch
+  # here would make that comparison meaningless.
+  - "jdk-stock|common|epsilon|heap16g"
