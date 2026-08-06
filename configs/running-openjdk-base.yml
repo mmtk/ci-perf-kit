@@ -122,6 +122,36 @@ overrides:
   # iterations. running-openjdk-mutator.yml sets its own separate override
   # (2) on top of this, so it's unaffected by this change.
   "suites.dacapochopin.timing_iteration": 3
+  # mmtk-openjdk's own CI (.github/configs/base.yml on jdk-21, run at 2.5x via
+  # .github/workflows/run-dacapo-chopin.yml) sizes every plan's heap off
+  # MarkCompact's min heap specifically. We try to use the same heap size
+  # in the performance testing.
+  # tradebeans/tradesoap: mmtk-openjdk lists those as infinite. We use
+  # temurin-21-G1-n-5 finite values for just those two.
+  "suites.dacapochopin.minheap_values.mmtk-openjdk-11-MarkCompact":
+    avrora: 8
+    batik: 426
+    biojava: 197
+    cassandra: 117
+    eclipse: 439
+    fop: 24
+    graphchi: 195
+    h2: 1122
+    h2o: 136
+    jme: 236
+    jython: 48
+    kafka: 243
+    luindex: 25
+    lusearch: 36
+    pmd: 291
+    spring: 110
+    sunflow: 37
+    tradebeans: 135 # mmtk-openjdk: .inf (MarkCompact can't bound this) - see above
+    tradesoap: 91 # mmtk-openjdk: .inf (MarkCompact can't bound this) - see above
+    tomcat: 55
+    xalan: 19
+    zxing: 427
+  "suites.dacapochopin.minheap": "mmtk-openjdk-11-MarkCompact"
 
 runtimes:
   jdk-mmtk:
