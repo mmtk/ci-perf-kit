@@ -5,12 +5,22 @@ benchmarks:
   dacapochopin:
     - avrora
     - batik
-    - biojava
+    # biojava genuinely takes ~13-16min/iteration under the Compressor plan
+    # (verified stable across multiple historical runs, not a fluke) - needs
+    # its own longer timeout instead of the suite-wide one below. See "suites.
+    # dacapochopin.timeout" in overrides for why the default was lowered.
+    - bm_name: biojava
+      name: biojava
+      timeout: 1800
     - cassandra
     - eclipse
     - fop
     - graphchi
-    - h2
+    # h2 genuinely takes up to ~7min/iteration under MarkCompact (full-heap
+    # compaction overhead) - same reasoning as biojava above.
+    - bm_name: h2
+      name: h2
+      timeout: 900
     - h2o
     - jme
     - jython
@@ -97,6 +107,21 @@ overrides:
   # This applies to stock (non-MMTk) runs too, but is harmless there: with no
   # -Dprobes set, ProbeMux.init() just warns and no-ops.
   "suites.dacapochopin.callback": "probe.DacapoChopinCallback"
+  # running-ng's shipped default (1800s) sized for the single slowest
+  # benchmark (biojava under Compressor). Every other benchmark's legitimate
+  # runtime is under ~300s (checked across all plans' latest runs), so a
+  # process still running past 600s is hung, not just slow - e.g. h2o and
+  # eclipse have both been observed thrashing/hanging for the full 1800s
+  # under some plans (gencopy/genimmix/immix/stickyimmix for h2o; semispace/
+  # stickyimmix for eclipse) instead of failing cleanly, wasting 30min each
+  # for no usable data. Lowering the default to 600s kills those hangs 3x
+  # faster; biojava and h2 (the two genuinely slow benchmarks) get their own
+  # longer per-benchmark timeout override above in benchmarks.dacapochopin.
+  "suites.dacapochopin.timeout": 600
+  # Override running-ng's shipped default (5) down to 3 warmup+timed
+  # iterations. running-openjdk-mutator.yml sets its own separate override
+  # (2) on top of this, so it's unaffected by this change.
+  "suites.dacapochopin.timing_iteration": 3
 
 runtimes:
   jdk-mmtk:
