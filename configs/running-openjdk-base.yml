@@ -5,7 +5,7 @@ benchmarks:
   dacapochopin:
     - avrora
     - batik
-    # biojava genuinely takes ~13-16min/iteration under the Compressor plan
+    # biojava genuinely takes ~13-16min/iteration under the OVC plan
     # (verified stable across multiple historical runs, not a fluke) - needs
     # its own longer timeout instead of the suite-wide one below. See "suites.
     # dacapochopin.timeout" in overrides for why the default was lowered.
@@ -16,7 +16,7 @@ benchmarks:
     - eclipse
     - fop
     - graphchi
-    # h2 genuinely takes up to ~7min/iteration under MarkCompact (full-heap
+    # h2 genuinely takes up to ~7min/iteration under Lisp2 (full-heap
     # compaction overhead) - same reasoning as biojava above.
     - bm_name: h2
       name: h2
@@ -108,7 +108,7 @@ overrides:
   # -Dprobes set, ProbeMux.init() just warns and no-ops.
   "suites.dacapochopin.callback": "probe.DacapoChopinCallback"
   # running-ng's shipped default (1800s) sized for the single slowest
-  # benchmark (biojava under Compressor). Every other benchmark's legitimate
+  # benchmark (biojava under OVC/Compressor). Every other benchmark's legitimate
   # runtime is under ~300s (checked across all plans' latest runs), so a
   # process still running past 600s is hung, not just slow - e.g. h2o and
   # eclipse have both been observed thrashing/hanging for the full 1800s
@@ -124,7 +124,7 @@ overrides:
   "suites.dacapochopin.timing_iteration": 3
   # mmtk-openjdk's own CI (.github/configs/base.yml on jdk-21, run at 2.5x via
   # .github/workflows/run-dacapo-chopin.yml) sizes every plan's heap off
-  # MarkCompact's min heap specifically. We try to use the same heap size
+  # MarkCompact(Lisp2)'s min heap specifically. We try to use the same heap size
   # in the performance testing.
   # tradebeans/tradesoap: mmtk-openjdk lists those as infinite. We use
   # temurin-21-G1-n-5 finite values for just those two.

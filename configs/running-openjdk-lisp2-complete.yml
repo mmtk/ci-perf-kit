@@ -2,4 +2,4 @@ includes:
   - "./running-openjdk-base.yml"
 
 configs:
-  - "jdk-mmtk|markcompact|common_mmtk"
+  - "jdk-mmtk|lisp2|common_mmtk"

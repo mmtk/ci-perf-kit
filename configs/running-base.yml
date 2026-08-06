@@ -71,14 +71,14 @@ modifiers:
       type: EnvVar
       var: "MMTK_PLAN"
       val: "StickyImmix"
-    markcompact:
+    lisp2:
       type: EnvVar
       var: "MMTK_PLAN"
-      val: "MarkCompact"
-    compressor:
+      val: "Lisp2"
+    ovc:
       type: EnvVar
       var: "MMTK_PLAN"
-      val: "Compressor"
+      val: "OVC"
     concurrentimmix:
       type: EnvVar
       var: "MMTK_PLAN"

@@ -14,9 +14,9 @@ plans:
     baseline: ['jdk-g1', 'jdk-zgc']
   - plan: marksweep
     baseline: ['jdk-g1', 'jdk-zgc']
-  - plan: markcompact
+  - plan: lisp2
     baseline: ['jdk-g1', 'jdk-zgc']
-  - plan: compressor
+  - plan: ovc
     baseline: ['jdk-g1', 'jdk-zgc']
   - plan: concurrentimmix
     baseline: ['jdk-g1', 'jdk-zgc']
