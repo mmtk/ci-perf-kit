@@ -12,22 +12,35 @@ from plotly.subplots import make_subplots
 import pprint
 pp = pprint.PrettyPrinter(indent=2)
 
-if len(sys.argv) != 5:
-    print("Usage: python history_report.py <config> <result_repo_vm_root> <result_repo_baseline_root> <output_dir>")
+if len(sys.argv) not in (5, 6):
+    print("Usage: python history_report.py <config> <result_repo_vm_root> <result_repo_baseline_root> <output_dir> [plan_name]")
     sys.exit(1)
 
 config_path = sys.argv[1]
 result_repo_vm_root = sys.argv[2]
 result_repo_baseline_root = sys.argv[3]
 output_dir = sys.argv[4]
+# Optional: only (re)generate this one plan's graph, instead of every plan
+# folder present in the result repo. Callers that just ran a single plan
+# (see openjdk-report.sh) pass this so the report step is scoped to - and
+# only commits/deploys - that plan's own updated graph, rather than
+# reprocessing (and re-publishing) all of them on every run.
+only_plan = sys.argv[5] if len(sys.argv) == 6 else None
 
 config = parse.parse_yaml(config_path)
 print(config)
 
 prefix = config['name']
 
-# all subfolders are plan names, or "canary" for the canary version
-plans = os.listdir(result_repo_vm_root)
+if only_plan is not None:
+    plan_path = os.path.join(result_repo_vm_root, only_plan)
+    if not os.path.isdir(plan_path):
+        print("No results found yet for plan '%s' at %s" % (only_plan, plan_path))
+        sys.exit(0)
+    plans = [only_plan]
+else:
+    # all subfolders are plan names, or "canary" for the canary version
+    plans = os.listdir(result_repo_vm_root)
 
 # check from date and to date
 from_date_env = environ.get("FROM_DATE")

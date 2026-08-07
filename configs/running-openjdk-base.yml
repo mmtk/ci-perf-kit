@@ -81,46 +81,21 @@ modifiers:
 
   common:
     type: ModifierSet
-    # dacapochopin_jdk21 adds the --add-exports/--add-opens flags Chopin's
-    # cassandra/h2o/tradebeans/tradesoap/etc. benchmarks need under JDK 21
-    # (it chains through the jdk17/jdk11/jdk9 flags too, plus a JDK21-specific
-    # h2o workaround).
     val: "ms|probes_cp|probes_openjdk|dacapochopin_jdk21"
   common_mmtk:
     type: ModifierSet
-    # Intentionally does not build on "common": drops s/c2 (-server, forced
-    # C2-only compilation) for MMTk plans, but keeps ms (metaspace size).
-    # Still needs its own probes_cp + dacapochopin_jdk21 (see "common" above
-    # for why).
-    val: "tph|ms|probes_cp|probes_rustmmtk|dacapochopin_jdk21"
+    val: "ms|probes_cp|probes_rustmmtk|dacapochopin_jdk21|tph"
 
 overrides:
   # running-ng ships dacapochopin pointing at the base 23.11 release jar;
-  # pin it to the MR2 jar instead. (The "release" field is validated against
-  # a fixed set of known DaCapo release strings, so it stays "23.11" - MR2 is
-  # a bugfix release with the same benchmark set, not a new release line.)
+  # pin it to the MR2 jar instead.
   "suites.dacapochopin.path": "/usr/share/benchmarks/dacapo/dacapo-23.11-MR2-chopin.jar"
-  # Without a callback, running-ng invokes `-jar dacapo.jar` directly, which
-  # never drives ProbeMux (only a Callback subclass does) - so RustMMTkProbe's
-  # begin/end (and therefore MMTk's own harness_begin/harness_end stats
-  # printing) never fire, even though probes_rustmmtk sets -Dprobes=RustMMTk.
-  # This applies to stock (non-MMTk) runs too, but is harmless there: with no
-  # -Dprobes set, ProbeMux.init() just warns and no-ops.
   "suites.dacapochopin.callback": "probe.DacapoChopinCallback"
   # running-ng's shipped default (1800s) sized for the single slowest
   # benchmark (biojava under OVC/Compressor). Every other benchmark's legitimate
-  # runtime is under ~300s (checked across all plans' latest runs), so a
-  # process still running past 600s is hung, not just slow - e.g. h2o and
-  # eclipse have both been observed thrashing/hanging for the full 1800s
-  # under some plans (gencopy/genimmix/immix/stickyimmix for h2o; semispace/
-  # stickyimmix for eclipse) instead of failing cleanly, wasting 30min each
-  # for no usable data. Lowering the default to 600s kills those hangs 3x
-  # faster; biojava and h2 (the two genuinely slow benchmarks) get their own
-  # longer per-benchmark timeout override above in benchmarks.dacapochopin.
+  # runtime is under ~300s (checked across all plans' latest runs)
   "suites.dacapochopin.timeout": 600
-  # Override running-ng's shipped default (5) down to 3 warmup+timed
-  # iterations. running-openjdk-mutator.yml sets its own separate override
-  # (2) on top of this, so it's unaffected by this change.
+  # Override running-ng's shipped default (5) down to 3.
   "suites.dacapochopin.timing_iteration": 3
   # mmtk-openjdk's own CI (.github/configs/base.yml on jdk-21, run at 2.5x via
   # .github/workflows/run-dacapo-chopin.yml) sizes every plan's heap off

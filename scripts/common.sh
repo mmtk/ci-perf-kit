@@ -250,10 +250,7 @@ build_probes() {
 # submodule, since it isn't part of that submodule) - a JMX-based probe for
 # stock (non-MMTk) OpenJDK runs, so only relevant for OpenJDK, not JikesRVM.
 # Needs a JAVA_HOME whose javac can read probes.jar's class files (built
-# under Java 8 by build_probes above) - i.e. Java 8 or newer. JikesRVM's
-# JAVA_HOME is Java 6, which can't, so jikesrvm-history-run.sh must not call
-# this (confirmed: it fails with "class file has wrong version 52.0, should
-# be 50.0" if it does).
+# under Java 8 by build_probes above) - i.e. Java 8 or newer.
 # Env: JAVA_HOME
 build_openjdk_probe() {
     ensure_env JAVA_HOME

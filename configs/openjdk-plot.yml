@@ -18,6 +18,18 @@ plans:
     baseline: ['jdk-g1', 'jdk-zgc']
   - plan: ovc
     baseline: ['jdk-g1', 'jdk-zgc']
+  # history_report.py plots every directory under result_repo_vm_root (see
+  # os.listdir(result_repo_vm_root) in history_report.py), not just the plans
+  # listed here - it just needs a config entry to find each one's baseline.
+  # markcompact/compressor are the pre-rename directory names that already
+  # exist in the result repo with real history in them; they need to stay
+  # listed (even though new runs land under lisp2/ovc above) or
+  # get_config_for_plan() returns None and history_report.py's assertion
+  # ("Cannot get config for plan") crashes the whole report generation step.
+  - plan: markcompact
+    baseline: ['jdk-g1', 'jdk-zgc']
+  - plan: compressor
+    baseline: ['jdk-g1', 'jdk-zgc']
   - plan: concurrentimmix
     baseline: ['jdk-g1', 'jdk-zgc']
   # "canary" is not a real plan.  It is for the canary build.

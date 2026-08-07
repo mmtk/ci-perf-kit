@@ -1,12 +1,6 @@
 includes:
   - "./running-openjdk-base.yml"
 
-overrides:
-    # Specific to NoGC (run fewer iterations)
-    "suites.dacapochopin.timing_iteration": 2
-    # Use probe to get mutator time
-    "suites.dacapochopin.callback": "probe.DacapoChopinCallback"
-
 # Though we can choose plans at runtime, we put them to different builds
 # so our script can easily figure out the build.
 runtimes:
@@ -40,13 +34,10 @@ runtimes:
       home: "./build/jdk-mmtk-no-zeroing-nogc/images/jdk"
 
 configs:
-  # heap16g for the nogc plan (and its epsilon baseline) to match
-  # running-openjdk-nogc-complete.yml. semispace/immix/g1 stay on heap8g -
-  # they're not NoGC and were out of scope for this change.
   - "jdk-mmtk-nogc|nogc|common_mmtk|heap16g"
-  - "jdk-mmtk-semispace|semispace|common_mmtk|heap8g"
-  - "jdk-mmtk-immix|immix|common_mmtk|heap8g"
+  - "jdk-mmtk-semispace|semispace|common_mmtk|heap16g"
+  - "jdk-mmtk-immix|immix|common_mmtk|heap16g"
   - "jdk-mmtk-lock-free-nogc|nogc|common_mmtk|heap16g"
   - "jdk-mmtk-no-zeroing-nogc|nogc|common_mmtk|heap16g"
-  - "jdk-g1|g1|common|probes_openjdk|heap8g"
+  - "jdk-g1|g1|common|probes_openjdk|heap16g"
   - "jdk-epsilon|epsilon|common|probes_openjdk|heap16g"

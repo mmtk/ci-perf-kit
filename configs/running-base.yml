@@ -3,16 +3,9 @@ includes:
 
 overrides:
   "remote_host": null
-  "suites.dacapo2006.timing_iteration": 2
 
 modifiers:
     # Fixed large heap sizes - for NoGC
-    # OpenJDK NoGC runs use heap16g (see running-openjdk-nogc-*.yml /
-    # running-openjdk-stock-nogc.yml) - the self-hosted runner has 64GB RAM
-    # (confirmed from vmstat output captured live during actual benchmark
-    # runs), so 16G comfortably fits alongside the OS with room to spare.
-    # heap8g is kept around for JikesRVM NoGC, which uses heap4g instead
-    # anyway, and for anything else still referencing it.
     heap16g:
       type: JVMArg
       val: "-Xms16000M -Xmx16000M"
