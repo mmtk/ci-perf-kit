@@ -1,3 +1,6 @@
 [submodule "ReBench"]
 	path = ReBench
 	url = git@github.com:mmtk/ReBench.git
+[submodule "probes"]
+	path = probes
+	url = git@github.com:anupli/probes.git

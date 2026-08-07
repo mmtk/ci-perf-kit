@@ -36,27 +36,48 @@ def parse_log(log_file, n_invocations = None):
             if len(line) == 0:
                 continue
             
-            # bm time
+            # bm time, as reported by the benchmark harness itself
             matcher = re.match(".*PASSED in (\d+) msec.*", line)
             if matcher:
                 insert_data('execution_times', float(matcher.group(1)))
-            
-            # mmtk statistics
+
+            # mmtk statistics - only present when a probe-driving DaCapo
+            # callback is configured (e.g. probe.DacapoChopinCallback).
+            # Absent for JikesRVM, stock (non-MMTk) OpenJDK runs, or if no
+            # callback is set at all - handled by the time.total fallback below.
             if "MMTk Statistics Totals" in line:
                 mmtk_keys = lines[i + 1].decode('utf-8').split()
                 mmtk_values = lines[i + 2].decode('utf-8').split()
                 if len(mmtk_keys) == len(mmtk_values):
                     for j in range(0, len(mmtk_keys)):
                         insert_data(mmtk_keys[j], float(mmtk_values[j]))
+                    # "Total time: X ms" - the MMTk-instrumented total
+                    # (time.other + time.stw), measured from
+                    # harness_begin/harness_end. More precise than
+                    # execution_times since it excludes DaCapo harness
+                    # overhead outside the timed region.
+                    total_time_matcher = re.match(r"Total time: ([\d.]+) ms", lines[i + 3].decode('utf-8'))
+                    if total_time_matcher:
+                        insert_data('time.total', float(total_time_matcher.group(1)))
                 else:
                     print(f"Unable to correctly parse values from {log_file}.")
                     print(f"* We have {len(mmtk_keys)} keys but {len(mmtk_values)} values.")
                     print(f"* This run will be ignored.")
 
-        # initialie execution_times to empty in case all runs failed
+        # initialie execution_times and time.total to empty in case all runs failed
+        # (other code indexes ret['time.total'] directly, so the key must always exist)
         ret['execution_times'] = []
+        ret['time.total'] = []
         for key in data:
             ret[key] = data[key]
+
+        # time.total: prioritize the MMTk-instrumented "Total time" over the
+        # benchmark's own reported time, but only if we got one properly
+        # parsed per successful invocation - otherwise (no callback, so no
+        # MMTk Statistics section at all; or a parse failure above) fall
+        # back to execution_times entirely, rather than mixing sources.
+        if len(ret['time.total']) != len(ret['execution_times']):
+            ret['time.total'] = ret['execution_times']
 
     # if no n_invocations is passed in, we do not check how many results we have
     if n_invocations == None:
@@ -76,6 +97,24 @@ def parse_log(log_file, n_invocations = None):
 
     return ret
 
+# Given a log folder (one run), return its commit info (e.g.
+# {'mmtk-openjdk': '<sha>', 'mmtk-core': '<sha>'}), or None if there isn't
+# one - e.g. older runs from before this was tracked, or plans like canary
+# that run a fixed downloaded release rather than something built from a commit.
+def parse_commit_info(log_folder):
+    path = os.path.join(log_folder, 'commit-info.yml')
+    if not os.path.isfile(path):
+        return None
+    return parse_yaml(path)
+
+# Given a run's commit info (as returned by parse_commit_info, may be None),
+# return a single display line for it (e.g. "mmtk-openjdk: abcdef0123,
+# mmtk-core: 0123abcdef"), or None if there isn't one.
+def format_commit_info_line(commit_info):
+    if not commit_info:
+        return None
+    return ", ".join("%s: %s" % (k, v[:10]) for k, v in commit_info.items())
+
 # Given a log folder, return the result
 def parse_run(log_folder, n_invocations = None):
     run_id = os.path.basename(os.path.normpath(log_folder))
@@ -84,7 +123,10 @@ def parse_run(log_folder, n_invocations = None):
     logs = list_logs(log_folder)
     for l in logs:
         results.append(parse_log(os.path.join(log_folder, l), n_invocations))
-    return run_id, results
+
+    commit_info = parse_commit_info(log_folder)
+
+    return run_id, results, commit_info
 
 # Given a run id, return the date
 def parse_run_date(run_id):
@@ -120,13 +162,13 @@ def get_config_for_plan(config, plan):
 # Get the last log from baseline_root
 def parse_baseline(result_repo_baseline_root):
     if not os.path.isdir(result_repo_baseline_root):
-        return None, []
+        return None, [], None
 
     # get baseline logs
     baseline_logs = list_logs(result_repo_baseline_root)
     if len(baseline_logs) == 0:
-        return None, []
-        
+        return None, [], None
+
     sort_logs(baseline_logs)
     latest_baseline_log = baseline_logs[-1]
     print("Latest baseline log: %s" % latest_baseline_log)

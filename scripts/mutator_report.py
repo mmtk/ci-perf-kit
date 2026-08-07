@@ -40,7 +40,7 @@ excluded_runs = plot.get_excluded_runs_from_env_var('MUTATOR_EXCLUDE_RUNS')
 runs = {}
 last_run = None
 for l in logs:
-    run_id, results = parse.parse_run(os.path.join(result_repo_mutator_root, l))
+    run_id, results, _ = parse.parse_run(os.path.join(result_repo_mutator_root, l))
     if run_id not in excluded_runs:
         runs[run_id] = results
         last_run = run_id

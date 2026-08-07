@@ -2,18 +2,39 @@ includes:
   - "./running-base.yml"
 
 benchmarks:
-  dacapo2006:
-    - antlr
-    - bloat
+  dacapochopin:
+    - avrora
+    - batik
+    # biojava genuinely takes ~13-16min/iteration under the OVC plan
+    # (verified stable across multiple historical runs, not a fluke) - needs
+    # its own longer timeout instead of the suite-wide one below. See "suites.
+    # dacapochopin.timeout" in overrides for why the default was lowered.
+    - bm_name: biojava
+      name: biojava
+      timeout: 1800
+    - cassandra
     - eclipse
     - fop
-    - xalan
+    - graphchi
+    # h2 genuinely takes up to ~7min/iteration under Lisp2 (full-heap
+    # compaction overhead) - same reasoning as biojava above.
+    - bm_name: h2
+      name: h2
+      timeout: 900
+    - h2o
+    - jme
     - jython
+    - kafka
     - luindex
     - lusearch
     - pmd
+    - spring
     - sunflow
-    - hsqldb
+    - tomcat
+    - tradebeans
+    - tradesoap
+    - xalan
+    - zxing
 
 modifiers:
   # OpenJDK options
@@ -25,7 +46,7 @@ modifiers:
     val: "-XX:-TieredCompilation -Xcomp"
     excludes:
       # These two benchmarks exit with code 1
-      dacapochopin-69a704e:
+      dacapochopin:
         - tradebeans
         - tradesoap
   ms:
@@ -60,44 +81,71 @@ modifiers:
 
   common:
     type: ModifierSet
-    val: "ms|s|c2|probes_cp"
+    val: "ms|probes_cp|probes_openjdk|dacapochopin_jdk21"
   common_mmtk:
     type: ModifierSet
-    val: "common|tph|probes_rustmmtk"
+    val: "ms|probes_cp|probes_rustmmtk|dacapochopin_jdk21|tph"
 
 overrides:
-  "suites.dacapo2006.minheap_values.from_old_running_scripts":
-    antlr: 24
-    bloat: 33
-    eclipse: 84
-    fop: 40
-    xalan: 54
-    jython: 40
-    luindex: 22
-    lusearch: 34
-    pmd: 49
-    sunflow: 54
-    hsqldb: 127
-  "suites.dacapo2006.minheap": "from_old_running_scripts"
+  # running-ng ships dacapochopin pointing at the base 23.11 release jar;
+  # pin it to the MR2 jar instead.
+  "suites.dacapochopin.path": "/usr/share/benchmarks/dacapo/dacapo-23.11-MR2-chopin.jar"
+  "suites.dacapochopin.callback": "probe.DacapoChopinCallback"
+  # running-ng's shipped default (1800s) sized for the single slowest
+  # benchmark (biojava under OVC/Compressor). Every other benchmark's legitimate
+  # runtime is under ~300s (checked across all plans' latest runs)
+  "suites.dacapochopin.timeout": 600
+  # Override running-ng's shipped default (5) down to 3.
+  "suites.dacapochopin.timing_iteration": 3
+  # mmtk-openjdk's own CI (.github/configs/base.yml on jdk-21, run at 2.5x via
+  # .github/workflows/run-dacapo-chopin.yml) sizes every plan's heap off
+  # MarkCompact(Lisp2)'s min heap specifically. We try to use the same heap size
+  # in the performance testing.
+  # tradebeans/tradesoap: mmtk-openjdk lists those as infinite. We use
+  # temurin-21-G1-n-5 finite values for just those two.
+  "suites.dacapochopin.minheap_values.mmtk-openjdk-11-MarkCompact":
+    avrora: 8
+    batik: 426
+    biojava: 197
+    cassandra: 117
+    eclipse: 439
+    fop: 24
+    graphchi: 195
+    h2: 1122
+    h2o: 136
+    jme: 236
+    jython: 48
+    kafka: 243
+    luindex: 25
+    lusearch: 36
+    pmd: 291
+    spring: 110
+    sunflow: 37
+    tradebeans: 135 # mmtk-openjdk: .inf (MarkCompact can't bound this) - see above
+    tradesoap: 91 # mmtk-openjdk: .inf (MarkCompact can't bound this) - see above
+    tomcat: 55
+    xalan: 19
+    zxing: 427
+  "suites.dacapochopin.minheap": "mmtk-openjdk-11-MarkCompact"
 
 runtimes:
   jdk-mmtk:
     type: OpenJDK
-    release: 11
+    release: 21
     home: "./build/jdk-mmtk/images/jdk"
   jdk-stock:
     type: OpenJDK
-    release: 11
+    release: 21
     home: "./build/jdk-stock/images/jdk"
   jdk-mmtk-trunk:
     type: OpenJDK
-    release: 11
+    release: 21
     home: "./build/jdk-mmtk-trunk/images/jdk"
   jdk-mmtk-branch:
     type: OpenJDK
-    release: 11
+    release: 21
     home: "./build/jdk-mmtk-branch/images/jdk"
   jdk-mmtk-canary:
     type: OpenJDK
-    release: 11
+    release: 21
     home: "./build/jdk-mmtk-canary/images/jdk"

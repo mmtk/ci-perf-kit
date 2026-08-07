@@ -3,10 +3,12 @@ includes:
 
 overrides:
   "remote_host": null
-  "suites.dacapo2006.timing_iteration": 2
 
 modifiers:
     # Fixed large heap sizes - for NoGC
+    heap16g:
+      type: JVMArg
+      val: "-Xms16000M -Xmx16000M"
     heap8g:
       type: JVMArg
       val: "-Xms8000M -Xmx8000M"
@@ -15,12 +17,15 @@ modifiers:
       val: "-Xms4000M -Xmx4000M"
 
     # Probes
+    # probes.jar/librust_mmtk_probe.so come from the anupli/probes submodule
+    # (built by build_probes in scripts/common.sh); OpenJDKProbe isn't part of
+    # that submodule, so it's kept and built separately under openjdk-probe/.
     probes_cp:
       type: JVMClasspath
-      val: "$PWD/probes/rust_mmtk/java $PWD/probes/openjdk/java $PWD/probes/probes.jar"
+      val: "$PWD/probes/out/probes.jar $PWD/openjdk-probe/java"
     probes_rustmmtk:
       type: JVMArg
-      val: "-Dprobes=RustMMTk -Djava.library.path=$PWD/probes/rust_mmtk"
+      val: "-Dprobes=RustMMTk -Djava.library.path=$PWD/probes/out"
     probes_openjdk:
       type: JVMArg
       val: "-Dprobes=OpenJDK"
@@ -59,3 +64,15 @@ modifiers:
       type: EnvVar
       var: "MMTK_PLAN"
       val: "StickyImmix"
+    lisp2:
+      type: EnvVar
+      var: "MMTK_PLAN"
+      val: "Lisp2"
+    ovc:
+      type: EnvVar
+      var: "MMTK_PLAN"
+      val: "OVC"
+    concurrentimmix:
+      type: EnvVar
+      var: "MMTK_PLAN"
+      val: "ConcurrentImmix"

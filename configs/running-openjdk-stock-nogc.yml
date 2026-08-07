@@ -2,4 +2,5 @@ includes:
   - "./running-openjdk-base.yml"
 
 configs:
-  - "jdk-stock|common|epsilon|heap8g"
+  # heap16g, matching running-openjdk-nogc-complete.yml's MMTk NoGC heap
+  - "jdk-stock|common|epsilon|heap16g"

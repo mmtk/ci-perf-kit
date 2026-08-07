@@ -4,7 +4,16 @@ set -ex
 . $(dirname "$0")/common.sh
 
 jikesrvm_binding=$(realpath $1)
-output_dir=$(realpath -m $2)
+# mmtk_core: optional path to a checked-out mmtk-core, if the binding was
+# built against a specific/local mmtk-core commit (e.g. via
+# ci-replace-mmtk-dep.sh). Only used to record the commit below; the build
+# itself already resolved whatever mmtk-jikesrvm/mmtk/Cargo.toml points at.
+if [ -n "$2" ]; then
+    mmtk_core=$(realpath $2)
+else
+    mmtk_core=
+fi
+output_dir=$(realpath -m $3)
 jikesrvm_rev=$(git -C $jikesrvm_binding rev-parse HEAD)
 
 # JikesRVM root
@@ -14,6 +23,13 @@ ensure_empty_dir $kit_build
 ensure_empty_dir $kit_upload
 ensure_empty_dir $log_dir
 checkout_result_repo
+
+# Record which commits this run is testing, so history_report.py can show
+# them in each datapoint's label (see openjdk-run-plan.sh for the OpenJDK
+# equivalent). Every plan built below comes from the same jikesrvm_binding/
+# mmtk_core checkouts, so this only needs to happen once.
+commit_info=$kit_build/commit-info.yml
+write_commit_info $commit_info mmtk-jikesrvm $jikesrvm_binding $mmtk_core
 
 run_exp() {
     build_config=$1
@@ -28,6 +44,9 @@ run_exp() {
     build_jikesrvm_with_mmtk $jikesrvm_binding $build_config $plan"_x86_64_m32-linux"
     # Run
     run_id=$(run_benchmarks $log_dir $run_config $heap_modifier $history_invocations)
+    if [ -f "$commit_info" ]; then
+        cp $commit_info $log_dir/$run_id/commit-info.yml
+    fi
     # Save result
     mkdir -p $result_repo_dir/jikesrvm/$lower_case_plan_name
     cp -r $log_dir/$run_id $result_repo_dir/jikesrvm/$lower_case_plan_name
