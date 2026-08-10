@@ -3,6 +3,7 @@ from os import environ
 import sys
 import parse
 import plot
+import index_gen
 import datetime
 from datetime import date
 
@@ -104,7 +105,21 @@ for plan in plans:
 
     build_info = prefix
 
-    # plot
+    # plot: the full interactive page (total time, with the mutator/STW informational
+    # overlay), plus a compact "sparkline" PNG of the same data for index.html's
+    # dashboard thumbnail (see plot.py's `sparkline` param).
     fig = plot.plot_history(build_info, runs, plan, benchmarks, from_date, to_date, "time.total", baseline, config['notes'].copy(), run_commit_info)
     path = os.path.join(output_dir, "%s_%s_history.html" % (prefix, plan))
     fig.write_html(path, include_plotlyjs='cdn')
+
+    sparkline_fig = plot.plot_history(build_info, runs, plan, benchmarks, from_date, to_date, "time.total", baseline, config['notes'].copy(), run_commit_info, sparkline=True)
+    png_path = os.path.join(output_dir, "%s_%s_history.png" % (prefix, plan))
+    # scale=2 for a crisp thumbnail on high-DPI displays; index.html displays it at
+    # plot.SPARKLINE_GRAPH_WIDTH logical CSS pixels regardless of this scale factor.
+    sparkline_fig.write_image(png_path, scale=2)
+
+# Regenerate index.html into output_dir alongside whatever this run just wrote.
+# Reads from *every* runtime config (see index_gen.CONFIG_FILENAMES), not just
+# this run's own `config` - so even a single-plan run (only_plan set) leaves a
+# complete, correct index behind, not one that only lists the plan it touched.
+index_gen.generate_index(output_dir)

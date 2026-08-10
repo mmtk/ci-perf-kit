@@ -9,8 +9,49 @@ import math
 GRAPH_WIDTH = 500
 GRAPH_HEIGHT_PER_BENCHMARK = 100
 
+# Compact "sparkline" sizing, used for the dashboard thumbnail rendered for index.html
+# (see the `sparkline` param on plot_history). No title, no decorative traces (moving
+# average/std-dev band/epoch markers/baseline lines) - just the colored history line,
+# the current-value number, and the informational mutator/STW overlay lines.
+SPARKLINE_GRAPH_WIDTH = 300
+SPARKLINE_HEIGHT_PER_BENCHMARK = 40
+SPARKLINE_BIG_NUMBER_FONT_SIZE = 13
+SPARKLINE_BM_NAME_FONT_SIZE = 9
+SPARKLINE_BM_NAME_Y_SHIFT = 6
+SPARKLINE_CURRENT_POINT_MARKER_SIZE = 4
+SPARKLINE_MARGIN = {"l": 2, "r": 2, "t": 2, "b": 2}
+FULL_MARGIN = {"l": 5, "r": 5, "t": 50, "b": 5}
+
 SHOW_DATA_POINT = False
 TRACE_MODE = "lines+markers" if SHOW_DATA_POINT else "lines"
+
+# Chart chrome/ink, from the dataviz palette (references/palette.md): a light,
+# consistent surface instead of Plotly's default theme.
+SURFACE = "#fcfcfb"
+GRIDLINE = "#e1e0d9"
+AXIS_LINE = "#c3c2b7"
+INK_PRIMARY = "#0b0b0b"
+INK_SECONDARY = "#52514e"
+INK_MUTED = "#898781"
+FONT_FAMILY = "system-ui, -apple-system, 'Segoe UI', sans-serif"
+
+# Status colors (fixed, never themed) - used for the regression/improvement/neutral
+# coloring of the total-time history line and current-value number.
+STATUS_GOOD = "#0ca30c"
+STATUS_CRITICAL = "#d03b3b"
+STATUS_NEUTRAL = INK_MUTED
+
+# Reference line for each baseline build (e.g. jdk-g1, jdk-zgc) - categorical slot 2.
+BASELINE_COLOR = "#eb6834"
+
+# Informational overlay lines shown alongside total time on the same per-benchmark
+# row: (data_key, display label, line color). These are plotted plain - no
+# regression coloring, no big number, no moving average/std-dev band - since total
+# time is what's being watched for regressions; mutator/STW are context only.
+SECONDARY_METRICS = [
+    ("time.other", "Mutator time", "#2a78d6"),  # categorical slot 1, blue
+    ("time.stw", "STW time", "#4a3aa7"),  # categorical slot 7, violet
+]
 
 # Intervals between X values (dense for old data, sparse for recent data). See log_timeline()
 X_INTERVAL_1 = 1
@@ -19,6 +60,9 @@ X_INTERVAL_3 = 5
 
 # We place the labels (big number/benchmark name/absolute number) on the position of (last point + this offset)
 LABEL_OFFSET = X_INTERVAL_3 * 15
+# A tighter offset for sparkline mode - the full offset leaves most of a
+# compact dashboard card blank (it's sized for a much wider chart).
+SPARKLINE_LABEL_OFFSET = X_INTERVAL_3 * 4
 BIG_NUMBER_FONT_SIZE = 30
 BM_NAME_FONT_SIZE = 15
 BM_NAME_Y_SHIFT = 15
@@ -41,24 +85,41 @@ CURRENT_POINT_MARKER_SIZE = 10
 # plan: the plan to plot
 # benchmarks: benchmarks to plot
 # start_date, end_date: plot data between the given date range
-# data_key: the data to render
+# data_key: the data to render (the metric that drives regression coloring/the big number - normally "time.total")
 # baseline: the baseline to plot as a dict {baseline: {benchmark: avg}}. None means no baseline, or no data for a certain benchmark.
 # notes: a list of [date, note]. date is YYYYMMDD
-def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_key, baseline, notes=[], run_commit_info=None):
+# sparkline: render a compact, chrome-free version (no title, no moving average/std-dev
+#   band, no epoch/baseline lines, smaller fonts) for use as a dashboard thumbnail.
+#   SECONDARY_METRICS (mutator/STW time) are still overlaid, just without a legend.
+def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_key, baseline, notes=[], run_commit_info=None, sparkline=False):
+    graph_width = SPARKLINE_GRAPH_WIDTH if sparkline else GRAPH_WIDTH
+    height_per_benchmark = SPARKLINE_HEIGHT_PER_BENCHMARK if sparkline else GRAPH_HEIGHT_PER_BENCHMARK
+    big_number_font_size = SPARKLINE_BIG_NUMBER_FONT_SIZE if sparkline else BIG_NUMBER_FONT_SIZE
+    bm_name_font_size = SPARKLINE_BM_NAME_FONT_SIZE if sparkline else BM_NAME_FONT_SIZE
+    bm_name_y_shift = SPARKLINE_BM_NAME_Y_SHIFT if sparkline else BM_NAME_Y_SHIFT
+    current_point_marker_size = SPARKLINE_CURRENT_POINT_MARKER_SIZE if sparkline else CURRENT_POINT_MARKER_SIZE
+    label_offset = SPARKLINE_LABEL_OFFSET if sparkline else LABEL_OFFSET
+
     layout = {
-        "title": "%s - %s" % (build_info, plan),
-        # "margin": {"t": 80},
-        "width": GRAPH_WIDTH,
-        "height": GRAPH_HEIGHT_PER_BENCHMARK * len(benchmarks),
+        "width": graph_width,
+        "height": height_per_benchmark * len(benchmarks),
+        "font": {"family": FONT_FAMILY, "color": INK_PRIMARY},
+        "plot_bgcolor": SURFACE,
+        "paper_bgcolor": SURFACE,
     }
-    
+    if not sparkline:
+        layout["title"] = {
+            "text": "%s - %s (Total / Mutator / STW)" % (build_info, plan),
+            "font": {"size": 16, "color": INK_PRIMARY},
+        }
+
     n_benchmarks = len(benchmarks)
     if (n_benchmarks == 0):
         print("Unable to plot history for %s: no benchmark result found." % plan)
         exit(1)
 
     row = 1
-    
+
     traces = []
     annotations = []
     baseline_hlines = []
@@ -70,6 +131,10 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
     benchmarks.sort()
 
     epoch_vlines = []
+
+    # Only show the (rare, one-time) legend entry for each secondary/informational
+    # metric once, on the first benchmark row that actually has data for it.
+    secondary_legend_shown = {key: False for key, _, _ in SECONDARY_METRICS}
 
     for bm in benchmarks:
         # extract results
@@ -201,12 +266,14 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
             else:
                 lines.append("%s (%s, compared to %s %.2f)" % (get_value_text(val), color_info['regression'], color_info['label'], color_info['value'] / y_baseline))
             history_hovertext.append("<br \>".join(lines))
-        traces.append({**history_trace, **{
-            "line": { "color": "black" },
-            "y": make_zero_as_none(y),
-            "opacity": 0,
-            "text": history_hovertext,
-        }})
+        if not sparkline:
+            # Static PNG export has no hover, so skip this trace there.
+            traces.append({**history_trace, **{
+                "line": { "color": INK_PRIMARY },
+                "y": make_zero_as_none(y),
+                "opacity": 0,
+                "text": history_hovertext,
+            }})
 
         layout["xaxis%d" % row] = {
             # attempt to show xticks. Couldn't get this work. Xticks are shown under the first subgraph. 
@@ -232,7 +299,8 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
             "domain": ydomain,
             "mirror": False,
             "showgrid": False,
-            "showline": True,
+            "showline": not sparkline,
+            "linecolor": AXIS_LINE,
             "zeroline": False,
             "showticklabels": False,
             "range": [this_y_lower - Y_RANGE_EXTRA, this_y_upper + Y_RANGE_EXTRA]
@@ -281,7 +349,7 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
         annotation = {
             "xref": x_axis,
             "yref": y_axis,
-            "x": x[-1] + LABEL_OFFSET,
+            "x": x[-1] + label_offset,
             "y": 1,
             "showarrow": False,
             # "bordercolor": 'black',
@@ -296,7 +364,7 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
         # print("cur: %.2f, std: %.2f, best: %.2f" % (current, current_std, y_best))
         if current == 0:
             # No data. Show neutral
-            current_color = "black"
+            current_color = STATUS_NEUTRAL
             current_symbol = "~"
         else:
             trend = check_regression(this_y_lower, this_y_lower_std, current, current_std)
@@ -309,35 +377,85 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
             "mode": "markers",
             "y": y_last_array,
             "text": ["history current: %s: %.2f" % (x, y) for (x, y) in zip(x_labels, y)],
-            "marker": {"size": CURRENT_POINT_MARKER_SIZE, "color": "black"},
+            "marker": {"size": current_point_marker_size, "color": INK_PRIMARY},
             "showlegend": False,
         }})
-        # big number
+
+        # Informational overlay: mutator/STW time, plotted plain (no regression
+        # coloring, no big number, no moving average/std-dev band) alongside total
+        # time on the same row. Indexed to each metric's own baseline (the min of its
+        # own values within the current epoch) rather than a second y-axis, so they
+        # share one axis meaningfully despite different absolute magnitudes. Drawn on
+        # top of (but thinner/more transparent than) total time's own line, so it
+        # stays visible without competing with total time - what this chart is
+        # actually for noticing regressions in.
+        #
+        # Clamped to *this row's own* total-time range (not added to the shared
+        # y_range_upper/lower) - mutator/STW can swing much wider than total time,
+        # and being informational-only, they should never stretch every row's shared
+        # axis (which would squash total time's own line flat) or bleed into a
+        # neighboring benchmark's row.
+        epoch_start = attributes[current_epoch]['start']
+        epoch_end = attributes[current_epoch]['end']
+        sec_clamp_lower = this_y_lower - Y_RANGE_EXTRA
+        sec_clamp_upper = this_y_upper + Y_RANGE_EXTRA
+        for sec_key, sec_label, sec_color in SECONDARY_METRICS:
+            sec_y, _ = history_per_run(runs, plan, bm, sec_key)
+            sec_nonzero_in_epoch = [v for v in sec_y[epoch_start:epoch_end + 1] if v != 0]
+            if len(sec_nonzero_in_epoch) == 0:
+                # No data for this metric on this benchmark (e.g. canary/JikesRVM
+                # plans have no MMTk stats at all) - just skip the overlay line.
+                continue
+            sec_baseline = min(sec_nonzero_in_epoch)
+            sec_y_norm = normalize_to(sec_y, sec_baseline)
+            sec_y_norm = [min(max(v, sec_clamp_lower), sec_clamp_upper) if v != 0 else 0 for v in sec_y_norm]
+
+            traces.append({
+                "name": sec_label,
+                "legendgroup": sec_label,
+                "showlegend": not sparkline and not secondary_legend_shown[sec_key],
+                "hoverinfo": "text",
+                "opacity": 0.65,
+                "mode": "lines",
+                "line": {"width": 1, "color": sec_color},
+                "type": "scatter",
+                "x": x,
+                "y": make_zero_as_none(sec_y_norm),
+                "text": ["%s: %s: %s" % (rid, sec_label, get_value_text(v) if v != 0 else "none") for (rid, v) in zip(x_labels, sec_y_norm)],
+                "xaxis": x_axis,
+                "yaxis": y_axis,
+            })
+            secondary_legend_shown[sec_key] = True
+
+        # big number - the total-time regression status (green/red/muted), what this
+        # dashboard is for noticing at a glance.
         annotations.append({**annotation, **{
             "text": "%.2f" % current,
-            "font": {"color": current_color, "size": BIG_NUMBER_FONT_SIZE},
+            "font": {"color": current_color, "size": big_number_font_size},
             "xanchor": "center",
             "yanchor": "middle",
+            "bgcolor": SURFACE,
         }})
         # benchmark name
         annotations.append({**annotation, **{
             "text": "<b>%s" % bm,
-            "font": {"color": "black", "size": BM_NAME_FONT_SIZE},
+            "font": {"color": INK_PRIMARY, "size": bm_name_font_size},
             "xanchor": "center",
             "yanchor": "bottom",
-            "yshift": BM_NAME_Y_SHIFT
+            "yshift": bm_name_y_shift,
+            "bgcolor": SURFACE,
         }})
         # aboslute number
         if SHOW_ABS_NUMBER:
             annotations.append({**annotation, **{
                 "text": "%.2f ms %s" % (y_cur_aboslute, current_symbol),
-                "font": {"color": "black", "size": ABS_NUMBER_FONT_SIZE},
+                "font": {"color": INK_PRIMARY, "size": ABS_NUMBER_FONT_SIZE},
                 "xanchor": "center",
                 "yanchor": "bottom",
                 "yshift": ABS_NUMBER_FONT_Y_SHIFT
             }})
 
-        if PLOT_MOVING_AVERAGE:
+        if PLOT_MOVING_AVERAGE and not sparkline:
             # moving average
             y_moving_average = moving_average(y, 10)
             traces.append({
@@ -345,7 +463,7 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
                 "hoverinfo": "none",
                 # "fill": "tozeroy",
                 "mode": TRACE_MODE,
-                "line": {"width": 1, "color": "gray"},
+                "line": {"width": 1, "color": INK_SECONDARY},
                 "type": "scatter",
                 "x": x,
                 "y": y_moving_average,
@@ -355,14 +473,14 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
                 "showlegend": False,
             })
 
-        if PLOT_STD_DEV:
+        if PLOT_STD_DEV and not sparkline:
             # variance (10p moving average of std dev)
             std_dev_moving_average = moving_average(std, 10)
             variance_trace = {
                 "name": bm,
                 "hoverinfo": "none",
                 "mode": "lines",
-                "line_color": "#cacccf",
+                "line_color": INK_MUTED,
                 "line": {"width": 0},
                 "x": x,
                 "xaxis": x_axis,
@@ -371,16 +489,18 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
             }
             variance_down = list(map(lambda a, b: a - b if a is not None and b is not None else None, y_moving_average, std_dev_moving_average))
             traces.append({**variance_trace, **{
-                # a hack: fill everything under this line the same as the background color
+                # a hack: fill everything under this line the same as the background color,
+                # i.e. this trace's fill color must always match plot_bgcolor (SURFACE).
                 "fill": "tozeroy",
-                "line_color": "#e5ecf6",
+                "line_color": SURFACE,
                 "y": variance_down,
                 "text": ["moving avg - std dev: %s: %s" % (x, "{:.2f}".format(y) if y is not None else "na") for (x, y) in zip(x_labels, variance_down)],
             }})
             variance_up = list(map(lambda a, b: a + b if a is not None and b is not None else None, y_moving_average, std_dev_moving_average))
             traces.append({**variance_trace, **{
-                # fill things in grey between this trace and the trace above
+                # fill things in muted ink (tinted) between this trace and the trace above
                 "fill": "tonexty",
+                "fillcolor": "rgba(137, 135, 129, 0.18)",
                 "y": variance_up,
                 "text": ["moving avg + std dev: %s: %s" % (x, "{:.2f}".format(y) if y is not None else "na") for (x, y) in zip(x_labels, variance_up)],
             }})
@@ -410,17 +530,18 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
 
             text = "Epoch: %s<br />  start: %.2f ± %.2f, end: %.2f ± %.2f<br />  min: %.2f, max: %.2f" % (v['note'], epoch_normalized_start_y, epoch_normalized_start_y_std, epoch_normalized_end_y, epoch_normalized_end_y_std, epoch_normalized_min_y, epoch_normalized_max_y)
 
-            epoch_vlines.append({**history_trace, **{
-                "hoverinfo": "text",
-                "mode": "lines",
-                "line": { "width": 1, "color": epoch_color },
-                "opacity": 0.2 if epoch_color == "black" else 1,
-                "x": [v['start_x'], v['start_x']],
-                "y": [y_min, y_max],
-                "text": text
-            }})
+            if not sparkline:
+                epoch_vlines.append({**history_trace, **{
+                    "hoverinfo": "text",
+                    "mode": "lines",
+                    "line": { "width": 1, "color": epoch_color },
+                    "opacity": 0.2 if epoch_color == STATUS_NEUTRAL else 1,
+                    "x": [v['start_x'], v['start_x']],
+                    "y": [y_min, y_max],
+                    "text": text
+                }})
 
-            if epoch_name == current_epoch:
+            if epoch_name == current_epoch and not sparkline:
                 # Epoch min
                 traces.append({**history_trace, **{
                     "hoverinfo": "text",
@@ -428,9 +549,9 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
                     "textposition": "top center",
                     "y": keep_first_in_index_range(y, lambda y: y == epoch_normalized_min_y, v['start'], v['end'] + 1),
                     "text": ["best: %s: %.2f" % (x, y) if y != 0 else "" for (x, y) in zip(x_labels, y)],
-                    "textfont_color": "green",
+                    "textfont_color": STATUS_GOOD,
                     "cliponaxis": False,
-                    "marker": { "size": MIN_MAX_MARKER_SIZE, "color": "green", "symbol": "triangle-down" },
+                    "marker": { "size": MIN_MAX_MARKER_SIZE, "color": STATUS_GOOD, "symbol": "triangle-down" },
                     "showlegend": False,
                 }})
                 # Epoch max
@@ -440,15 +561,15 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
                     "textposition": "top center",
                     "y": keep_first_in_index_range(y, lambda y: y == epoch_normalized_max_y, v['start'], v['end'] + 1),
                     "text": ["worst: %s: %.2f" % (x, y) if y != 0 else "" for (x, y) in zip(x_labels, y)],
-                    "textfont_color": "red",
+                    "textfont_color": STATUS_CRITICAL,
                     "cliponaxis": False,
-                    "marker": { "size": MIN_MAX_MARKER_SIZE, "color": "red", "symbol": "triangle-up" },
+                    "marker": { "size": MIN_MAX_MARKER_SIZE, "color": STATUS_CRITICAL, "symbol": "triangle-up" },
                     "showlegend": False,
                 }})
 
         # baseline - we will draw one horizontal line per each baseline
         baseline_opacity = 0.6
-        baseline_color = "orange"
+        baseline_color = BASELINE_COLOR
         baseline_trace = {
             "hoverinfo": "text",
             "mode": "lines",
@@ -481,10 +602,11 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
 
                     print("%s baseline %s: %s" % (bm, build, hline))
 
-                    traces.append({**baseline_trace, **{
-                        "y": [hline] * len(x),
-                        "text": "%s: %.2f" % (build, hline),
-                    }})
+                    if not sparkline:
+                        traces.append({**baseline_trace, **{
+                            "y": [hline] * len(x),
+                            "text": "%s: %.2f" % (build, hline),
+                        }})
                     # annotations.append({**baseline_label, **{
                     #     "y": hline,
                     #     "text": "%s: %.2f" % (build, hline),
@@ -510,7 +632,7 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
 
     fig.update_layout(hovermode='x')
     fig.update_layout(hoverdistance=1)
-    fig.update_layout(margin=dict(l=5, r=5, t=50, b=5))
+    fig.update_layout(margin=SPARKLINE_MARGIN if sparkline else FULL_MARGIN)
 
     return fig
 
@@ -648,7 +770,7 @@ def split_epochs(x, x_labels, y, y_std, notes):
         for i in range(start, end + 1):
             if y[i] == 0:
                 # No data
-                line_colors.append("black")
+                line_colors.append(STATUS_NEUTRAL)
                 line_colors_info.append(None)
                 continue
 
@@ -702,9 +824,9 @@ def check_regression(r1, std1, r2, std2):
 
 def get_regression_color(regression):
     match regression:
-        case "regression": return "red"
-        case "improvement": return "green"
-        case "neutral": return "black"
+        case "regression": return STATUS_CRITICAL
+        case "improvement": return STATUS_GOOD
+        case "neutral": return STATUS_NEUTRAL
         case _: raise Exception('Unexpected regression string:' + regression)
 
 
