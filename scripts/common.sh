@@ -331,6 +331,38 @@ checkout_result_repo() {
     git clone https://$RESULT_REPO_ACCESS_TOKEN@github.com/$RESULT_REPO.git $result_repo_dir --branch=$RESULT_REPO_BRANCH
 }
 
+# checkout_result_repo_at 'dest_dir' 'branch'
+# Like checkout_result_repo, but clones into an explicit dest_dir on an
+# explicit branch instead of the single global $result_repo_dir/$RESULT_REPO_BRANCH
+# - for callers (render-all.sh) that need more than one branch of the result
+# repo checked out at once (e.g. OpenJDK and JikesRVM tracking different
+# result-repo branches).
+#
+# If dest_dir is already a checkout of this repo (e.g. a previous local run,
+# or a persistent self-hosted-runner workspace), reuse it - fetch and switch
+# to the given branch in place - instead of removing and re-cloning full
+# history every time.
+# Env: RESULT_REPO_ACCESS_TOKEN, RESULT_REPO
+checkout_result_repo_at() {
+    dest_dir=$1
+    branch=$2
+
+    ensure_env RESULT_REPO
+
+    repo_url=https://$RESULT_REPO_ACCESS_TOKEN@github.com/$RESULT_REPO.git
+
+    if [ -d "$dest_dir/.git" ]; then
+        git -C $dest_dir remote set-url origin $repo_url
+        git -C $dest_dir fetch origin $branch
+        git -C $dest_dir checkout -B $branch origin/$branch
+        git -C $dest_dir reset --hard origin/$branch
+        git -C $dest_dir clean -fdx
+    else
+        rm -rf $dest_dir
+        git clone $repo_url $dest_dir --branch=$branch
+    fi
+}
+
 # commit_result_repo_dir 'message'
 commit_result_repo() {
     if [[ -z $SKIP_UPLOAD_RESULT ]]; then
