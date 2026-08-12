@@ -383,18 +383,21 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
 
         # Informational overlay: mutator/STW time, plotted plain (no regression
         # coloring, no big number, no moving average/std-dev band) alongside total
-        # time on the same row. Indexed to each metric's own baseline (the min of its
-        # own values within the current epoch) rather than a second y-axis, so they
-        # share one axis meaningfully despite different absolute magnitudes. Drawn on
-        # top of (but thinner/more transparent than) total time's own line, so it
-        # stays visible without competing with total time - what this chart is
-        # actually for noticing regressions in.
+        # time on the same row. Indexed to total time's own baseline (not each
+        # metric's own min) so the overlay reads as a proportion of total time:
+        # sec_y_norm[i] == (sec_raw[i] / total_raw[i]) * y[i], i.e. this metric's
+        # share of total time at that point, times total time's own normalized Y
+        # - which simplifies to sec_raw[i] / y_baseline since y[i] itself is
+        # total_raw[i] / y_baseline. The hover label shows that share as a percentage
+        # (see sec_pct_text below), not the plotted Y value itself. Drawn on top of
+        # (but thinner/more transparent than) total time's own line, so it stays
+        # visible without competing with total time - what this chart is actually
+        # for noticing regressions in.
         #
         # Clamped to *this row's own* total-time range (not added to the shared
-        # y_range_upper/lower) - mutator/STW can swing much wider than total time,
-        # and being informational-only, they should never stretch every row's shared
-        # axis (which would squash total time's own line flat) or bleed into a
-        # neighboring benchmark's row.
+        # y_range_upper/lower) - being informational-only, mutator/STW should never
+        # stretch every row's shared axis (which would squash total time's own line
+        # flat) or bleed into a neighboring benchmark's row.
         epoch_start = attributes[current_epoch]['start']
         epoch_end = attributes[current_epoch]['end']
         sec_clamp_lower = this_y_lower - Y_RANGE_EXTRA
@@ -406,9 +409,21 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
                 # No data for this metric on this benchmark (e.g. canary/JikesRVM
                 # plans have no MMTk stats at all) - just skip the overlay line.
                 continue
-            sec_baseline = min(sec_nonzero_in_epoch)
-            sec_y_norm = normalize_to(sec_y, sec_baseline)
+            sec_y_norm = normalize_to(sec_y, y_baseline)
             sec_y_norm = [min(max(v, sec_clamp_lower), sec_clamp_upper) if v != 0 else 0 for v in sec_y_norm]
+
+            # Hover label: this metric's share of total time at that point, as a
+            # percentage - not the plotted (normalized, possibly clamped) Y value,
+            # which isn't meaningful to read as a number on its own.
+            sec_pct_text = []
+            for sec_v, total_norm_v in zip(sec_y, y):
+                total_raw_v = total_norm_v * y_baseline
+                if sec_v == 0:
+                    sec_pct_text.append("none")
+                elif total_raw_v == 0:
+                    sec_pct_text.append("n/a")
+                else:
+                    sec_pct_text.append("%.1f%%" % (sec_v / total_raw_v * 100))
 
             traces.append({
                 "name": sec_label,
@@ -421,7 +436,7 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
                 "type": "scatter",
                 "x": x,
                 "y": make_zero_as_none(sec_y_norm),
-                "text": ["%s: %s: %s" % (rid, sec_label, get_value_text(v) if v != 0 else "none") for (rid, v) in zip(x_labels, sec_y_norm)],
+                "text": ["%s: %s: %s of total" % (rid, sec_label, pct) for (rid, pct) in zip(x_labels, sec_pct_text)],
                 "xaxis": x_axis,
                 "yaxis": y_axis,
             })
