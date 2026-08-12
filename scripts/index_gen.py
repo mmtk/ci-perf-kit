@@ -1,21 +1,22 @@
 import os
 import parse
 
-# The runtime configs that define what a complete index.html should list.
-# Every history_report.py invocation regenerates the index from *all* of
-# these, regardless of which single config/plan it was actually asked to
-# render - so a per-commit run that only touches one plan still writes a
-# complete, correct index.html into its output_dir alongside that plan's
-# page. The external deploy step (outside this repo) syncs output_dir into
-# the destination folder with existing files kept, so whichever runtime's
-# report ran most recently "wins" and leaves the same complete index behind
-# either way.
-CONFIG_FILENAMES = ["openjdk-plot.yml", "jikesrvm-plot.yml"]
+# The runtime configs that define what a complete index.html should list,
+# when a caller doesn't say otherwise (see generate_index's config_filenames
+# param). Every history_report.py invocation regenerates the index from
+# *all* configs it's given, regardless of which single config/plan it was
+# actually asked to render - so a per-commit run that only touches one plan
+# still writes a complete, correct index.html into its output_dir alongside
+# that plan's page. The external deploy step (outside this repo) syncs
+# output_dir into the destination folder with existing files kept, so
+# whichever runtime's report ran most recently "wins" and leaves the same
+# complete index behind either way.
+DEFAULT_CONFIG_FILENAMES = ["openjdk-plot.yml", "jikesrvm-plot.yml"]
 
 
-def _collect_cards(config_dir):
+def _collect_cards(config_dir, config_filenames):
     cards = []
-    for filename in CONFIG_FILENAMES:
+    for filename in config_filenames:
         path = os.path.join(config_dir, filename)
         if not os.path.isfile(path):
             continue
@@ -185,12 +186,18 @@ def _render_html(cards):
 
 # output_dir: where history_report.py just wrote this run's *_history.{html,png}
 # files - the generated index.html is written alongside them, referencing them
-# (and every other plan from CONFIG_FILENAMES) with plain relative filenames.
-def generate_index(output_dir):
+# (and every other plan from config_filenames) with plain relative filenames.
+# config_filenames: which configs/*.yml files to list cards from. Defaults to
+# DEFAULT_CONFIG_FILENAMES - the two configs every routine per-commit/weekly
+# workflow uses. A caller rendering against a non-default config (e.g.
+# render_all.py, when a manual run points at a differently-named plot config)
+# must pass the actual filenames it used, or the index would silently list
+# the default configs' cards instead of the ones it just rendered.
+def generate_index(output_dir, config_filenames=None):
     scripts_dir = os.path.dirname(os.path.abspath(__file__))
     config_dir = os.path.join(scripts_dir, "..", "configs")
 
-    cards = _collect_cards(config_dir)
+    cards = _collect_cards(config_dir, config_filenames or DEFAULT_CONFIG_FILENAMES)
     html = _render_html(cards)
 
     with open(os.path.join(output_dir, "index.html"), "w") as f:
