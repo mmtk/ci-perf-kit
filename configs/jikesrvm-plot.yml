@@ -1,10 +1,13 @@
 name: jikesrvm
 plans:
   - plan: nogc
+    time: true
     baseline: ['JavaMMTk_NoGC']
   - plan: semispace
+    time: true
     baseline: ['JavaMMTk_SemiSpace']
   - plan: marksweep
+    time: true
     baseline: []
 notes:
   - date: "20230116"

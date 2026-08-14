@@ -1,22 +1,31 @@
 name: openjdk
 plans:
   - plan: nogc
+    time: true
     baseline: ['jdk-epsilon']
   - plan: semispace
+    time: true
     baseline: ['jdk-g1', 'jdk-zgc']
   - plan: gencopy
+    time: true
     baseline: ['jdk-g1', 'jdk-zgc']
   - plan: immix
+    time: true
     baseline: ['jdk-g1', 'jdk-zgc']
   - plan: genimmix
+    time: true
     baseline: ['jdk-g1', 'jdk-zgc']
   - plan: stickyimmix
+    time: true
     baseline: ['jdk-g1', 'jdk-zgc']
   - plan: marksweep
+    time: true
     baseline: ['jdk-g1', 'jdk-zgc']
   - plan: lisp2
+    time: true
     baseline: ['jdk-g1', 'jdk-zgc']
   - plan: ovc
+    time: true
     baseline: ['jdk-g1', 'jdk-zgc']
   # history_report.py plots every directory under result_repo_vm_root (see
   # os.listdir(result_repo_vm_root) in history_report.py), not just the plans
@@ -30,17 +39,22 @@ plans:
   # (see index_gen.py) - they're only listed here for the baseline lookup
   # above, not meant to show up as their own cards any more.
   - plan: markcompact
+    time: true
     baseline: ['jdk-g1', 'jdk-zgc']
     hidden: true
   - plan: compressor
+    time: true
     baseline: ['jdk-g1', 'jdk-zgc']
     hidden: true
   - plan: concurrentimmix
+    time: true
     baseline: ['jdk-g1', 'jdk-zgc']
+    latency: true
   # "canary" is not a real plan.  It is for the canary build.
   # We add it here to make history_report.py recognize its result
   # and plot it in a separate block in parallel to other real plans in OpenJDK.
   - plan: canary
+    time: true
     baseline: ['jdk-g1', 'jdk-zgc']
 notes:
   - date: "20230116"

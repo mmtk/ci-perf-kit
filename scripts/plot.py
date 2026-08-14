@@ -47,10 +47,13 @@ BASELINE_COLOR = "#eb6834"
 # Informational overlay lines shown alongside total time on the same per-benchmark
 # row: (data_key, display label, line color). These are plotted plain - no
 # regression coloring, no big number, no moving average/std-dev band - since total
-# time is what's being watched for regressions; mutator/STW are context only.
+# time is what's being watched for regressions; mutator/STW are context only. Colored
+# in gray (not a hue) so they read as secondary to total time's own green/red/gray
+# regression coloring - mutator (the larger, more prominent component of total time)
+# a darker gray, STW a lighter one.
 SECONDARY_METRICS = [
-    ("time.other", "Mutator time", "#2a78d6"),  # categorical slot 1, blue
-    ("time.stw", "STW time", "#4a3aa7"),  # categorical slot 7, violet
+    ("time.other", "Mutator time", "#5c5a54"),  # darker gray - the more prominent secondary metric
+    ("time.stw", "STW time", "#b0aca2"),  # lighter gray
 ]
 
 # Intervals between X values (dense for old data, sparse for recent data). See log_timeline()
@@ -81,17 +84,152 @@ Y_RANGE_EXTRA = 0.2
 MIN_MAX_MARKER_SIZE = 5
 CURRENT_POINT_MARKER_SIZE = 10
 
+# Shared core of a green(improvement)/red(regression)/gray(neutral) history line:
+# split into epochs, pick the current epoch's own minimum as the baseline, normalize
+# to it, and classify each point/segment against the best value seen so far in its
+# epoch (see split_epochs/check_regression). This is plot_history's per-benchmark
+# computation for its one primary series (time.total for the time chart, latency.p50
+# for the latency chart - see history_report.py) - factored out from the trace-
+# building below it since the computation itself has no UI concerns.
+#
+# y, std: this series' raw values, one per x/x_labels entry (see history_per_run).
+# x, x_labels: the shared run timeline/run_ids (see log_timeline) - same order as y/std.
+# notes: config notes (epoch boundaries) - copied internally, since split_epochs
+#   consumes (pops from) whatever list it's given.
+# no_data_fallback_perf: baseline to fall back to if this series has no valid nonzero
+#   value to normalize against (nothing at all, or only the current/most-recent point
+#   is nonzero) - resolved from plot_history's `baseline` dict (stock JDK data) for the
+#   time chart; the latency chart has no equivalent, so it just uses the default of 1.
+#
+# Returns a dict:
+#   y_norm, std_norm, y_plot: y/std normalized to y_baseline (y_plot has zeros -> None)
+#   y_baseline: the raw value that normalizes to 1.0
+#   nonzero_y: the nonzero raw values used to resolve y_baseline (see
+#     no_data_fallback_perf) - exposed for callers that size a plot element (e.g. an
+#     epoch divider) to the series' overall visible range
+#   attrs, current_epoch: split_epochs() output, for the caller's own epoch decorations
+#   this_y_upper, this_y_lower, this_y_lower_std: current epoch's normalized bounds
+#   seg_colors, seg_colors_info: per-point color (green/red/STATUS_NEUTRAL) and
+#     best-so-far comparison info, aligned with y (see split_epochs's line_colors)
+#   current, current_std: the latest (current) point's normalized value/std
+#   current_trend: "improvement"/"regression"/"neutral", or None if the current
+#     point has no data at all
+def compute_regression_series(y, std, x, x_labels, notes, no_data_fallback_perf=1):
+    attrs = split_epochs(x, x_labels, y, std, notes.copy())
+    current_epoch = sorted(attrs.keys())[-1]
+
+    if len(y) == 1:
+        nonzero_y = [y[0]] if y[0] != 0 else []
+    else:
+        # we dont want 0 as baseline, and we should not use the most recent data as baseline
+        nonzero_y = [v for v in y[:-1] if v != 0]
+    if len(nonzero_y) == 0:
+        nonzero_y = [no_data_fallback_perf]
+
+    y_baseline = attrs[current_epoch]['min']
+    # No min value in the current epoch. We just need a reasonable baseline.
+    if y_baseline == 0:
+        y_baseline = min(nonzero_y)
+
+    this_y_upper = attrs[current_epoch]['max'] / y_baseline
+    this_y_lower = attrs[current_epoch]['min'] / y_baseline
+    this_y_lower_std = attrs[current_epoch]['min_std'] / y_baseline
+    if this_y_lower == 0:
+        this_y_lower = 1
+        this_y_lower_std = 0
+
+    y_norm = normalize_to(y, y_baseline)
+    std_norm = normalize_to(std, y_baseline)
+
+    seg_colors = []
+    seg_colors_info = []
+    for epoch_name in sorted(attrs.keys()):
+        seg_colors.extend(attrs[epoch_name]['line_colors'])
+        seg_colors_info.extend(attrs[epoch_name]['line_colors_info'])
+
+    current = y_norm[-1]
+    current_std = std_norm[-1]
+    current_trend = None if y[-1] == 0 else check_regression(this_y_lower, this_y_lower_std, current, current_std)
+
+    return {
+        'y_norm': y_norm,
+        'std_norm': std_norm,
+        'y_plot': make_zero_as_none(y_norm),
+        'y_baseline': y_baseline,
+        'nonzero_y': nonzero_y,
+        'attrs': attrs,
+        'current_epoch': current_epoch,
+        'this_y_upper': this_y_upper,
+        'this_y_lower': this_y_lower,
+        'this_y_lower_std': this_y_lower_std,
+        'seg_colors': seg_colors,
+        'seg_colors_info': seg_colors_info,
+        'current': current,
+        'current_std': current_std,
+        'current_trend': current_trend,
+    }
+
+
+# The colored-segment traces for one regression-classified line (see
+# compute_regression_series) - deliberately stops one point short of the end; the
+# very last point's status is conveyed by the caller's own current-value indicator
+# (a big number annotation or a small marker) instead.
+def regression_segment_traces(base_trace, x, y_plot, seg_colors, line_width):
+    return [
+        {**base_trace, **{
+            "x": x[i:i+2],
+            "y": y_plot[i:i+2],
+            "line": {"width": line_width, "color": seg_colors[i+1]},
+        }}
+        for i in range(0, len(x) - 2)
+    ]
+
+
 # runs: all the runs for a certain build (as a dictionary from run_id -> run results)
 # plan: the plan to plot
 # benchmarks: benchmarks to plot
 # start_date, end_date: plot data between the given date range
-# data_key: the data to render (the metric that drives regression coloring/the big number - normally "time.total")
-# baseline: the baseline to plot as a dict {baseline: {benchmark: avg}}. None means no baseline, or no data for a certain benchmark.
+# data_key: the data to render (the metric that drives regression coloring/the big number
+#   - "time.total" for the time chart, "latency.p50" for the latency chart)
+# baseline: the baseline to plot as a dict {baseline: {benchmark: avg}}. None means no
+#   baseline, or no data for a certain benchmark - the latency chart has no equivalent,
+#   so it always passes None.
 # notes: a list of [date, note]. date is YYYYMMDD
 # sparkline: render a compact, chrome-free version (no title, no moving average/std-dev
 #   band, no epoch/baseline lines, smaller fonts) for use as a dashboard thumbnail.
-#   SECONDARY_METRICS (mutator/STW time) are still overlaid, just without a legend.
-def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_key, baseline, notes=[], run_commit_info=None, sparkline=False):
+#   secondary_metrics are still overlaid, just without a legend.
+# secondary_metrics: informational overlay lines plotted alongside the primary series on
+#   the same row - plain (no regression coloring, no big number, no moving average/std-
+#   dev band), as a list of (data_key, display label, line color). Defaults to
+#   SECONDARY_METRICS (mutator/STW time) when None - the latency chart passes
+#   LATENCY_SECONDARY_METRICS (p90/p99/p99.9/p99.99) instead, with data_key="latency.p50"
+#   as the primary series that drives the big number/regression coloring - i.e. the exact
+#   same chart, just with different Ys (see history_report.py).
+# title_suffix: the parenthetical in the chart title, e.g. "(Total / Mutator / STW)".
+# primary_label: how the primary series is named in secondary_metrics' hover text ("X%
+#   of <primary_label>") - "total" for the time chart, "p50" for the latency chart.
+# secondary_clamp: whether secondary_metrics are clamped to the primary series' own epoch
+#   range (and excluded from the shared cross-benchmark Y range) - appropriate when a
+#   secondary metric is inherently <= the primary one (mutator/STW are always <= total),
+#   but not for latency, where p90+ are routinely many times p50 and clamping them would
+#   flatten them into invisible lines pinned at the top of p50's own range.
+# only_benchmarks_with_data: skip benchmarks with no nonzero value anywhere in their
+#   history for data_key or any secondary_metrics key - appropriate for the latency chart,
+#   where only request/response-style benchmarks (cassandra, h2, lusearch, tomcat, ...)
+#   report latency at all, unlike time.total which every benchmark always has.
+# data_label, unit: how the primary series is named/units in hover text - "Total time"/
+#   "ms" for the time chart, "p50 latency"/"usec" for the latency chart. Also used for
+#   secondary_metrics' hover text (same unit, using each metric's own display label).
+# secondary_show_percentage: whether secondary_metrics' hover text includes "X% of
+#   <primary_label>" - meaningful for the time chart (mutator + STW make up total time)
+#   but not the latency chart (p90 isn't "part of" p50 the way mutator is part of total).
+# log_y: log-scale Y axis - off for the time chart (values normalized close to 1 with
+#   secondary_clamp keep it readable on a linear axis); on for the latency chart, whose
+#   unclamped secondary percentiles can span two-plus orders of magnitude.
+def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_key, baseline, notes=[], run_commit_info=None, sparkline=False,
+                  secondary_metrics=None, title_suffix="(Time)", primary_label="total",
+                  secondary_clamp=True, only_benchmarks_with_data=False,
+                  data_label="Total time", unit="ms", secondary_show_percentage=True, log_y=False):
     graph_width = SPARKLINE_GRAPH_WIDTH if sparkline else GRAPH_WIDTH
     height_per_benchmark = SPARKLINE_HEIGHT_PER_BENCHMARK if sparkline else GRAPH_HEIGHT_PER_BENCHMARK
     big_number_font_size = SPARKLINE_BIG_NUMBER_FONT_SIZE if sparkline else BIG_NUMBER_FONT_SIZE
@@ -99,6 +237,20 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
     bm_name_y_shift = SPARKLINE_BM_NAME_Y_SHIFT if sparkline else BM_NAME_Y_SHIFT
     current_point_marker_size = SPARKLINE_CURRENT_POINT_MARKER_SIZE if sparkline else CURRENT_POINT_MARKER_SIZE
     label_offset = SPARKLINE_LABEL_OFFSET if sparkline else LABEL_OFFSET
+
+    secondary_metrics = SECONDARY_METRICS if secondary_metrics is None else secondary_metrics
+
+    if only_benchmarks_with_data:
+        data_keys = [data_key] + [k for k, _, _ in secondary_metrics]
+        def _has_any_data(bm):
+            return any(
+                any(v != 0 for v in history_per_run(runs, plan, bm, k)[0])
+                for k in data_keys
+            )
+        benchmarks = [bm for bm in benchmarks if _has_any_data(bm)]
+        if len(benchmarks) == 0:
+            print("No benchmark has data for %s in plan %s yet." % (data_key, plan))
+            return None
 
     layout = {
         "width": graph_width,
@@ -109,7 +261,7 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
     }
     if not sparkline:
         layout["title"] = {
-            "text": "%s - %s (Total / Mutator / STW)" % (build_info, plan),
+            "text": "%s - %s %s" % (build_info, plan, title_suffix),
             "font": {"size": 16, "color": INK_PRIMARY},
         }
 
@@ -134,7 +286,7 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
 
     # Only show the (rare, one-time) legend entry for each secondary/informational
     # metric once, on the first benchmark row that actually has data for it.
-    secondary_legend_shown = {key: False for key, _, _ in SECONDARY_METRICS}
+    secondary_legend_shown = {key: False for key, _, _ in secondary_metrics}
 
     for bm in benchmarks:
         # extract results
@@ -162,49 +314,32 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
             for rid in x_labels
         ]
 
-        attributes = split_epochs(x, x_labels, y, std, notes.copy())
-
         y_cur_aboslute = y[-1]
+        y_raw = y
 
-        # From now, all y's are normalized to this baseline
-        if len(y) == 1:
-            if y[0] != 0:
-                nonzero_y = y
-            else:
-                nonzero_y = []
-        else:
-            nonzero_y = [i for i in y[:-1] if i != 0] # we dont want 0 as baseline, and we should not use the most recent data as baseline
+        # We do not have any valid data for the benchmark: find our baseline, and use
+        # it as the fallback baseline (see compute_regression_series).
+        baseline_perf = 0
+        if baseline is not None:
+            for build in baseline:
+                if bm in baseline[build] and baseline[build][bm] is not None:
+                    baseline_perf = baseline[build][bm]
+                    if baseline_perf != 0:
+                        break
+        # We don't even have a baseline number for it. Just use 1 (random number)
+        if baseline_perf == 0:
+            baseline_perf = 1
 
-        if len(nonzero_y) == 0:
-            # We do not have any valid data for the benchmark
-            # Find our baseline, and use it as the y_baseline.
-            baseline_perf = 0
-            if baseline is not None:
-                for build in baseline:
-                    if bm in baseline[build] and baseline[build][bm] is not None:
-                        baseline_perf = baseline[build][bm]
-                        if baseline_perf != 0:
-                            break
-            # We don't even have a baseline number for it. Just use 1 (random number)
-            if baseline_perf == 0:
-                baseline_perf = 1
-            nonzero_y = [baseline_perf]
+        series = compute_regression_series(y, std, x, x_labels, notes, no_data_fallback_perf=baseline_perf)
 
-        # normalize to the min value in the latest epoch
-        current_epoch = sorted(attributes.keys())[-1]
-        y_baseline = attributes[current_epoch]['min']
-        # No min value. There is no value in the plot at all. We just need a reasonable baseline.
-        if y_baseline == 0:
-            y_baseline = min(nonzero_y)
-        y_max = max(nonzero_y) / y_baseline
-        y_min = min(nonzero_y) / y_baseline
-
-        this_y_upper = attributes[current_epoch]['max'] / y_baseline
-        this_y_lower = attributes[current_epoch]['min'] / y_baseline
-        this_y_lower_std = attributes[current_epoch]['min_std'] / y_baseline
-        if this_y_lower == 0:
-            this_y_lower = 1
-            this_y_lower_std = 0
+        attributes = series['attrs']
+        current_epoch = series['current_epoch']
+        y_baseline = series['y_baseline']
+        y_max = max(series['nonzero_y']) / y_baseline
+        y_min = min(series['nonzero_y']) / y_baseline
+        this_y_upper = series['this_y_upper']
+        this_y_lower = series['this_y_lower']
+        this_y_lower_std = series['this_y_lower_std']
 
         # update range
         if this_y_upper > y_range_upper:
@@ -213,8 +348,8 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
             y_range_lower = this_y_lower
 
         # normalize y
-        y = normalize_to(y, y_baseline)
-        std = normalize_to(std, y_baseline)
+        y = series['y_norm']
+        std = series['std_norm']
 
         x_axis = "x"
         y_axis = "y%d" % row
@@ -233,44 +368,35 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
 
         # history
         history_x = x
-        history_y = make_zero_as_none(y)
-        history_colors = []
-        line_colors_info = []
-        for epoch_name in sorted(attributes.keys()):
-            history_colors.extend(attributes[epoch_name]['line_colors'])
-            line_colors_info.extend(attributes[epoch_name]['line_colors_info'])
+        history_y = series['y_plot']
+        history_colors = series['seg_colors']
+        line_colors_info = series['seg_colors_info']
 
         assert len(history_colors) == len(history_x)
         assert len(history_colors) == len(history_y)
         assert len(history_colors) == len(line_colors_info)
 
         # render each segment with color
-        for i in range(0, len(history_x) - 2):
-            traces.append({**history_trace, **{
-                "x": history_x[i:i+2],
-                "y": history_y[i:i+2],
-                "line": { "width": 3, "color": history_colors[i+1] },
-            }})
+        traces.extend(regression_segment_traces(history_trace, history_x, history_y, history_colors, 3))
 
         # render the hovertext with an invisible trace (we have to do this otherwise the hovertext is fucked up -- the segments are too crowded and we would see multiple hover texts showing up)
-        # Three lines: run id, commit info (if any - skipped otherwise), then
-        # the value and (if any) how it compares to the baseline. Keeping
-        # commit info on its own line avoids a single overly long line 1.
+        # Three lines: run id, commit info (if any - skipped otherwise), then the data
+        # label/normalized value/status and the absolute value (with unit).
         history_hovertext = []
-        for (rid, commit_info_line, val, color, color_info) in zip(x_labels, commit_info_lines, y, history_colors, line_colors_info):
-            lines = ["%s" % rid]
+        for (rid, commit_info_line, raw_val, val, color_info) in zip(x_labels, commit_info_lines, y_raw, y, line_colors_info):
+            lines = [rid]
             if commit_info_line:
                 lines.append(commit_info_line)
             if color_info is None:
-                lines.append(get_value_text(val))
+                lines.append("%s: no data" % data_label)
             else:
-                lines.append("%s (%s, compared to %s %.2f)" % (get_value_text(val), color_info['regression'], color_info['label'], color_info['value'] / y_baseline))
+                lines.append("%s: %s (%s), %s %s" % (data_label, get_value_text(val), color_info['regression'], get_value_text(raw_val), unit))
             history_hovertext.append("<br \>".join(lines))
         if not sparkline:
             # Static PNG export has no hover, so skip this trace there.
             traces.append({**history_trace, **{
                 "line": { "color": INK_PRIMARY },
-                "y": make_zero_as_none(y),
+                "y": history_y,
                 "opacity": 0,
                 "text": history_hovertext,
             }})
@@ -293,6 +419,14 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
         # e.g. if we have 4 rows (row = 5 at the moment)
         # the y domain for each trace should be [0, 0.25], [0.25, 0.5], [0.5, 0.75], [0.75, 1]
         ydomain = [1 - 1/n_benchmarks * row, 1 - 1/n_benchmarks * (row - 1)]
+        # Plotly's axis "range" must be given in log10 units when type="log" (unlike
+        # every trace's own y-values, which are always given in normal/linear units
+        # regardless of axis type - see the SAME_Y_RANGE_IN_ALL_TRACES block below,
+        # which keeps a separate linear-space range for trace data like epoch_vlines).
+        if log_y:
+            row_range = [math.log10(this_y_lower / 1.3), math.log10(this_y_upper * 1.3)]
+        else:
+            row_range = [this_y_lower - Y_RANGE_EXTRA, this_y_upper + Y_RANGE_EXTRA]
         layout["yaxis%d" % row] = {
             "ticks": "",
             "anchor": x_axis,
@@ -303,7 +437,8 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
             "linecolor": AXIS_LINE,
             "zeroline": False,
             "showticklabels": False,
-            "range": [this_y_lower - Y_RANGE_EXTRA, this_y_upper + Y_RANGE_EXTRA]
+            "type": "log" if log_y else "linear",
+            "range": row_range,
         }
 
         # highlight max/min
@@ -345,29 +480,43 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
                     return idx
             return None
 
-        # labeling
-        annotation = {
-            "xref": x_axis,
-            "yref": y_axis,
-            "x": x[-1] + label_offset,
-            "y": 1,
-            "showarrow": False,
-            # "bordercolor": 'black',
-            # "borderwidth": 1,
-        }
-        # print(annotation)
+        # labeling - anchored at data value 1 (the baseline) by default, which reads
+        # fine when the row's Y range stays close to 1 (time's mutator/STW overlay is
+        # always <= total, so it never stretches the range much). secondary_clamp=False
+        # rows (latency) can have a Y range dozens of times wider than 1 (p9999 vs.
+        # p50), which would leave data-anchored annotations stranded near the bottom -
+        # so those anchor to a fixed fraction of the row's own domain instead, which
+        # stays put regardless of how wide the data range is.
+        if secondary_clamp:
+            annotation = {
+                "xref": x_axis,
+                "yref": y_axis,
+                "x": x[-1] + label_offset,
+                "y": 1,
+                "showarrow": False,
+            }
+        else:
+            # Plotly's annotation yref validator wants the bare axis name for the
+            # first axis ("y domain", not "y1 domain") when using domain reference,
+            # unlike trace yaxis assignment (which does accept "y1").
+            domain_yref = "y domain" if y_axis == "y1" else "%s domain" % y_axis
+            annotation = {
+                "xref": x_axis,
+                "yref": domain_yref,
+                "x": x[-1] + label_offset,
+                "y": 0.5,
+                "showarrow": False,
+            }
 
         # highlight current
-        current = y[-1]
-        current_std = std[-1]
-        # determine if current is improvement or degradation
-        # print("cur: %.2f, std: %.2f, best: %.2f" % (current, current_std, y_best))
-        if current == 0:
+        current = series['current']
+        current_std = series['current_std']
+        trend = series['current_trend']
+        if trend is None:
             # No data. Show neutral
             current_color = STATUS_NEUTRAL
             current_symbol = "~"
         else:
-            trend = check_regression(this_y_lower, this_y_lower_std, current, current_std)
             current_color = get_regression_color(trend)
             current_symbol = get_regression_symbol(trend)
 
@@ -381,28 +530,33 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
             "showlegend": False,
         }})
 
-        # Informational overlay: mutator/STW time, plotted plain (no regression
-        # coloring, no big number, no moving average/std-dev band) alongside total
-        # time on the same row. Indexed to total time's own baseline (not each
-        # metric's own min) so the overlay reads as a proportion of total time:
-        # sec_y_norm[i] == (sec_raw[i] / total_raw[i]) * y[i], i.e. this metric's
-        # share of total time at that point, times total time's own normalized Y
-        # - which simplifies to sec_raw[i] / y_baseline since y[i] itself is
-        # total_raw[i] / y_baseline. The hover label shows that share as a percentage
-        # (see sec_pct_text below), not the plotted Y value itself. Drawn on top of
-        # (but thinner/more transparent than) total time's own line, so it stays
-        # visible without competing with total time - what this chart is actually
-        # for noticing regressions in.
+        # Informational overlay: secondary_metrics (mutator/STW time, or the latency
+        # chart's p90/p99/p99.9/p99.99), plotted plain (no regression coloring, no big
+        # number, no moving average/std-dev band) alongside the primary series on the
+        # same row. Indexed to the primary series' own baseline (not each metric's own
+        # min) so the overlay reads as a proportion of it: sec_y_norm[i] ==
+        # (sec_raw[i] / primary_raw[i]) * y[i], i.e. this metric's share of the primary
+        # metric at that point, times the primary metric's own normalized Y - which
+        # simplifies to sec_raw[i] / y_baseline since y[i] itself is primary_raw[i] /
+        # y_baseline. The hover label shows that share as a percentage (see
+        # sec_pct_text below), not the plotted Y value itself. Drawn on top of (but
+        # thinner/more transparent than) the primary series' own line, so it stays
+        # visible without competing with it - what this chart is actually for noticing
+        # regressions in.
         #
-        # Clamped to *this row's own* total-time range (not added to the shared
-        # y_range_upper/lower) - being informational-only, mutator/STW should never
-        # stretch every row's shared axis (which would squash total time's own line
-        # flat) or bleed into a neighboring benchmark's row.
+        # When secondary_clamp (mutator/STW, always <= total): clamped to *this row's
+        # own* primary-metric range, and not added to the shared y_range_upper/lower -
+        # being informational-only, they should never stretch every row's shared axis
+        # (which would squash the primary series' own line flat) or bleed into a
+        # neighboring benchmark's row. When not (latency's p90+, routinely many times
+        # p50): left unclamped, and their own range does extend the shared axis -
+        # otherwise they'd be squashed flat against the top of p50's own narrow range,
+        # defeating the point of plotting them at all.
         epoch_start = attributes[current_epoch]['start']
         epoch_end = attributes[current_epoch]['end']
         sec_clamp_lower = this_y_lower - Y_RANGE_EXTRA
         sec_clamp_upper = this_y_upper + Y_RANGE_EXTRA
-        for sec_key, sec_label, sec_color in SECONDARY_METRICS:
+        for sec_key, sec_label, sec_color in secondary_metrics:
             sec_y, _ = history_per_run(runs, plan, bm, sec_key)
             sec_nonzero_in_epoch = [v for v in sec_y[epoch_start:epoch_end + 1] if v != 0]
             if len(sec_nonzero_in_epoch) == 0:
@@ -410,20 +564,31 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
                 # plans have no MMTk stats at all) - just skip the overlay line.
                 continue
             sec_y_norm = normalize_to(sec_y, y_baseline)
-            sec_y_norm = [min(max(v, sec_clamp_lower), sec_clamp_upper) if v != 0 else 0 for v in sec_y_norm]
+            if secondary_clamp:
+                sec_y_norm = [min(max(v, sec_clamp_lower), sec_clamp_upper) if v != 0 else 0 for v in sec_y_norm]
+            else:
+                sec_nonzero_norm = [v for v in sec_y_norm if v != 0]
+                if sec_nonzero_norm:
+                    if max(sec_nonzero_norm) > y_range_upper:
+                        y_range_upper = max(sec_nonzero_norm)
+                    if min(sec_nonzero_norm) < y_range_lower:
+                        y_range_lower = min(sec_nonzero_norm)
 
-            # Hover label: this metric's share of total time at that point, as a
-            # percentage - not the plotted (normalized, possibly clamped) Y value,
-            # which isn't meaningful to read as a number on its own.
-            sec_pct_text = []
+            # Hover label: this metric's own absolute value (with unit) - plus, when
+            # secondary_show_percentage (the time chart: mutator + STW make up total
+            # time), its share of the primary metric at that point as a percentage.
+            # Not the plotted (normalized, possibly clamped) Y value, which isn't
+            # meaningful to read as a number on its own.
+            sec_hovertext = []
             for sec_v, total_norm_v in zip(sec_y, y):
-                total_raw_v = total_norm_v * y_baseline
                 if sec_v == 0:
-                    sec_pct_text.append("none")
-                elif total_raw_v == 0:
-                    sec_pct_text.append("n/a")
-                else:
-                    sec_pct_text.append("%.1f%%" % (sec_v / total_raw_v * 100))
+                    sec_hovertext.append("%s: no data" % sec_label)
+                    continue
+                line = "%s: %s %s" % (sec_label, get_value_text(sec_v), unit)
+                if secondary_show_percentage:
+                    total_raw_v = total_norm_v * y_baseline
+                    line += " (%s of %s)" % ("n/a" if total_raw_v == 0 else "%.1f%%" % (sec_v / total_raw_v * 100), primary_label)
+                sec_hovertext.append(line)
 
             traces.append({
                 "name": sec_label,
@@ -436,7 +601,7 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
                 "type": "scatter",
                 "x": x,
                 "y": make_zero_as_none(sec_y_norm),
-                "text": ["%s: %s: %s of total" % (rid, sec_label, pct) for (rid, pct) in zip(x_labels, sec_pct_text)],
+                "text": sec_hovertext,
                 "xaxis": x_axis,
                 "yaxis": y_axis,
             })
@@ -631,11 +796,19 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
 
     # fix range for all the traces
     if SAME_Y_RANGE_IN_ALL_TRACES:
-        y_range = [y_range_lower - Y_RANGE_EXTRA, y_range_upper + Y_RANGE_EXTRA]
+        # epoch_vlines are trace data (a vertical line's y-span), always in normal/
+        # linear units regardless of axis type - only the axis "range" itself needs
+        # log10 units when log_y (see the per-row comment above).
+        if log_y:
+            y_range_data = [y_range_lower / 1.3, y_range_upper * 1.3]
+            y_range_axis = [math.log10(y_range_data[0]), math.log10(y_range_data[1])]
+        else:
+            y_range_data = [y_range_lower - Y_RANGE_EXTRA, y_range_upper + Y_RANGE_EXTRA]
+            y_range_axis = y_range_data
         for i in range(1, row):
-            layout["yaxis%d" % i]["range"] = y_range
+            layout["yaxis%d" % i]["range"] = y_range_axis
         for line in epoch_vlines:
-            line["y"] = y_range
+            line["y"] = y_range_data
 
     fig = Figure(data = Data(traces), layout = layout)
     for anno in annotations:
@@ -650,6 +823,20 @@ def plot_history(build_info, runs, plan, benchmarks, start_date, end_date, data_
     fig.update_layout(margin=SPARKLINE_MARGIN if sparkline else FULL_MARGIN)
 
     return fig
+
+
+# Secondary metrics for the latency chart (see plot_history's secondary_metrics
+# param) - p50/p90/p99/p99.9, plotted alongside latency.p9999 (the primary series -
+# the tail percentile people actually watch for SLA regressions) exactly like the
+# time chart plots mutator/STW alongside time.total. Each gets its own gray shade
+# (darkest for p50, lightest for p99.9) since, unlike mutator/STW, there is more
+# than one of them on the same row.
+LATENCY_SECONDARY_METRICS = [
+    ("latency.p50", "p50", "#5c5a54"),
+    ("latency.p90", "p90", "#7b7972"),
+    ("latency.p99", "p99", "#9a978e"),
+    ("latency.p999", "p99.9", "#b9b6ac"),
+]
 
 
 def split_epochs(x, x_labels, y, y_std, notes):
