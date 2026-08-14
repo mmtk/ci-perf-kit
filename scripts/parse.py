@@ -1,6 +1,31 @@
 import re
 import os
 
+# Tail latency line for the timed (non-warmup) iteration, e.g.:
+#   ===== DaCapo tail latency, metered 100ms smoothing: 50% 516 usec, 90% 14583 usec, 99% 23235 usec, 99.9% 35661 usec, 99.99% 60845 usec, max 84478 usec, measured over 200000 events =====
+# Only request/response-style DaCapo Chopin benchmarks (cassandra, h2,
+# lusearch, tomcat) run through probe.DacapoChopinCallback print this; other
+# benchmarks simply never match, which is how we tell latency-capable
+# benchmarks apart from the rest without hardcoding their names (see
+# plot.plot_history's only_benchmarks_with_data param, used by
+# history_report.py for the latency chart).
+#
+# We use "metered 100ms smoothing" rather than "simple" or "metered full
+# smoothing": "simple" is raw per-request latency and doesn't correct for
+# coordinated omission (a GC pause blocks the next request from even being
+# issued, so it never shows up as a slow request); "metered full smoothing"
+# spreads a single long pause's cost across the *entire* run, which produces
+# huge, run-length-dependent percentiles that mostly reflect measurement
+# smoothing rather than the shape of individual pauses. "metered 100ms
+# smoothing" corrects for coordinated omission over a fixed short window, so
+# the percentiles stay meaningful and comparable run over run.
+LATENCY_METERED_100MS_RE = re.compile(
+    r".*tail latency, metered 100ms smoothing: "
+    r"50% ([\d.]+) usec, 90% ([\d.]+) usec, 99% ([\d.]+) usec, "
+    r"99\.9% ([\d.]+) usec, 99\.99% ([\d.]+) usec, max ([\d.]+) usec")
+
+LATENCY_KEYS = ['latency.p50', 'latency.p90', 'latency.p99', 'latency.p999', 'latency.p9999']
+
 # Given a log file and expected invocations, return the result
 def parse_log(log_file, n_invocations = None):
     # return a dict of the parse result
@@ -41,6 +66,16 @@ def parse_log(log_file, n_invocations = None):
             if matcher:
                 insert_data('execution_times', float(matcher.group(1)))
 
+                # The tail latency block (if any) for this same invocation is
+                # always 3 lines below PASSED: a "processed N requests" line,
+                # then "simple", then "metered 100ms smoothing" (see
+                # LATENCY_METERED_100MS_RE above).
+                if i + 3 < len(lines):
+                    latency_matcher = LATENCY_METERED_100MS_RE.match(lines[i + 3].decode('utf-8'))
+                    if latency_matcher:
+                        for key, value in zip(LATENCY_KEYS, latency_matcher.groups()):
+                            insert_data(key, float(value))
+
             # mmtk statistics - only present when a probe-driving DaCapo
             # callback is configured (e.g. probe.DacapoChopinCallback).
             # Absent for JikesRVM, stock (non-MMTk) OpenJDK runs, or if no
@@ -68,6 +103,11 @@ def parse_log(log_file, n_invocations = None):
         # (other code indexes ret['time.total'] directly, so the key must always exist)
         ret['execution_times'] = []
         ret['time.total'] = []
+        # Likewise for latency: absent entirely for benchmarks that never print a
+        # tail latency line, so callers can check `len(ret[key]) == 0` uniformly
+        # instead of handling a missing key as a separate case.
+        for key in LATENCY_KEYS:
+            ret[key] = []
         for key in data:
             ret[key] = data[key]
 
