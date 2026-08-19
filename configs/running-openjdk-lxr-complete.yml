@@ -1,0 +1,5 @@
+includes:
+  - "./running-openjdk-base.yml"
+
+configs:
+  - "jdk-mmtk|lxr|common_mmtk|no_reference_types"
