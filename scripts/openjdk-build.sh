@@ -15,6 +15,14 @@ if [ -n "$2" ]; then
 else
     mmtk_core=
 fi
+# build_path: optional name for the build dir under $kit_build/ (and
+# $kit_upload/). Defaults to 'jdk-mmtk' (the name openjdk-run-plan.sh and
+# every running-openjdk-*-complete.yml config expect). Callers that need
+# more than one build to coexist under the same $kit_build - e.g. a
+# trunk/branch pair for PR comparison, restored from two separate caches -
+# pass distinct names here (see running-openjdk-*-compare.yml, which
+# reference 'jdk-mmtk-trunk'/'jdk-mmtk-branch' explicitly).
+build_path=${3:-jdk-mmtk}
 
 ensure_empty_dir $kit_build
 ensure_empty_dir $kit_upload
@@ -23,10 +31,10 @@ ensure_empty_dir $kit_upload
 build_probes
 build_openjdk_probe
 
-# Build OpenJDK+MMTk. The result is left at $kit_build/jdk-mmtk (and
-# bundled at $kit_upload/jdk-mmtk) for openjdk-run-plan.sh to run against.
-build_openjdk_with_mmtk $openjdk_binding release jdk-mmtk
+# Build OpenJDK+MMTk. The result is left at $kit_build/$build_path (and
+# bundled at $kit_upload/$build_path) for openjdk-run-plan.sh to run against.
+build_openjdk_with_mmtk $openjdk_binding release $build_path
 
 # Record which commits went into this build, so openjdk-run-plan.sh can
 # carry it into each run's log folder.
-write_commit_info $kit_build/jdk-mmtk/commit-info.yml mmtk-openjdk $openjdk_binding $mmtk_core
+write_commit_info $kit_build/$build_path/commit-info.yml mmtk-openjdk $openjdk_binding $mmtk_core

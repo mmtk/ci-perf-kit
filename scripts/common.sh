@@ -373,7 +373,27 @@ commit_result_repo() {
         git add .
         git commit -m "$message"
         git pull --rebase # pull any new commit (if any)
-        git push    
+        git push
+    else
+        echo "SKIP_UPLOAD_RESULT is set, skip uploading result"
+    fi
+}
+
+# commit_result_repo_at 'dest_dir' 'message'
+# Like commit_result_repo, but commits/pushes an explicit dest_dir (as set up
+# by checkout_result_repo_at) instead of the single global $result_repo_dir -
+# for callers that check out more than one branch of the result repo at once.
+commit_result_repo_at() {
+    dest_dir=$1
+    message=$2
+
+    if [[ -z $SKIP_UPLOAD_RESULT ]]; then
+        cd $dest_dir
+
+        git add .
+        git commit -m "$message"
+        git pull --rebase # pull any new commit (if any)
+        git push
     else
         echo "SKIP_UPLOAD_RESULT is set, skip uploading result"
     fi
