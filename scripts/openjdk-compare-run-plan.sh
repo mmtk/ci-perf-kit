@@ -10,6 +10,11 @@ set -ex
 # build_path=jdk-mmtk-trunk and once with build_path=jdk-mmtk-branch (see
 # running-openjdk-*-compare.yml, which reference exactly those two runtime
 # names).
+#
+# The full result (raw logs + report.md + plots) is pushed to
+# $RESULT_REPO_BRANCH (private). The plot images are additionally pushed to
+# gh-pages (public), which is the only copy a PR comment can actually link
+# to - see the note further down.
 
 # plan_name: result dir name under result_repo/openjdk/pr-<pr_number>/ (e.g. stickyimmix)
 plan_name=$1
@@ -63,3 +68,19 @@ cp -r $log_dir/$run_id $RESULT_DIR
 
 # Commit result.
 commit_result_repo 'OpenJDK compare PR #'$pr_number' ('$plan_name'): '$run_id
+
+# ci-perf-result is private, so raw.githubusercontent.com links to it 404 for
+# anyone (GitHub's PR-comment image rendering fetches anonymously - it
+# doesn't carry the viewer's session). gh-pages is already public though (it
+# already serves the regression history dashboard), so push just the plot
+# images - not the raw logs - there too, under their own folder, so the PR
+# comment can link to a URL that actually renders.
+GHPAGES_DIR=$kit_root/result_repo_ghpages
+checkout_result_repo_at $GHPAGES_DIR gh-pages
+
+IMAGE_DIR=$GHPAGES_DIR/pr-compare/openjdk/pr-$pr_number/$plan_name/$run_id
+mkdir -p $IMAGE_DIR
+if ls $log_dir/$run_id/plots/*.png >/dev/null 2>&1; then
+    cp $log_dir/$run_id/plots/*.png $IMAGE_DIR
+    commit_result_repo_at $GHPAGES_DIR 'OpenJDK compare PR #'$pr_number' ('$plan_name'): '$run_id' images'
+fi
