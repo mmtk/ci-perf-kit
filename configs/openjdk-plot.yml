@@ -50,6 +50,10 @@ plans:
     time: true
     baseline: ['jdk-g1', 'jdk-zgc']
     latency: true
+  - plan: lxr
+    time: true
+    baseline: ['jdk-g1', 'jdk-zgc']
+    latency: true
   # "canary" is not a real plan.  It is for the canary build.
   # We add it here to make history_report.py recognize its result
   # and plot it in a separate block in parallel to other real plans in OpenJDK.

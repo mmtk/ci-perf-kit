@@ -86,6 +86,18 @@ modifiers:
     type: ModifierSet
     val: "ms|probes_cp|probes_rustmmtk|dacapochopin_jdk21|tph"
 
+  no_reference_types:
+    type: EnvVar
+    var: "MMTK_NO_REFERENCE_TYPES"
+    val: "true"
+  no_class_unloading:
+    type: JVMArg
+    val: "-XX:-ClassUnloading"
+  no_finalizer:
+    type: EnvVar
+    var: "MMTK_NO_FINALIZER"
+    val: "true"
+
 overrides:
   # running-ng ships dacapochopin pointing at the base 23.11 release jar;
   # pin it to the MR2 jar instead.

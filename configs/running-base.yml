@@ -76,3 +76,7 @@ modifiers:
       type: EnvVar
       var: "MMTK_PLAN"
       val: "ConcurrentImmix"
+    lxr:
+      type: EnvVar
+      var: "MMTK_PLAN"
+      val: "LXR"
