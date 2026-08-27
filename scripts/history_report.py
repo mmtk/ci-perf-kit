@@ -114,37 +114,50 @@ def render_plans(config_path, result_repo_vm_root, result_repo_baseline_root, ou
             # plot.SPARKLINE_GRAPH_WIDTH logical CSS pixels regardless of this scale factor.
             sparkline_fig.write_image(png_path, scale=2)
 
-        # Plans opted into `latency: true` (see configs/openjdk-plot.yml) additionally
-        # get a tail-latency history page plus dashboard sparkline PNG - the exact
-        # same chart as the time history above (plot.plot_history), just with
-        # latency.p9999 as the primary series (instead of time.total - p99.99 is the
-        # tail percentile people actually watch for SLA regressions) and
-        # LATENCY_SECONDARY_METRICS - p50/p90/p99/p99.9 - as the informational overlay
-        # (instead of mutator/STW), on a log-scale Y axis (log_y) since those span two-
-        # plus orders of magnitude. There's no latency equivalent of the stock-JDK
-        # `baseline` dict, and only benchmarks with latency data anywhere in their
-        # history get a row (see only_benchmarks_with_data) - not every DaCapo
-        # benchmark reports tail latency, only request/response-style ones (e.g.
-        # cassandra, h2, lusearch, tomcat) do. Named "_latency_history.{html,png}" so
-        # index_gen.py can reference it distinctly from the "_time_history" pair above.
-        if plan_config.get('latency', False):
-            latency_fig = plot.plot_history(build_info, runs, plan, benchmarks, from_date, to_date, "latency.p9999", None, config['notes'].copy(), run_commit_info,
-                                             secondary_metrics=plot.LATENCY_SECONDARY_METRICS,
-                                             title_suffix="(Tail latency)",
-                                             primary_label="p99.99", secondary_clamp=False, only_benchmarks_with_data=True,
-                                             data_label="p99.99 latency", unit="usec", secondary_show_percentage=False, log_y=True)
-            if latency_fig is not None:
-                latency_path = os.path.join(output_dir, "%s_%s_latency_history.html" % (prefix, plan))
-                latency_fig.write_html(latency_path, include_plotlyjs='cdn')
+        # Every plan gets all three percentile-based history charts, regardless of
+        # what configs/*-plot.yml says for it - the exact same chart as the time
+        # history above (plot.plot_history), just with a <metric>.p9999 primary
+        # series (instead of time.total - p99.99 is the tail percentile people
+        # actually watch for regressions) and a secondary_metrics overlay of the
+        # less extreme percentile(s), on a log-scale Y axis (log_y) since tail
+        # percentiles span two-plus orders of magnitude versus the rest. The
+        # `latency`/`time_to_yield`/`pause_time` config flags no longer gate
+        # whether a chart is rendered - only whether index_gen.py's dashboard shows
+        # its card by default (see index_gen._collect_cards) - so a plan without
+        # the flag still gets a real page, just tucked into the dashboard's
+        # collapsed "more metrics" section unless a viewer opts in.
+        # There's no percentile equivalent of the stock-JDK `baseline` dict, and only
+        # benchmarks with data anywhere in their history get a row
+        # (only_benchmarks_with_data) - not every benchmark reports every metric (e.g.
+        # tail latency is only reported by request/response-style DaCapo benchmarks
+        # like cassandra, h2, lusearch, tomcat). Named "_<file_suffix>_history.{html,png}"
+        # so index_gen.py can reference each distinctly from the "_time_history" pair
+        # above and from each other.
+        def render_percentile_history(metric_key, secondary_metrics, title_suffix, data_label, unit, file_suffix):
+            fig = plot.plot_history(build_info, runs, plan, benchmarks, from_date, to_date, "%s.p9999" % metric_key, None, config['notes'].copy(), run_commit_info,
+                                     secondary_metrics=secondary_metrics, title_suffix=title_suffix,
+                                     primary_label="p99.99", secondary_clamp=False, only_benchmarks_with_data=True,
+                                     data_label=data_label, unit=unit, secondary_show_percentage=False, log_y=True)
+            if fig is None:
+                print("Plan %s has no benchmark with %s data yet." % (plan, metric_key))
+                return
 
-                latency_sparkline_fig = plot.plot_history(build_info, runs, plan, benchmarks, from_date, to_date, "latency.p9999", None, config['notes'].copy(), run_commit_info,
-                                                           secondary_metrics=plot.LATENCY_SECONDARY_METRICS,
-                                                           primary_label="p99.99", secondary_clamp=False, only_benchmarks_with_data=True, sparkline=True,
-                                                           data_label="p99.99 latency", unit="usec", secondary_show_percentage=False, log_y=True)
-                latency_png_path = os.path.join(output_dir, "%s_%s_latency_history.png" % (prefix, plan))
-                latency_sparkline_fig.write_image(latency_png_path, scale=2)
-            else:
-                print("Plan %s is configured for latency, but no benchmark has latency data yet." % plan)
+            path = os.path.join(output_dir, "%s_%s_%s_history.html" % (prefix, plan, file_suffix))
+            fig.write_html(path, include_plotlyjs='cdn')
+
+            sparkline_fig = plot.plot_history(build_info, runs, plan, benchmarks, from_date, to_date, "%s.p9999" % metric_key, None, config['notes'].copy(), run_commit_info,
+                                               secondary_metrics=secondary_metrics,
+                                               primary_label="p99.99", secondary_clamp=False, only_benchmarks_with_data=True, sparkline=True,
+                                               data_label=data_label, unit=unit, secondary_show_percentage=False, log_y=True)
+            png_path = os.path.join(output_dir, "%s_%s_%s_history.png" % (prefix, plan, file_suffix))
+            sparkline_fig.write_image(png_path, scale=2)
+
+        render_percentile_history("latency", plot.LATENCY_SECONDARY_METRICS,
+                                   "(Tail latency)", "p99.99 latency", "usec", "latency")
+        render_percentile_history("time-to-yield", plot.TIME_TO_YIELD_SECONDARY_METRICS,
+                                   "(Time-to-yield)", "p99.99 time-to-yield", "ms", "time_to_yield")
+        render_percentile_history("pause-time", plot.PAUSE_TIME_SECONDARY_METRICS,
+                                   "(Pause time)", "p99.99 pause time", "ms", "pause_time")
 
 
 if __name__ == "__main__":
