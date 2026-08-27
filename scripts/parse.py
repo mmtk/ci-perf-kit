@@ -26,6 +26,14 @@ LATENCY_METERED_100MS_RE = re.compile(
 
 LATENCY_KEYS = ['latency.p50', 'latency.p90', 'latency.p99', 'latency.p999', 'latency.p9999']
 
+# MMTk stats print "n/a" for a counter that wasn't collected in that run
+# (e.g. a plan-specific stat not applicable to the current plan). Treat it
+# as 0 rather than failing to parse.
+def parse_mmtk_value(s):
+    if s == 'n/a':
+        return 0.0
+    return float(s)
+
 # Given a log file and expected invocations, return the result
 def parse_log(log_file, n_invocations = None):
     # return a dict of the parse result
@@ -85,7 +93,7 @@ def parse_log(log_file, n_invocations = None):
                 mmtk_values = lines[i + 2].decode('utf-8').split()
                 if len(mmtk_keys) == len(mmtk_values):
                     for j in range(0, len(mmtk_keys)):
-                        insert_data(mmtk_keys[j], float(mmtk_values[j]))
+                        insert_data(mmtk_keys[j], parse_mmtk_value(mmtk_values[j]))
                     # "Total time: X ms" - the MMTk-instrumented total
                     # (time.other + time.stw), measured from
                     # harness_begin/harness_end. More precise than
