@@ -838,6 +838,17 @@ LATENCY_SECONDARY_METRICS = [
     ("latency.p999", "p99.9", "#b9b6ac"),
 ]
 
+# Secondary metrics for the time-to-yield and pause-time charts (see plot_history's
+# secondary_metrics param) - each has only a p50 informational overlay alongside its
+# p9999 primary series (the tail percentile that actually matters for responsiveness),
+# unlike the latency chart's four secondary percentiles.
+TIME_TO_YIELD_SECONDARY_METRICS = [
+    ("time-to-yield.p50", "p50", "#5c5a54"),
+]
+PAUSE_TIME_SECONDARY_METRICS = [
+    ("pause-time.p50", "p50", "#5c5a54"),
+]
+
 
 def split_epochs(x, x_labels, y, y_std, notes):
     import datetime

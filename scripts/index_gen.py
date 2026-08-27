@@ -14,13 +14,13 @@ import parse
 DEFAULT_CONFIG_FILENAMES = ["openjdk-plot.yml", "jikesrvm-plot.yml"]
 
 
-# A plan can independently opt into `time: true` and/or `latency: true` (see
-# openjdk-plot.yml) - each enabled metric gets its own card, so a plan with
-# both gets two: "<runtime>-<plan>-time" and "<runtime>-<plan>-latency",
-# linking to "<runtime>_<plan>_<metric>_history.{html,png}" (see
-# history_report.py, which writes exactly those names for each metric it
-# renders).
-CARD_METRICS = ["time", "latency"]
+# history_report.py now renders all four metrics for every plan unconditionally
+# (see render_percentile_history there) - the `time`/`latency`/`time_to_yield`/
+# `pause_time` flags in openjdk-plot.yml no longer gate whether a chart exists,
+# only whether its card is shown by default here. Every plan gets a card for
+# each of these, linking to "<runtime>_<plan>_<metric>_history.{html,png}"
+# (see history_report.py, which writes exactly those names).
+CARD_METRICS = ["time", "latency", "time_to_yield", "pause_time"]
 
 
 def _collect_cards(config_dir, config_filenames):
@@ -35,8 +35,18 @@ def _collect_cards(config_dir, config_filenames):
             if p.get("hidden", False):
                 continue
             for metric in CARD_METRICS:
-                if p.get(metric, False):
-                    cards.append({"runtime": runtime, "plan": p["plan"], "metric": metric})
+                # The config flag is now only a *default visibility* hint (e.g. only
+                # lxr/concurrentimmix opt into latency/time_to_yield/pause_time by
+                # default, since those are the plans where those metrics are
+                # meaningful) - a viewer can still reveal any other card from the
+                # dashboard's collapsed section, and that choice is remembered (see
+                # the STORAGE_KEY-versioned localStorage handling in _render_html).
+                cards.append({
+                    "runtime": runtime,
+                    "plan": p["plan"],
+                    "metric": metric,
+                    "default_visible": bool(p.get(metric, False)),
+                })
     return cards
 
 
@@ -54,15 +64,23 @@ def _render_html(cards):
   every time a report is rendered - do not hand-edit, it will be overwritten.
 
   Each card is a static sparkline PNG (see plot.py's `sparkline` mode), one
-  per plan per enabled metric (suffixed "-time" or "-latency" - see
-  CARD_METRICS above):
+  per plan per metric (suffixed "-time", "-latency", "-time_to_yield" or
+  "-pause_time" - see CARD_METRICS above). Every plan gets all four; a card's
+  `default_visible` (from the plan's config flag) only decides whether it
+  starts in the main grid or the collapsed "More metrics" section - a viewer
+  can move any card between the two, and that choice is remembered per
+  browser (see STORAGE_KEY below):
   - "-time" cards: one row per benchmark, total time (colored green/red/muted
     for improvement/regression/neutral, with the current value as the big
     number) plus mutator/STW time as thin informational overlay lines.
   - "-latency" cards: one row per benchmark with latency data, the
     50/90/99/99.9/99.99th percentile tail latency (metered, corrected for
     coordinated omission - see parse.py) on a log scale.
-  Click a card to open the full interactive page for that plan/metric.
+  - "-time_to_yield" / "-pause_time" cards: one row per benchmark, the
+    99.99th percentile time-to-yield / pause time (colored green/red/muted
+    for improvement/regression/neutral) plus the 50th percentile as a thin
+    informational overlay line, on a log scale.
+  Click a card's title or image to open the full interactive page.
 -->
 <style>
   :root {
@@ -122,25 +140,54 @@ def _render_html(cards):
   }
 
   .plan-card {
-    display: block;
     width: 300px;
     border: 1px solid var(--border);
     border-radius: 8px;
     background: var(--surface-card);
     overflow: hidden;
-    text-decoration: none;
-    color: inherit;
     transition: border-color 0.15s ease, transform 0.15s ease;
   }
   .plan-card:hover {
     border-color: var(--ink-secondary);
     transform: translateY(-1px);
   }
+  .plan-card .plan-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 8px 8px 12px;
+    border-bottom: 1px solid var(--border);
+  }
   .plan-card .plan-name {
-    padding: 8px 12px;
     font-size: 13px;
     font-weight: 600;
-    border-bottom: 1px solid var(--border);
+    text-decoration: none;
+    color: inherit;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .plan-card .plan-name:hover {
+    text-decoration: underline;
+  }
+  .plan-card .toggle-btn {
+    flex: none;
+    font-size: 11px;
+    font-family: inherit;
+    color: var(--ink-secondary);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 3px 8px;
+    cursor: pointer;
+  }
+  .plan-card .toggle-btn:hover {
+    border-color: var(--ink-secondary);
+    color: var(--ink-primary);
+  }
+  .plan-card a.plan-thumb {
+    display: block;
   }
   .plan-card img {
     display: block;
@@ -150,36 +197,262 @@ def _render_html(cards):
   .plan-card.missing {
     display: none;
   }
+
+  details.more-metrics {
+    margin-top: 20px;
+  }
+  details.more-metrics > summary {
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-secondary);
+    padding: 6px 0;
+  }
+  details.more-metrics > .plan-grid {
+    margin-top: 14px;
+  }
+
+  .filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .ms-dropdown {
+    position: relative;
+  }
+  .ms-dropdown-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-width: 170px;
+    font-size: 12px;
+    font-family: inherit;
+    color: var(--ink-primary);
+    background: var(--surface-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    cursor: pointer;
+  }
+  .ms-dropdown-btn:hover {
+    border-color: var(--ink-secondary);
+  }
+  .ms-dropdown-btn .ms-caret {
+    font-size: 9px;
+    color: var(--ink-muted);
+  }
+  .ms-dropdown-panel {
+    position: absolute;
+    top: calc(100%% + 4px);
+    left: 0;
+    z-index: 20;
+    min-width: 230px;
+    max-height: 260px;
+    overflow-y: auto;
+    background: var(--surface-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.16);
+  }
+  .ms-dropdown-panel.hidden {
+    display: none;
+  }
+  .ms-dropdown-panel label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 6px;
+    font-size: 12px;
+    color: var(--ink-primary);
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .ms-dropdown-panel label:hover {
+    background: var(--surface-page);
+  }
+
+  .bar-btn {
+    font-size: 12px;
+    font-family: inherit;
+    color: var(--ink-secondary);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 12px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .bar-btn:hover {
+    border-color: var(--ink-secondary);
+    color: var(--ink-primary);
+  }
+  p.filter-hint {
+    margin: 8px 0 20px;
+    font-size: 11px;
+    color: var(--ink-muted);
+  }
+  p.empty-note {
+    margin: 0 0 20px;
+    font-size: 13px;
+    color: var(--ink-muted);
+  }
+
+  .page-footer {
+    margin-top: 56px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--ink-muted);
+  }
+  .page-footer a {
+    color: var(--ink-muted);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  .page-footer a:hover {
+    color: var(--ink-secondary);
+  }
 </style>
 </head>
 <body>
 
 <h1>MMTk Performance Regression</h1>
-<p class="subtitle">Each card is one plan's history for one metric (see the -time / -latency suffix). Time cards: total time per benchmark (big number/line colored green improvement, red regression, gray neutral), with mutator/STW time as thin informational overlays. Latency cards: 50/90/99/99.9/99.99th percentile tail latency per benchmark, log scale. Click a card for the full interactive history.</p>
+<p class="subtitle">Each card is one plan's history for one metric (see the -time / -latency / -time_to_yield / -pause_time suffix). Time cards: total time per benchmark (big number/line colored green improvement, red regression, gray neutral), with mutator/STW time as thin informational overlays. Latency cards: 50/90/99/99.9/99.99th percentile tail latency per benchmark, log scale. Time-to-yield/pause-time cards: 99.99th percentile per benchmark (same coloring), with the 50th percentile as a thin informational overlay, log scale. Every plan has all four; less commonly-relevant ones start collapsed below - click "Hide"/"Show" on any card to move it, your choice is remembered in this browser.</p>
+
+<div class="filter-bar">
+  <div class="ms-dropdown" id="plan-filter">
+    <button type="button" class="ms-dropdown-btn" id="plan-filter-btn"><span id="plan-filter-label">Plans: All</span><span class="ms-caret">&#9662;</span></button>
+    <div class="ms-dropdown-panel hidden" id="plan-filter-panel"></div>
+  </div>
+  <div class="ms-dropdown" id="metric-filter">
+    <button type="button" class="ms-dropdown-btn" id="metric-filter-btn"><span id="metric-filter-label">Metrics: All</span><span class="ms-caret">&#9662;</span></button>
+    <div class="ms-dropdown-panel hidden" id="metric-filter-panel"></div>
+  </div>
+  <button type="button" class="bar-btn" id="reset-filters-btn">Reset filters</button>
+</div>
+<p class="filter-hint">Nothing selected in a dropdown means no filter on that axis. Filtering only controls what's on this page right now - it doesn't change any card's show/hide preference, and a hidden card that passes the filter still appears under "More metrics" below.</p>
+<p class="empty-note" id="empty-note" style="display: none;">No plots match the current filter.</p>
 
 <div class="plan-grid" id="plan-grid"></div>
+
+<details class="more-metrics" id="more-metrics">
+  <summary id="more-metrics-summary"></summary>
+  <div class="plan-grid" id="hidden-plan-grid"></div>
+</details>
+
+<div class="page-footer">
+  <a id="reset-prefs-link">Reset all show/hide preferences to default</a>
+</div>
 
 <script>
   // Pages/images referenced below live in this same folder - no path prefix.
   // Generated from configs/*-plot.yml by index_gen.py; do not hand-edit.
   const cards = %s;
 
-  const grid = document.getElementById("plan-grid");
+  // Per-viewer show/hide overrides, persisted in this browser only.
+  //
+  // Versioning: the key name carries a schema version (bump it - v2, v3, ... -
+  // any time the stored *shape* changes incompatibly; the old key is simply
+  // never read again, so there's nothing to migrate). Within a version, each
+  // override is additionally keyed by a content-addressed card id
+  // ("<runtime>_<plan>_<metric>", the same string used for the card's file
+  // prefix) rather than e.g. an array index - so if configs/*.yml adds,
+  // removes, or reorders plans/metrics between visits, existing overrides
+  // still apply to the exact same card if it still exists, and simply go
+  // unused (rather than mis-apply to a different card) if it doesn't. A
+  // stored payload is also tagged with its own "v" field and re-validated on
+  // load (wrong shape/version -> treated as empty) as a second guard against
+  // a stale or foreign value ending up under this key.
+  const STORAGE_KEY = "mmtk-dashboard-overrides-v1";
+  const STORAGE_VERSION = 1;
 
-  for (const { runtime, plan, metric } of cards) {
-    const prefix = `${runtime}_${plan}_${metric}`;
-    const title = `${runtime}-${plan}-${metric}`;
+  function loadOverrides() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return {};
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== "object" || parsed.v !== STORAGE_VERSION || typeof parsed.overrides !== "object") {
+        return {};
+      }
+      return parsed.overrides;
+    } catch (e) {
+      return {};
+    }
+  }
 
-    const card = document.createElement("a");
-    card.className = "plan-card";
-    card.href = `${prefix}_history.html`;
-    card.target = "_blank";
-    card.rel = "noopener";
+  function saveOverrides() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ v: STORAGE_VERSION, overrides }));
+    } catch (e) {
+      // Storage disabled/full (e.g. private browsing) - the toggle still
+      // works for the rest of this page load, it just won't persist.
+    }
+  }
 
-    const name = document.createElement("div");
+  let overrides = loadOverrides();
+
+  function cardId(card) {
+    return `${card.runtime}_${card.plan}_${card.metric}`;
+  }
+
+  function isVisible(card) {
+    const id = cardId(card);
+    return Object.prototype.hasOwnProperty.call(overrides, id) ? overrides[id] : card.default_visible;
+  }
+
+  function setVisible(card, visible) {
+    const id = cardId(card);
+    // Only store a real override when it differs from the config default -
+    // keeps localStorage small and means a future config change (a plan's
+    // default flipping) isn't silently masked by a stale override that
+    // happened to agree with the old default.
+    if (visible === card.default_visible) {
+      delete overrides[id];
+    } else {
+      overrides[id] = visible;
+    }
+    saveOverrides();
+    render();
+  }
+
+  function buildCard(card, visible) {
+    const prefix = cardId(card);
+    const title = `${card.runtime}-${card.plan}-${card.metric}`;
+
+    const el = document.createElement("div");
+    el.className = "plan-card";
+
+    const header = document.createElement("div");
+    header.className = "plan-card-header";
+
+    const name = document.createElement("a");
     name.className = "plan-name";
     name.textContent = title;
-    card.appendChild(name);
+    name.href = `${prefix}_history.html`;
+    name.target = "_blank";
+    name.rel = "noopener";
+    header.appendChild(name);
+
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "toggle-btn";
+    toggle.textContent = visible ? "Hide" : "Show";
+    toggle.onclick = () => setVisible(card, !visible);
+    header.appendChild(toggle);
+
+    el.appendChild(header);
+
+    const link = document.createElement("a");
+    link.className = "plan-thumb";
+    link.href = `${prefix}_history.html`;
+    link.target = "_blank";
+    link.rel = "noopener";
 
     const img = document.createElement("img");
     img.src = `${prefix}_history.png`;
@@ -188,11 +461,157 @@ def _render_html(cards):
     // A plan with no report yet (e.g. newly added, or not touched by this
     // particular run) shouldn't leave a broken-image icon in the dashboard -
     // just hide the whole card.
-    img.onerror = () => card.classList.add("missing");
-    card.appendChild(img);
+    img.onerror = () => el.classList.add("missing");
+    link.appendChild(img);
+    el.appendChild(link);
 
-    grid.appendChild(card);
+    return el;
   }
+
+  const grid = document.getElementById("plan-grid");
+  const hiddenGrid = document.getElementById("hidden-plan-grid");
+  const moreMetrics = document.getElementById("more-metrics");
+  const moreSummary = document.getElementById("more-metrics-summary");
+  const emptyNote = document.getElementById("empty-note");
+  const resetFiltersBtn = document.getElementById("reset-filters-btn");
+  const resetPrefsLink = document.getElementById("reset-prefs-link");
+
+  // Plan/metric filters: which cards even get built at all. Independent of
+  // isVisible/overrides above - a card that fails the filter doesn't appear
+  // in either grid, while a card that passes but isn't isVisible() still
+  // lands in the "More metrics" section same as always. Not persisted (a
+  // fresh page load always starts unfiltered) - only the show/hide
+  // preference above is meant to survive a reload.
+  const METRIC_LABELS = { time: "Time", latency: "Latency", time_to_yield: "Time-to-yield", pause_time: "Pause time" };
+
+  function planKey(card) {
+    return `${card.runtime}::${card.plan}`;
+  }
+
+  function uniqueSorted(values) {
+    return Array.from(new Set(values)).sort();
+  }
+
+  // A closed-by-default multi-select "dropdown": a button showing a summary
+  // of the current selection (placeholder / one label / "N selected"), which
+  // opens a checkbox panel on click. Only one such panel - across both the
+  // plan and metric filters - is ever open at a time (see
+  // closeAllDropdowns/registerDropdown below).
+  const openDropdownPanels = [];
+  function closeAllDropdowns() {
+    for (const panel of openDropdownPanels) panel.classList.add("hidden");
+  }
+  document.addEventListener("click", closeAllDropdowns);
+
+  function makeDropdown(btnId, labelId, panelId, entries, placeholder, onChange) {
+    const btn = document.getElementById(btnId);
+    const label = document.getElementById(labelId);
+    const panel = document.getElementById(panelId);
+    const selected = new Set();
+    openDropdownPanels.push(panel);
+
+    function refreshLabel() {
+      if (selected.size === 0) {
+        label.textContent = `${placeholder}: All`;
+      } else if (selected.size === 1) {
+        const only = entries.find((e) => selected.has(e.value));
+        label.textContent = `${placeholder}: ${only.label}`;
+      } else {
+        label.textContent = `${placeholder}: ${selected.size} selected`;
+      }
+    }
+
+    for (const { value, label: entryLabel } of entries) {
+      const optLabel = document.createElement("label");
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.value = value;
+      checkbox.addEventListener("change", () => {
+        if (checkbox.checked) selected.add(value);
+        else selected.delete(value);
+        refreshLabel();
+        onChange();
+      });
+      optLabel.appendChild(checkbox);
+      optLabel.appendChild(document.createTextNode(entryLabel));
+      panel.appendChild(optLabel);
+    }
+
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const wasHidden = panel.classList.contains("hidden");
+      closeAllDropdowns();
+      if (wasHidden) panel.classList.remove("hidden");
+    });
+    panel.addEventListener("click", (e) => e.stopPropagation());
+
+    refreshLabel();
+
+    return {
+      selected,
+      reset() {
+        selected.clear();
+        for (const cb of panel.querySelectorAll("input[type=checkbox]")) cb.checked = false;
+        refreshLabel();
+      },
+    };
+  }
+
+  const planEntries = uniqueSorted(cards.map(planKey)).map((key) => ({ value: key, label: key.replace("::", "-") }));
+  const metricEntries = uniqueSorted(cards.map((c) => c.metric)).map((m) => ({ value: m, label: METRIC_LABELS[m] || m }));
+
+  const planFilter = makeDropdown("plan-filter-btn", "plan-filter-label", "plan-filter-panel", planEntries, "Plans", () => render());
+  const metricFilter = makeDropdown("metric-filter-btn", "metric-filter-label", "metric-filter-panel", metricEntries, "Metrics", () => render());
+
+  function passesFilter(card) {
+    return (planFilter.selected.size === 0 || planFilter.selected.has(planKey(card))) &&
+           (metricFilter.selected.size === 0 || metricFilter.selected.has(card.metric));
+  }
+
+  resetFiltersBtn.addEventListener("click", () => {
+    planFilter.reset();
+    metricFilter.reset();
+    render();
+  });
+
+  // Deliberately a plain link in the page footer, far from the filter bar's
+  // "Reset filters" button above - filters and show/hide preferences are
+  // unrelated axes (see passesFilter/isVisible), and this keeps a viewer
+  // from mixing the two up.
+  resetPrefsLink.addEventListener("click", (e) => {
+    e.preventDefault();
+    overrides = {};
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (err) {
+      // Storage disabled - nothing was persisted in the first place.
+    }
+    render();
+  });
+
+  function render() {
+    grid.replaceChildren();
+    hiddenGrid.replaceChildren();
+
+    const filtered = cards.filter(passesFilter);
+
+    let hiddenCount = 0;
+    for (const card of filtered) {
+      const visible = isVisible(card);
+      const el = buildCard(card, visible);
+      if (visible) {
+        grid.appendChild(el);
+      } else {
+        hiddenGrid.appendChild(el);
+        hiddenCount++;
+      }
+    }
+    moreSummary.textContent = `More metrics (${hiddenCount})`;
+    moreMetrics.style.display = hiddenCount === 0 ? "none" : "";
+    emptyNote.style.display = filtered.length === 0 ? "block" : "none";
+  }
+
+  render();
 </script>
 
 </body>
